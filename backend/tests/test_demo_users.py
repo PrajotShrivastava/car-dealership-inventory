@@ -7,7 +7,7 @@ from app.cli import main
 from app.config import Settings, get_settings
 from app.db import get_sessionmaker
 from app.demo import DEMO_ACCOUNTS, DemoSeedRefusedError, seed_demo_users
-from app.models import ApplicationStatus, DealerApplication, Role, User
+from app.models import DealerApplication, Role, User
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def test_refuses_a_non_local_database(app_env):
         seed_demo_users()
 
 
-def test_creates_admin_customer_and_pending_applicant_once(app_env):
+def test_creates_one_admin_customer_and_dealer_once(app_env):
     app_env.setenv("APP_ENV", "development")
 
     created = seed_demo_users()
@@ -55,10 +55,10 @@ def test_creates_admin_customer_and_pending_applicant_once(app_env):
     assert again == 0
     with get_sessionmaker()() as session:
         roles = {u.email: u.role for u in session.scalars(select(User))}
-        application = session.scalars(select(DealerApplication)).one()
-    assert sorted(roles.values()) == [Role.ADMIN, Role.CUSTOMER, Role.CUSTOMER]
-    assert application.status == ApplicationStatus.PENDING
-    assert roles[application.applicant.email] == Role.CUSTOMER
+        applications = session.scalars(select(DealerApplication)).all()
+    assert roles["demo-dealer@example.com"] == Role.DEALER
+    assert sorted(roles.values()) == sorted([Role.ADMIN, Role.CUSTOMER, Role.DEALER])
+    assert applications == []
 
 
 def test_cli_reports_refusal_with_exit_code_1(app_env, capsys):

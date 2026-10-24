@@ -1,3 +1,9 @@
+"""Review of dealer applications made before dealers could sign up directly.
+
+New dealer sign-ups no longer create applications (see test_dealer_role.py); these
+records exist only in older data, so the tests insert them directly.
+"""
+
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -12,16 +18,9 @@ from tests.conftest import VEHICLE
 
 APPLICANT = {
     "full_name": "Dana Dealer",
-    "email": "Dana@Motors.example",
+    "email": "dana@motors.example",
     "password": "dealer-pass-1",
-    "business_name": "Dana Motors",
-    "phone": "+44 20 7946 0000",
-    "message": "Family-run used car lot, 40 vehicles.",
 }
-
-
-def apply(client, **overrides):
-    return client.post("/api/auth/register-dealer", json={**APPLICANT, **overrides})
 
 
 def token_for(client, email, password):
@@ -31,79 +30,28 @@ def token_for(client, email, password):
 
 @pytest.fixture
 def applicant(client):
-    body = apply(client).json()
-    headers = token_for(client, APPLICANT["email"], APPLICANT["password"])
-    return body["application"], headers
+    """A customer with a pending application, as in data created before this change."""
+    user = client.post("/api/auth/register", json=APPLICANT).json()
+    with get_sessionmaker()() as session:
+        application = DealerApplication(user_id=user["id"], business_name="Dana Motors")
+        session.add(application)
+        session.commit()
+        application_id = application.id
+    return {"id": application_id}, token_for(client, APPLICANT["email"], APPLICANT["password"])
 
 
-class TestRegisterDealer:
-    def test_creates_a_customer_account_with_a_pending_application(self, client):
-        response = apply(client)
-
-        assert response.status_code == 201
-        body = response.json()
-        assert body["user"]["email"] == "dana@motors.example"
-        assert body["user"]["role"] == "customer"
-        application = body["application"]
-        assert application["status"] == "pending"
-        assert application["business_name"] == "Dana Motors"
-        assert application["applicant"]["email"] == "dana@motors.example"
-
-    def test_cannot_request_admin_directly(self, client):
-        body = apply(client, role="admin").json()
-
-        assert body["user"]["role"] == "customer"
-
+class TestMyApplication:
     def test_pending_applicant_has_no_inventory_permissions(self, client, applicant):
         _, headers = applicant
 
         assert client.post("/api/vehicles", json=VEHICLE, headers=headers).status_code == 403
 
-    def test_rejects_duplicate_email(self, client, customer_headers):
-        response = apply(client, email="customer@example.com")
-
-        assert response.status_code == 409
-        assert response.json()["error"]["code"] == "EMAIL_TAKEN"
-
-    @pytest.mark.parametrize(
-        ("field", "value"),
-        [
-            ("business_name", "   "),
-            ("business_name", "x" * 101),
-            ("phone", "call me maybe"),
-            ("message", "x" * 1001),
-            ("password", "short"),
-            ("email", "not-an-email"),
-        ],
-    )
-    def test_validates_input(self, client, field, value):
-        response = apply(client, **{field: value})
-
-        assert response.status_code == 422
-        assert field in {d["field"] for d in response.json()["error"]["details"]}
-
-    def test_phone_and_message_are_optional(self, client):
-        payload = {k: v for k, v in APPLICANT.items() if k not in ("phone", "message")}
-
-        response = client.post("/api/auth/register-dealer", json=payload)
-
-        assert response.status_code == 201
-        assert response.json()["application"]["phone"] is None
-
-    def test_customer_registration_does_not_create_an_application(self, client):
-        client.post(
-            "/api/auth/register",
-            json={"email": "buyer@example.com", "password": "buyer-pass-1", "full_name": "Buyer"},
-        )
-        headers = token_for(client, "buyer@example.com", "buyer-pass-1")
-
-        response = client.get("/api/dealer-applications/me", headers=headers)
+    def test_customers_without_an_application_get_404(self, client, customer_headers):
+        response = client.get("/api/dealer-applications/me", headers=customer_headers)
 
         assert response.status_code == 404
         assert response.json()["error"]["code"] == "APPLICATION_NOT_FOUND"
 
-
-class TestMyApplication:
     def test_applicant_sees_their_application(self, client, applicant):
         _, headers = applicant
 
@@ -139,7 +87,7 @@ class TestReview:
         assert client.request(method, path, json={}).status_code == 401
         assert client.request(method, path, json={}, headers=applicant_headers).status_code == 403
 
-    def test_approval_grants_admin_and_takes_effect_immediately(
+    def test_approval_makes_the_applicant_a_dealer_immediately(
         self, client, admin_headers, applicant
     ):
         application, applicant_headers = applicant
@@ -152,10 +100,13 @@ class TestReview:
         body = response.json()
         assert body["status"] == "approved"
         assert body["reviewed_at"] is not None
-        assert body["applicant"]["role"] == "admin"
+        assert body["applicant"]["role"] == "dealer"
         # Same token as before: the role is read from the database on each request.
         created = client.post("/api/vehicles", json=VEHICLE, headers=applicant_headers)
         assert created.status_code == 201
+        # A dealer, not an admin: reviewing applications stays admin-only.
+        listing = client.get("/api/dealer-applications", headers=applicant_headers)
+        assert listing.status_code == 403
         with get_sessionmaker()() as session:
             record = session.scalars(select(DealerApplication)).one()
             reviewer = session.scalar(select(User).where(User.email == "admin@example.com"))
