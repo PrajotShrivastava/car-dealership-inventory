@@ -45,3 +45,56 @@ def _clean_tables() -> Iterator[None]:
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(create_app())
+
+
+# --- auth helpers -----------------------------------------------------------
+
+
+def _auth_headers(client: TestClient, email: str, *, admin: bool = False) -> dict[str, str]:
+    from app.cli import create_admin
+
+    password = "test-pass-123"
+    if admin:
+        create_admin(email, password, "Test Admin")
+    else:
+        client.post(
+            "/api/auth/register",
+            json={"email": email, "password": password, "full_name": "Test Customer"},
+        )
+    token = client.post("/api/auth/login", json={"email": email, "password": password}).json()[
+        "access_token"
+    ]
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def customer_headers(client: TestClient) -> dict[str, str]:
+    return _auth_headers(client, "customer@example.com")
+
+
+@pytest.fixture
+def admin_headers(client: TestClient) -> dict[str, str]:
+    return _auth_headers(client, "admin@example.com", admin=True)
+
+
+VEHICLE = {
+    "make": "Ford",
+    "model": "Kuga",
+    "trim": "ST-Line",
+    "year": 2023,
+    "category": "suv",
+    "fuel_type": "hybrid",
+    "transmission": "automatic",
+    "price": "35990.00",
+    "quantity": 4,
+}
+
+
+@pytest.fixture
+def make_vehicle(client: TestClient, admin_headers: dict[str, str]):  # type: ignore[no-untyped-def]
+    def _make(**overrides):  # type: ignore[no-untyped-def]
+        response = client.post("/api/vehicles", json={**VEHICLE, **overrides}, headers=admin_headers)
+        assert response.status_code == 201, response.text
+        return response.json()
+
+    return _make
