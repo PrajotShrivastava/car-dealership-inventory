@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { CATEGORIES, type Availability, type Category, type SortOrder, type VehicleQuery } from '../../api/types'
@@ -24,53 +24,50 @@ function oneOf<T extends string>(value: string | null, allowed: readonly T[], fa
   return allowed.includes(value as T) ? (value as T) : fallback
 }
 
-/** Filters live in the URL so views are shareable and survive reloads. */
+function parseFilters(params: URLSearchParams): Filters {
+  return {
+    q: params.get('q') ?? '',
+    category: oneOf(params.get('category'), CATEGORIES, '' as never) as Category | '',
+    min_price: params.get('min_price') ?? '',
+    max_price: params.get('max_price') ?? '',
+    availability: oneOf(params.get('availability'), AVAILABILITY, 'all'),
+    sort: oneOf(params.get('sort'), SORTS, 'newest'),
+    page: Math.max(1, Number(params.get('page')) || 1),
+  }
+}
+
+const DEFAULTS: Filters = parseFilters(new URLSearchParams())
+
+/**
+ * Filters are React state (so controlled inputs update synchronously) mirrored
+ * one-way into the URL, which keeps views shareable and reload-safe.
+ */
 export function useInventoryFilters() {
   const [params, setParams] = useSearchParams()
+  const [filters, setFilters] = useState<Filters>(() => parseFilters(params))
 
-  const filters: Filters = useMemo(
-    () => ({
-      q: params.get('q') ?? '',
-      category: oneOf(params.get('category'), CATEGORIES, '' as never) as Category | '',
-      min_price: params.get('min_price') ?? '',
-      max_price: params.get('max_price') ?? '',
-      availability: oneOf(params.get('availability'), AVAILABILITY, 'all'),
-      sort: oneOf(params.get('sort'), SORTS, 'newest'),
-      page: Math.max(1, Number(params.get('page')) || 1),
-    }),
-    [params],
-  )
-
-  const update = useCallback(
-    (changes: Partial<Filters>) => {
-      setParams(
-        (current) => {
-          const next = new URLSearchParams(current)
-          for (const [key, value] of Object.entries(changes)) {
-            const isDefault = value === '' || value === 'all' || value === 'newest' || value === 1
-            if (isDefault) next.delete(key)
-            else next.set(key, String(value))
-          }
-          // Any filter/sort change returns to the first page.
-          if (!('page' in changes)) next.delete('page')
-          return next
-        },
-        { replace: true },
-      )
-    },
-    [setParams],
-  )
-
-  const clear = useCallback(() => {
+  useEffect(() => {
     setParams(
       (current) => {
         const next = new URLSearchParams(current)
-        for (const key of [...FILTER_KEYS, 'page']) next.delete(key)
+        for (const key of Object.keys(DEFAULTS) as (keyof Filters)[]) {
+          if (filters[key] === DEFAULTS[key]) next.delete(key)
+          else next.set(key, String(filters[key]))
+        }
         return next
       },
       { replace: true },
     )
-  }, [setParams])
+  }, [filters, setParams])
+
+  const update = useCallback((changes: Partial<Filters>) => {
+    // Any filter/sort change returns to the first page.
+    setFilters((current) => ({ ...current, page: 1, ...changes }))
+  }, [])
+
+  const clear = useCallback(() => {
+    setFilters((current) => ({ ...DEFAULTS, sort: current.sort }))
+  }, [])
 
   const selectedId = Number(params.get('vehicle')) || null
   const select = useCallback(
