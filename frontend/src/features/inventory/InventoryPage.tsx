@@ -1,14 +1,19 @@
-import { ChevronLeft, ChevronRight, PackageSearch, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, PackageSearch, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import type { SortOrder } from '../../api/types'
+import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Drawer } from '../../components/Drawer'
 import { Spinner } from '../../components/Spinner'
+import { Tabs } from '../../components/Tabs'
+import { RestockForm } from '../admin/RestockForm'
+import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
 import { vehicleTitle } from './format'
 import { PurchasePanel } from './PurchasePanel'
-import { useVehicle, useVehicleSearch } from './queries'
+import { useCreateVehicle, useDeleteVehicle, useUpdateVehicle, useVehicle, useVehicleSearch } from './queries'
 import { PAGE_SIZE, useInventoryFilters, useTextDrafts } from './useInventoryFilters'
 import { VehicleDetails } from './VehicleDetails'
 import { ROW_GRID, VehicleRow } from './VehicleRow'
@@ -43,8 +48,22 @@ function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => v
   )
 }
 
+type DrawerTab = 'details' | 'edit' | 'restock'
+
+const ADMIN_TABS: { value: DrawerTab; label: string }[] = [
+  { value: 'details', label: 'Details' },
+  { value: 'edit', label: 'Edit' },
+  { value: 'restock', label: 'Restock' },
+]
+
 function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
+  const { isAdmin } = useAuth()
   const { data: vehicle, isError, error } = useVehicle(id)
+  const update = useUpdateVehicle(id)
+  const remove = useDeleteVehicle()
+  const [tab, setTab] = useState<DrawerTab>('details')
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+
   if (isError) {
     return (
       <Drawer title="Vehicle details" onClose={onClose}>
@@ -63,14 +82,77 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
       </Drawer>
     )
   }
+
+  const title = vehicleTitle(vehicle)
   return (
-    <Drawer
-      title={vehicleTitle(vehicle)}
-      subtitle={[vehicle.trim, vehicle.year].filter(Boolean).join(' · ')}
-      onClose={onClose}
-      footer={<PurchasePanel key={vehicle.id} vehicle={vehicle} />}
-    >
-      <VehicleDetails vehicle={vehicle} />
+    <>
+      <Drawer
+        title={title}
+        subtitle={[vehicle.trim, vehicle.year].filter(Boolean).join(' · ')}
+        onClose={onClose}
+        actions={
+          isAdmin && (
+            <button
+              type="button"
+              aria-label="Delete vehicle"
+              title="Delete vehicle"
+              onClick={() => setConfirmingDelete(true)}
+              className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+            >
+              <Trash2 className="size-[18px]" />
+            </button>
+          )
+        }
+        tabs={isAdmin && <Tabs label="Vehicle sections" tabs={ADMIN_TABS} value={tab} onChange={setTab} />}
+        footer={tab === 'details' ? <PurchasePanel key={vehicle.id} vehicle={vehicle} /> : undefined}
+      >
+        {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
+        {tab === 'edit' && (
+          <VehicleForm
+            key={vehicle.id}
+            vehicle={vehicle}
+            submitLabel="Save changes"
+            successMessage="Changes saved."
+            onSubmit={(fields) => update.mutateAsync(fields)}
+          />
+        )}
+        {tab === 'restock' && <RestockForm key={vehicle.id} vehicle={vehicle} />}
+      </Drawer>
+      {confirmingDelete && (
+        <ConfirmDialog
+          title={`Delete ${title}?`}
+          confirmLabel="Delete"
+          busy={remove.isPending}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() =>
+            remove.mutate(vehicle.id, {
+              onSuccess: () => {
+                setConfirmingDelete(false)
+                onClose()
+              },
+            })
+          }
+        >
+          This removes the vehicle from inventory. Past purchase records are kept.
+          {remove.isError && <span className="mt-2 block text-red-600">{remove.error.message}</span>}
+        </ConfirmDialog>
+      )}
+    </>
+  )
+}
+
+function AddVehicleDrawer({ onClose }: { onClose: () => void }) {
+  const create = useCreateVehicle()
+  return (
+    <Drawer title="Add vehicle" subtitle="New listings appear at the top of the inventory." onClose={onClose}>
+      <VehicleForm
+        withQuantity
+        submitLabel="Create vehicle"
+        onSubmit={async (fields, quantity) => {
+          await create.mutateAsync({ ...fields, quantity })
+          onClose()
+        }}
+      />
     </Drawer>
   )
 }
@@ -80,6 +162,8 @@ export function InventoryPage() {
   const { data, isPending, isError, error, refetch, isFetching } = useVehicleSearch(query)
   const { drafts, change: changeDrafts, reset: resetDrafts } = useTextDrafts(filters, update)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const { isAdmin } = useAuth()
 
   const clearAll = useCallback(() => {
     resetDrafts()
@@ -106,9 +190,20 @@ export function InventoryPage() {
 
   return (
     <div className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
-        <p className="mt-1 text-sm text-slate-500">Browse vehicles on the lot and check live availability.</p>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {isAdmin
+              ? 'Manage listings, pricing and stock levels.'
+              : 'Browse vehicles on the lot and check live availability.'}
+          </p>
+        </div>
+        {isAdmin && (
+          <Button icon={<Plus aria-hidden className="size-4" />} onClick={() => setAdding(true)}>
+            Add vehicle
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -234,7 +329,8 @@ export function InventoryPage() {
         </div>
       )}
 
-      {selectedId !== null && <VehicleDrawer id={selectedId} onClose={closeDrawer} />}
+      {selectedId !== null && <VehicleDrawer key={selectedId} id={selectedId} onClose={closeDrawer} />}
+      {adding && <AddVehicleDrawer onClose={() => setAdding(false)} />}
     </div>
   )
 }

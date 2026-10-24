@@ -41,3 +41,32 @@ export function usePurchase() {
     onSuccess: (result) => sync(result.vehicle),
   })
 }
+
+export function useCreateVehicle() {
+  const sync = useSyncVehicle()
+  return useMutation({ mutationFn: vehiclesApi.create, onSuccess: sync })
+}
+
+export function useUpdateVehicle(id: number) {
+  const sync = useSyncVehicle()
+  return useMutation({
+    mutationFn: (body: Parameters<typeof vehiclesApi.update>[1]) => vehiclesApi.update(id, body),
+    onSuccess: sync,
+  })
+}
+
+export function useRestock(id: number) {
+  const sync = useSyncVehicle()
+  return useMutation({ mutationFn: (quantity: number) => vehiclesApi.restock(id, quantity), onSuccess: sync })
+}
+
+export function useDeleteVehicle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => vehiclesApi.remove(id),
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: vehicleKeys.detail(id) })
+      return queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] })
+    },
+  })
+}

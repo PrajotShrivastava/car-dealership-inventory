@@ -7,10 +7,12 @@ interface DrawerProps {
   onClose: () => void
   children: ReactNode
   footer?: ReactNode
+  actions?: ReactNode
+  tabs?: ReactNode
 }
 
 /** Right-side panel over a dimmed page; full-screen sheet on small screens. */
-export function Drawer({ title, subtitle, onClose, children, footer }: DrawerProps) {
+export function Drawer({ title, subtitle, onClose, children, footer, actions, tabs }: DrawerProps) {
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
 
@@ -43,7 +45,9 @@ export function Drawer({ title, subtitle, onClose, children, footer }: DrawerPro
             </h2>
             {subtitle && <div className="mt-0.5 text-sm text-slate-500">{subtitle}</div>}
           </div>
-          <button
+          <div className="flex shrink-0 items-center gap-1">
+            {actions}
+            <button
             ref={closeRef}
             type="button"
             onClick={onClose}
@@ -52,7 +56,9 @@ export function Drawer({ title, subtitle, onClose, children, footer }: DrawerPro
           >
             <X className="size-5" />
           </button>
+          </div>
         </header>
+        {tabs}
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
         {footer && <footer className="border-t border-slate-200 bg-white px-6 py-4">{footer}</footer>}
       </section>
