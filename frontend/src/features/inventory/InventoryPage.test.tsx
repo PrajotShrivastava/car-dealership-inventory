@@ -7,7 +7,7 @@ import { server } from '../../test/server'
 import { renderApp } from '../../test/utils'
 
 function renderAsCustomer() {
-  return renderApp({ path: '/', user: seedUser('customer') })
+  return renderApp({ path: '/app', user: seedUser('customer') })
 }
 
 async function rows() {
