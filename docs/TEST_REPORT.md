@@ -15,8 +15,8 @@ Every number below is copied from real runs. The full, unedited console output i
 
 | Suite | Result | Coverage |
 |---|---|---|
-| Backend (pytest, real PostgreSQL `drivestock_test`) | **129 passed**, 0 failed (≈12 s) | **98 %** statements (660 stmts, 10 missed) |
-| Frontend (Vitest + React Testing Library + MSW) | **88 passed**, 0 failed | **93.6 %** stmts · 85.7 % branches · 93.0 % funcs · 94.3 % lines |
+| Backend (pytest, real PostgreSQL `drivestock_test`) | **133 passed**, 0 failed (≈12 s) | **98 %** statements (661 stmts, 10 missed) |
+| Frontend (Vitest + React Testing Library + MSW) | **91 passed**, 0 failed | **93.8 %** stmts · 85.9 % branches · 93.3 % funcs · 94.5 % lines |
 | End-to-end (Playwright, Chromium, real API + PostgreSQL) | **10 passed**, 7 skipped¹ | n/a |
 | Static checks | ruff ✔ · ruff format ✔ · mypy `--strict` ✔ · oxlint 0 warnings · `tsc --noEmit` ✔ · production build ✔ | |
 
@@ -35,6 +35,7 @@ Every number below is copied from real runs. The full, unedited console output i
 | `test_demo_users.py` | 7 | `APP_ENV` defaults to production; demo seeding refused outside development and for a non-localhost database; creates an admin, a customer and a pending applicant once (idempotent); CLI exit code and printed credentials |
 | `test_cli.py` | 6 | `create-admin` (hashing, duplicate, validation, environment password), `seed` (runs once only, includes out-of-stock cars) |
 | `test_health.py` | 1 | health check |
+| `test_unused_columns.py` | 4 | the unused `catalog_image_id` column is not in API responses, stays null for new vehicles, is left untouched by edits, and can't be set through the API (422) |
 
 **Migrations:** each pytest session runs `alembic downgrade base` then `alembic upgrade head` on the test database, so every migration's upgrade *and* downgrade runs on every test run. `alembic check` against the dev database reports *"No new upgrade operations detected"*, meaning the models and migrations match.
 
@@ -50,12 +51,12 @@ Every number below is copied from real runs. The full, unedited console output i
 |---|---|---|
 | `api/client.test.ts` | 5 | bearer token, JSON body, ApiError with field errors, 204 handling, global 401 → sign-out, network errors |
 | `auth/auth.test.tsx` | 11 | redirect to sign-in, sign in, wrong credentials, client-side validation, register, duplicate email, session restore, stale token, signed-in users kept off `/login`, sign out |
-| `features/inventory/InventoryPage.test.tsx` | 15 | list, empty inventory, load error and retry, search, category, availability counts, price range, clear filters, sort, paging, details drawer (Escape), purchase updates stock, quantity capped at stock, out-of-stock disabled, server rejection shown |
+| `features/inventory/InventoryPage.test.tsx` | 16 | list, empty inventory, load error and retry, search, category, availability counts, price range, clear filters, sort, paging, details drawer (Escape), purchase updates stock, quantity capped at stock, out-of-stock disabled, server rejection shown, body-style placeholder when there's no photo |
 | `features/inventory/format.test.ts` | 9 | price formatting, stock thresholds, labels |
 | `features/admin/admin.test.tsx` | 9 | customers see no admin controls; admin add (with client-side and API field errors), edit, restock (valid and invalid amounts), delete with confirm and cancel |
 | `features/dealers/dealers.test.tsx` | 15 | Dealer Sign In switch (and `?as=dealer`), customer sign-up kept separate, approved admin lands on the management view; dealer registration (submit, sign in, pending banner, validation, duplicate email); rejected banner shows the note; admin sidebar item with pending count; customers redirected away from the review page; approve and reject (with note) through the confirmation dialog; empty state |
 | `routing.test.tsx` | 9 | public `/`, app behind sign-in at `/app`, `/register` → `/signup`, redirects to `/app` after sign-in and sign-up, deep `/app?…` link preserved, signed-in users can browse public pages, 404 |
-| `marketing/marketing.test.tsx` | 10 | navbar links and navigation, mobile menu, "Open dashboard" when signed in, hero calls to action, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |
+| `marketing/marketing.test.tsx` | 12 | navbar links and navigation, mobile menu, "Open dashboard" when signed in, hero calls to action, marquee headline announced once (animated copies hidden from assistive tech), pause and resume of the headline animation, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |
 | `theme/theme.test.tsx` | 5 | light/dark toggle in the header and on sign-in, saved choice persisted and restored, system setting used when nothing is saved |
 
 Unit tests use an in-memory MSW fake of the API contract (`src/test/handlers.ts`). The Playwright suite then checks the same flows against the real API and database.
@@ -99,7 +100,7 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 
 ## Not verified / known gaps
 
-- **CI workflow** (`.github/workflows/ci.yml`): first GitHub Actions run after pushing, [run 40064767293](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40064767293), **passed**: backend job (ruff, mypy, pytest with coverage on a Postgres 17 service) in 1m10s, frontend job (lint, typecheck, tests, build) in 28s. Playwright e2e is not part of CI; it was run locally only.
+- **CI workflow** (`.github/workflows/ci.yml`): first GitHub Actions run after pushing, [run 40064767293](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40064767293), **passed**: backend job (ruff, mypy, pytest with coverage on a Postgres 17 service) in 1m10s, frontend job (lint, typecheck, tests, build) in 28s. The latest run, on PR #2 ([run 40116182780](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40116182780)), also **passed** (backend 1m2s, frontend 30s). Playwright e2e is not part of CI; it was run locally only.
 - **`docker-compose.yml`** has **not been tested**: Docker isn't installed on this machine. Local development uses Homebrew Postgres 17.
 - Only tested on **Python 3.14** and **Chromium**. `requires-python >=3.12` is declared but 3.12 and 3.13 weren't run.
 - No load or performance testing, no automated accessibility audit, no penetration testing.
