@@ -2,7 +2,7 @@
 
 A full-stack inventory system for a car dealership. Customers browse, search and buy vehicles; admins manage listings, prices and stock. Built test-first with a FastAPI + PostgreSQL REST API and a React + TypeScript + Tailwind single-page app.
 
-![Customer inventory](docs/screenshots/03-customer-inventory.png)
+![DriveStock landing page](docs/screenshots/15-landing.png)
 
 ---
 
@@ -24,7 +24,13 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 
 ## Features
 
-**Everyone (signed in)**
+**Public website** (no sign-in needed)
+- Landing page at `/` explaining the product, with a coded dashboard preview (clearly labelled sample data), features, how it works, and **Get Started** / **Sign In** calls to action
+- **About** (`/about`): mission, purpose and audience. **Pricing** (`/pricing`): three plans, all clearly marked as placeholders; no billing or payments exist
+- Responsive navbar (Home, Features, About, Pricing, Sign In, Get Started) with a mobile menu; signed-in visitors see **Open dashboard** instead
+- Separate **Sign In** (`/login`) and **Sign Up** (`/signup`) pages; after either, users land in the app at `/app`, or back on the app URL they originally asked for
+
+**Everyone (signed in, at `/app`)**
 - Register and sign in (JWT bearer tokens); the session survives a reload
 - Inventory list showing make, model, trim, year, spec line, price and a live stock badge (in stock / low stock / out of stock)
 - Search (make, model, trim) and filters for category, price range and availability, with counts per availability state; filters live in the URL so a view can be shared
@@ -83,6 +89,7 @@ frontend/
   src/api/             fetch client, typed endpoints, shared types
   src/auth/            AuthProvider, token storage, route guards
   src/layout/          AppShell (navy sidebar + header)
+  src/marketing/       public site: MarketingLayout (navbar/footer), Home, About, Pricing
   src/features/        inventory/ (list, filters, drawer, purchase), admin/ (forms)
   src/components/      Button, fields, Drawer, Tabs, ConfirmDialog, Alert…
   src/test/            MSW fake API + render helpers
@@ -139,7 +146,7 @@ cp .env.example .env        # VITE_API_URL=http://localhost:8000/api
 npm run dev                 # http://localhost:5173
 ```
 
-Register a customer from the sign-up page, or sign in with the admin you created.
+The public site is at <http://localhost:5173/> and the app at <http://localhost:5173/app>. Create a customer account via **Get Started**, or sign in with the admin you created.
 
 ### Configuration
 
@@ -261,6 +268,8 @@ Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade 
 - **Purchase history survives deletion.** `purchases.vehicle_id` becomes `NULL` and a `vehicle_label` snapshot is kept.
 - **Admins via CLI.** Self-service admin sign-up would be a privilege-escalation path.
 - **Filters in the URL.** Shareable, reload-safe views. They're React state mirrored to the URL so form controls update immediately (see defect #3 in the test report).
+- **Public site and app share one SPA.** Marketing pages (`/`, `/about`, `/pricing`) and the app (`/app`) live in the same React build with separate layouts; `/register` redirects to `/signup`. The pricing page is deliberately a labelled placeholder: there is no billing.
+- **Single dealership today.** The backend serves one dealership. [`docs/MULTI_TENANCY.md`](docs/MULTI_TENANCY.md) explains why it can't yet host several safely and the recommended `dealership_id` plus row-level-security design. It's a plan, not implemented.
 - **No vehicle images.** Out of scope by decision. Category icons serve as neutral placeholders.
 - **Simplicity over extras.** No Redux, no UI kit, no ORM repositories, no global state beyond the auth context and the query cache.
 
@@ -285,7 +294,9 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 | ![Add vehicle](docs/screenshots/07-admin-add-vehicle.png) **Add vehicle** | ![Restock](docs/screenshots/08-admin-restock.png) **Restock** |
 | ![Edit](docs/screenshots/09-admin-edit.png) **Edit** | ![Delete](docs/screenshots/10-admin-delete-confirm.png) **Delete confirmation** |
 | ![Tablet](docs/screenshots/11-tablet.png) **Tablet** | ![Mobile](docs/screenshots/12-mobile.png) **Mobile** |
-| ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | |
+| ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | ![Landing mobile menu](docs/screenshots/18-landing-mobile-menu.png) **Landing page, mobile menu** |
+| ![Landing](docs/screenshots/15-landing.png) **Landing page** | ![Pricing](docs/screenshots/17-pricing.png) **Pricing (placeholder)** |
+| ![About](docs/screenshots/16-about.png) **About** | |
 
 ## Test report
 

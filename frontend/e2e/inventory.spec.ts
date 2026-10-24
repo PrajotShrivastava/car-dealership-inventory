@@ -16,7 +16,7 @@ function row(page: Page, title: string) {
 
 test('customer registers, finds a car, buys it and sees stock drop', async ({ page }) => {
   const email = `buyer-${Date.now()}@example.com`
-  await page.goto('/register')
+  await page.goto('/signup')
   await page.getByLabel('Full name').fill('E2E Buyer')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('buyer-pass-123')
