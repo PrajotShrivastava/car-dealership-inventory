@@ -1,3 +1,4 @@
+import enum
 from datetime import date
 from decimal import Decimal
 from typing import Annotated
@@ -7,6 +8,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
+    ValidationInfo,
     field_serializer,
     field_validator,
 )
@@ -61,6 +63,53 @@ class VehicleOut(VehicleFields):
         return f"{value:.2f}"
 
 
+class Availability(enum.StrEnum):
+    ALL = "all"
+    IN_STOCK = "in_stock"
+    OUT_OF_STOCK = "out_of_stock"
+
+
+class SortOrder(enum.StrEnum):
+    NEWEST = "newest"
+    PRICE_ASC = "price_asc"
+    PRICE_DESC = "price_desc"
+    YEAR_DESC = "year_desc"
+    YEAR_ASC = "year_asc"
+    MAKE_ASC = "make_asc"
+
+
+OptionalText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None
+NonNegativePrice = Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)] | None
+
+
+class VehicleQuery(BaseModel):
+    q: OptionalText = None
+    make: OptionalText = None
+    model: OptionalText = None
+    category: Category | None = None
+    min_price: NonNegativePrice = None
+    max_price: NonNegativePrice = None
+    availability: Availability = Availability.ALL
+    sort: SortOrder = SortOrder.NEWEST
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
+
+    @field_validator("max_price")
+    @classmethod
+    def _range_is_ordered(cls, value: Decimal | None, info: ValidationInfo) -> Decimal | None:
+        low = info.data.get("min_price")
+        if value is not None and low is not None and value < low:
+            raise ValueError("max_price must be greater than or equal to min_price")
+        return value
+
+
+class AvailabilityCounts(BaseModel):
+    all: int
+    in_stock: int
+    out_of_stock: int
+
+
 class VehicleList(BaseModel):
     items: list[VehicleOut]
     total: int
+    counts: AvailabilityCounts

@@ -4,7 +4,9 @@ import pytest
 @pytest.fixture
 def inventory(make_vehicle):
     return {
-        "kuga": make_vehicle(make="Ford", model="Kuga", category="suv", price="35990", quantity=4),
+        "kuga": make_vehicle(
+            make="Ford", model="Kuga", trim="Titanium", category="suv", price="35990", quantity=4
+        ),
         "fiesta": make_vehicle(
             make="Ford", model="Fiesta", trim="ST", category="hatchback", price="18500", quantity=0
         ),

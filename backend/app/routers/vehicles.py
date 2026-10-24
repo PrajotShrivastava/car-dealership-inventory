@@ -1,12 +1,20 @@
-from fastapi import APIRouter, Depends, Response, status
-from sqlalchemy import func, select
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.errors import AppError
 from app.models import User, Vehicle
-from app.schemas.vehicles import VehicleCreate, VehicleList, VehicleOut, VehicleUpdate
+from app.schemas.vehicles import (
+    VehicleCreate,
+    VehicleList,
+    VehicleOut,
+    VehicleQuery,
+    VehicleUpdate,
+)
 from app.security import get_current_user, require_admin
+from app.services.inventory import search_vehicles
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -18,13 +26,30 @@ def _get_or_404(db: Session, vehicle_id: int) -> Vehicle:
     return vehicle
 
 
+def _list(db: Session, query: VehicleQuery) -> VehicleList:
+    items, total, counts = search_vehicles(db, query)
+    return VehicleList(
+        items=[VehicleOut.model_validate(v) for v in items], total=total, counts=counts
+    )
+
+
 @router.get("", response_model=VehicleList)
 def list_vehicles(
-    db: Session = Depends(get_db), _: User = Depends(get_current_user)
+    query: Annotated[VehicleQuery, Query()],
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
 ) -> VehicleList:
-    items = db.scalars(select(Vehicle).order_by(Vehicle.created_at.desc(), Vehicle.id.desc()))
-    total = db.scalar(select(func.count()).select_from(Vehicle)) or 0
-    return VehicleList(items=[VehicleOut.model_validate(v) for v in items], total=total)
+    return _list(db, query)
+
+
+@router.get("/search", response_model=VehicleList)
+def search(
+    query: Annotated[VehicleQuery, Query()],
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> VehicleList:
+    """Search/filter inventory. Same parameters as the list endpoint."""
+    return _list(db, query)
 
 
 @router.get("/{vehicle_id}", response_model=VehicleOut)
