@@ -4,7 +4,7 @@
  * exercise UI flows; the real API has its own pytest suite.
  */
 import { http, HttpResponse } from 'msw/http'
-import type { DealerApplication, User, Vehicle, VehicleCreate } from '../api/types'
+import type { DealerApplication, User, Vehicle, VehicleCreate, VehiclePhoto } from '../api/types'
 
 const API = 'http://localhost:8000/api'
 
@@ -73,10 +73,42 @@ export function seedVehicle(overrides: Partial<Vehicle> = {}): Vehicle {
     transmission: 'automatic',
     price: '35990.00',
     quantity: 3,
+    photos: [],
     ...overrides,
   }
   vehicles.push(vehicle)
   return vehicle
+}
+
+/** Photo records as the real API returns them (served from /api/media). */
+export function fakePhoto(): VehiclePhoto {
+  const key = (nextId++).toString(16).padStart(32, '0')
+  return {
+    id: nextId++,
+    url: `/api/media/vehicles/${key}.webp`,
+    thumb_url: `/api/media/vehicles/${key}-thumb.webp`,
+  }
+}
+
+export const MAX_PHOTOS = 10
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+/**
+ * The uploaded files' types and sizes, read from the raw multipart body. (request.formData()
+ * can't parse files in jsdom: its File class differs from the one Node's parser expects.)
+ */
+async function uploadedFiles(request: Request) {
+  const boundary = request.headers.get('content-type')?.split('boundary=')[1] ?? ''
+  return (await request.text())
+    .split(`--${boundary}`)
+    .filter((part) => part.includes('name="files"'))
+    .map((part) => {
+      const [head = '', ...rest] = part.split('\r\n\r\n')
+      return {
+        type: /content-type: ([^\r\n]+)/i.exec(head)?.[1] ?? '',
+        size: rest.join('\r\n\r\n').replace(/\r\n$/, '').length,
+      }
+    })
 }
 
 export function getVehicle(id: number) {
@@ -281,6 +313,36 @@ export const handlers = [
       },
       vehicle,
     })
+  }),
+
+  http.post(`${API}/vehicles/:id/photos`, async ({ request, params }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    if (user.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    const vehicle = getVehicle(Number(params.id))
+    if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    const files = await uploadedFiles(request)
+    if (files.some((file) => !PHOTO_TYPES.includes(file.type))) {
+      return error(415, 'UNSUPPORTED_PHOTO_TYPE', 'Photos must be JPEG, PNG or WebP images')
+    }
+    if (files.some((file) => file.size > 5 * 1024 * 1024)) {
+      return error(413, 'PHOTO_TOO_LARGE', 'Each photo must be 5 MB or smaller')
+    }
+    if (vehicle.photos.length + files.length > MAX_PHOTOS) {
+      return error(409, 'PHOTO_LIMIT_EXCEEDED', 'A vehicle can have at most 10 photos')
+    }
+    vehicle.photos = [...vehicle.photos, ...files.map(() => fakePhoto())]
+    return HttpResponse.json(vehicle, { status: 201 })
+  }),
+
+  http.delete(`${API}/vehicles/:id/photos/:photoId`, ({ request, params }) => {
+    const user = currentUser(request)
+    if (user?.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    const vehicle = getVehicle(Number(params.id))
+    const photo = vehicle?.photos.find((p) => p.id === Number(params.photoId))
+    if (!vehicle || !photo) return error(404, 'PHOTO_NOT_FOUND', 'Photo not found')
+    vehicle.photos = vehicle.photos.filter((p) => p !== photo)
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/vehicles/:id/restock`, async ({ request, params }) => {
