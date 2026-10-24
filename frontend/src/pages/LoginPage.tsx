@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { cn } from '../components/cn'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { postAuthTarget } from '../auth/redirects'
@@ -12,6 +13,9 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  // Same secure sign-in for everyone; the account's role decides what appears after.
+  const [params, setParams] = useSearchParams()
+  const dealer = params.get('as') === 'dealer'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
@@ -39,7 +43,36 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout title="Sign in" subtitle="Welcome back. Sign in to browse and manage inventory.">
+    <AuthLayout
+      title={dealer ? 'Dealer sign in' : 'Sign in'}
+      subtitle={
+        dealer
+          ? 'For dealership staff. Approved dealer accounts can manage vehicles, prices and stock.'
+          : 'Welcome back. Sign in to browse the inventory and buy.'
+      }
+      above={
+        <div role="tablist" aria-label="Account type" className="mb-6 grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+          {[
+            { label: 'Customer', value: false },
+            { label: 'Dealer Sign In', value: true },
+          ].map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              role="tab"
+              aria-selected={dealer === tab.value}
+              onClick={() => setParams(tab.value ? { as: 'dealer' } : {}, { replace: true, state: location.state })}
+              className={cn(
+                'h-9 rounded-md text-sm font-medium transition',
+                dealer === tab.value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      }
+    >
       <form noValidate onSubmit={handleSubmit} className="space-y-5">
         {formError && <Alert>{formError}</Alert>}
         <TextField
@@ -62,12 +95,21 @@ export function LoginPage() {
           Sign in
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        New to DriveStock?{' '}
-        <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
-          Create an account
-        </Link>
-      </p>
+      {dealer ? (
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Want to sell on DriveStock?{' '}
+          <Link to="/dealer/register" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
+            Register as a Dealer
+          </Link>
+        </p>
+      ) : (
+        <p className="mt-6 text-center text-sm text-slate-500">
+          New to DriveStock?{' '}
+          <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
+            Create an account
+          </Link>
+        </p>
+      )}
     </AuthLayout>
   )
 }

@@ -129,7 +129,13 @@ function Footer() {
           <p className="text-sm text-slate-500">Inventory management for car dealerships.</p>
         </div>
         <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {[...LINKS.slice(1), { to: '/login', label: 'Sign In' }, { to: '/signup', label: 'Get Started' }].map(
+          {[
+            ...LINKS.slice(1),
+            { to: '/login', label: 'Sign In' },
+            { to: '/signup', label: 'Get Started' },
+            { to: '/login?as=dealer', label: 'Dealer Sign In' },
+            { to: '/dealer/register', label: 'Register as a Dealer' },
+          ].map(
             (link) => (
               <li key={link.to}>
                 <Link to={link.to} className="text-slate-500 hover:text-slate-900">

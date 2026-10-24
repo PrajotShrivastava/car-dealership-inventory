@@ -12,7 +12,18 @@ const highlights = [
   { icon: ShieldCheck, text: 'Role-based access for customers and staff' },
 ]
 
-export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+export function AuthLayout({
+  title,
+  subtitle,
+  children,
+  above,
+}: {
+  title: string
+  subtitle: string
+  children: ReactNode
+  /** Rendered above the heading (e.g. an account-type switch). */
+  above?: ReactNode
+}) {
   return (
     <div className="flex min-h-full">
       <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-navy-900 p-12 text-on-accent lg:flex">
@@ -44,6 +55,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           <Link to="/" aria-label="DriveStock home" className="mb-8 inline-block lg:hidden">
             <Logo />
           </Link>
+          {above}
           <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
           <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           <div className="mt-8">{children}</div>

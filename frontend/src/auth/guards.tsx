@@ -13,6 +13,12 @@ export function RequireAuth() {
   return <Outlet />
 }
 
+/** Admin-only pages: everyone else is sent back to the inventory. */
+export function RequireAdmin() {
+  const { isAdmin } = useAuth()
+  return isAdmin ? <Outlet /> : <Navigate to="/app" replace />
+}
+
 export function GuestOnly() {
   const { status } = useAuth()
   const location = useLocation()

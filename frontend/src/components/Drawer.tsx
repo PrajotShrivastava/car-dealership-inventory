@@ -16,18 +16,25 @@ export function Drawer({ title, subtitle, onClose, children, footer, actions, ta
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
 
+  // Latest onClose, so the effect below runs once per opening rather than on
+  // every render (which would steal focus from fields inside the drawer).
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null
     closeRef.current?.focus()
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
       previouslyFocused?.focus?.()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { User } from '../api/types'
+import type { DealerRegisterRequest, User } from '../api/types'
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous'
 
@@ -9,6 +9,8 @@ export interface AuthContextValue {
   isAdmin: boolean
   login: (email: string, password: string) => Promise<void>
   register: (fullName: string, email: string, password: string) => Promise<void>
+  /** Customer account + pending dealer application, then sign in. */
+  registerDealer: (body: DealerRegisterRequest) => Promise<void>
   logout: () => void
 }
 

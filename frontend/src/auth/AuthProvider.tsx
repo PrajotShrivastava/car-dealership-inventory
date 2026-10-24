@@ -2,7 +2,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { authApi } from '../api/auth'
 import { setAuthToken, setUnauthorizedHandler } from '../api/client'
-import type { User } from '../api/types'
+import { dealersApi } from '../api/dealers'
+import type { DealerRegisterRequest, User } from '../api/types'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
 import { tokenStorage } from './tokenStorage'
 
@@ -61,9 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [login],
   )
 
+  const registerDealer = useCallback(
+    async (body: DealerRegisterRequest) => {
+      await dealersApi.register(body)
+      await login(body.email, body.password)
+    },
+    [login],
+  )
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, isAdmin: user?.role === 'admin', login, register, logout }),
-    [status, user, login, register, logout],
+    () => ({ status, user, isAdmin: user?.role === 'admin', login, register, registerDealer, logout }),
+    [status, user, login, register, registerDealer, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
