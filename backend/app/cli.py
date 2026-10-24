@@ -54,6 +54,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     admin_cmd.add_argument("--email", required=True)
     admin_cmd.add_argument("--name", required=True)
     commands.add_parser("seed", help="Load demo vehicles into an empty inventory")
+    commands.add_parser(
+        "seed-demo-users",
+        help="Local development only: demo admin, customer and pending dealer applicant",
+    )
 
     args = parser.parse_args(argv)
     try:
@@ -66,6 +70,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(
                 f"Seeded {added} vehicles" if added else "Seeded 0 vehicles (inventory not empty)"
             )
+        elif args.command == "seed-demo-users":
+            from app.demo import DEMO_ACCOUNTS, DemoSeedRefusedError, seed_demo_users
+
+            try:
+                created = seed_demo_users()
+            except DemoSeedRefusedError as exc:
+                print(str(exc), file=sys.stderr)
+                return 1
+            print(f"Created {created} demo account(s). Local development only:")
+            for account in DEMO_ACCOUNTS:
+                print(f"  {account.label:<28} {account.email}  /  {account.password}")
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1

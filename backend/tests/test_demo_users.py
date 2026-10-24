@@ -4,9 +4,9 @@ import pytest
 from sqlalchemy import select
 
 from app.cli import main
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.db import get_sessionmaker
-from app.demo import DEMO_ACCOUNTS, DemoSeedRefused, seed_demo_users
+from app.demo import DEMO_ACCOUNTS, DemoSeedRefusedError, seed_demo_users
 from app.models import ApplicationStatus, DealerApplication, Role, User
 
 
@@ -20,16 +20,18 @@ def app_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[pytest.MonkeyPatch]:
 
 def test_app_env_defaults_to_production(app_env):
     app_env.delenv("APP_ENV", raising=False)
-    get_settings.cache_clear()
 
-    assert get_settings().app_env == "production"
+    # Ignore any local .env file: this checks the built-in default.
+    settings = Settings(_env_file=None, database_url="postgresql://x/y", jwt_secret="s" * 32)
+
+    assert settings.app_env == "production"
 
 
 @pytest.mark.parametrize("env", ["production", "staging"])
 def test_refuses_outside_development(app_env, env):
     app_env.setenv("APP_ENV", env)
 
-    with pytest.raises(DemoSeedRefused, match="APP_ENV"):
+    with pytest.raises(DemoSeedRefusedError, match="APP_ENV"):
         seed_demo_users()
     with get_sessionmaker()() as session:
         assert session.scalars(select(User)).all() == []
@@ -39,7 +41,7 @@ def test_refuses_a_non_local_database(app_env):
     app_env.setenv("APP_ENV", "development")
     app_env.setenv("DATABASE_URL", "postgresql+psycopg://u:p@db.example.com:5432/drivestock")
 
-    with pytest.raises(DemoSeedRefused, match="localhost"):
+    with pytest.raises(DemoSeedRefusedError, match="localhost"):
         seed_demo_users()
 
 

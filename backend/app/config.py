@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
     cors_origins: str = "http://localhost:5173"
+    # Safe default: anything not explicitly "development" is treated as production.
+    app_env: str = "production"
 
     @property
     def cors_origin_list(self) -> list[str]:
