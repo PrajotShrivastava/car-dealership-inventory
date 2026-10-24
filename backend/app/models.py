@@ -71,6 +71,9 @@ class Vehicle(Base):
         CheckConstraint("price > 0", name="ck_vehicles_price_positive"),
         CheckConstraint("quantity >= 0", name="ck_vehicles_quantity_non_negative"),
         CheckConstraint("year BETWEEN 1900 AND 2100", name="ck_vehicles_year_range"),
+        CheckConstraint(
+            "catalog_image_id ~ '^[0-9a-f]{16}$'", name="ck_vehicles_catalog_image_id_format"
+        ),
         Index("ix_vehicles_make_model", "make", "model"),
     )
 
@@ -90,6 +93,10 @@ class Vehicle(Base):
     )
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), index=True)
     quantity: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Unused: left over from the removed CarDatabase integration (migration 0005). Kept
+    # mapped so the model matches the schema; nothing reads or writes it, and it is not
+    # exposed by the API. Dropping it needs a new migration (see docs).
+    catalog_image_id: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

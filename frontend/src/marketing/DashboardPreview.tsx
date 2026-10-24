@@ -2,7 +2,7 @@ import { CarFront, ShoppingCart } from 'lucide-react'
 import type { Vehicle } from '../api/types'
 import { formatPrice, specLine, vehicleTitle } from '../features/inventory/format'
 import { StockBadge } from '../features/inventory/StockBadge'
-import { CarIllustration } from './CarIllustration'
+import { CarIllustration } from '../components/CarIllustration'
 
 // Illustrative sample rows; not live data.
 const SAMPLE: (Vehicle & { paint: string })[] = [

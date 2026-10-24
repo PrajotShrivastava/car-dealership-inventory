@@ -309,9 +309,11 @@ curl -s -X POST localhost:8000/api/vehicles/1/purchase -H "Authorization: Bearer
 | Table | Columns | Constraints |
 |---|---|---|
 | `users` | id, email, password_hash, full_name, role (`customer`\|`admin`), created_at | unique lowercase email |
-| `vehicles` | id, make, model, trim?, year, category, fuel_type, transmission, price `NUMERIC(12,2)`, quantity, created_at, updated_at | `price > 0`, `quantity >= 0`, `year 1900–2100`; indexes on (make, model), category, price |
+| `vehicles` | id, make, model, trim?, year, category, fuel_type, transmission, price `NUMERIC(12,2)`, quantity, catalog_image_id? *(unused, see below)*, created_at, updated_at | `price > 0`, `quantity >= 0`, `year 1900–2100`; indexes on (make, model), category, price |
 | `purchases` | id, user_id → users, vehicle_id → vehicles **ON DELETE SET NULL**, vehicle_label, quantity, unit_price, created_at | `quantity > 0`, `unit_price > 0` |
 | `dealer_applications` | id, user_id → users (unique), business_name, phone?, message?, status (`pending`\|`approved`\|`rejected`), created_at, reviewed_at?, reviewed_by_id → users, review_note? | one application per account; index on status |
+
+`vehicles.catalog_image_id` (migration `0005`) is unused. It's left over from a removed CarDatabase.dev photo integration and kept to avoid a destructive migration. It's nullable, not exposed by the API, and left untouched by edits.
 
 Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade head`, roll back with `alembic downgrade -1`.
 

@@ -1,6 +1,6 @@
 import { useId } from 'react'
 import type { Category } from '../api/types'
-import { cn } from '../components/cn'
+import { cn } from './cn'
 
 /* Side-profile car drawings (facing right) on a 120 × 48 canvas, ground at y = 45.
    Hand-drawn SVG so the marketing pages need no image assets or licences. */
@@ -51,8 +51,11 @@ const SHAPES: Record<Category, Shape> = {
   },
 }
 
-/** A coloured car drawing for the given body style. Decorative. */
-export function CarIllustration({ category, paint, className }: { category: Category; paint: string; className?: string }) {
+/**
+ * A car drawing for the given body style. Decorative. With `paint` it is a coloured
+ * illustration; without it, a neutral theme-aware silhouette used as the "no photo" fallback.
+ */
+export function CarIllustration({ category, paint, className }: { category: Category; paint?: string; className?: string }) {
   const id = useId()
   const { body, windows, wheels, r = 7 } = SHAPES[category]
   return (
@@ -69,20 +72,38 @@ export function CarIllustration({ category, paint, className }: { category: Cate
         </linearGradient>
       </defs>
       <ellipse cx="60" cy="45" rx="54" ry="2.5" fill="#000" opacity="0.15" />
-      <path d={body} fill={paint} stroke="#000" strokeOpacity="0.25" strokeWidth="0.75" />
-      <path d={body} fill={`url(#${id}-shine)`} />
-      {windows.map((d) => (
-        <path key={d} d={d} fill={`url(#${id}-glass)`} />
-      ))}
-      <rect x="108.5" y="28" width="4" height="2.5" rx="1" fill="#fef3c7" />
-      <rect x={category === 'hatchback' ? 12 : 8} y="27" width="2.5" height="3" rx="0.75" fill="#dc2626" />
-      {wheels.map((cx) => (
-        <g key={cx}>
-          <circle cx={cx} cy={38} r={r} fill="#111" />
-          <circle cx={cx} cy={38} r={r * 0.5} fill="#9ca3af" />
-          <circle cx={cx} cy={38} r={r * 0.18} fill="#4b5563" />
-        </g>
-      ))}
+      {paint ? (
+        <>
+          <path d={body} fill={paint} stroke="#000" strokeOpacity="0.25" strokeWidth="0.75" />
+          <path d={body} fill={`url(#${id}-shine)`} />
+          {windows.map((d) => (
+            <path key={d} d={d} fill={`url(#${id}-glass)`} />
+          ))}
+          <rect x="108.5" y="28" width="4" height="2.5" rx="1" fill="#fef3c7" />
+          <rect x={category === 'hatchback' ? 12 : 8} y="27" width="2.5" height="3" rx="0.75" fill="#dc2626" />
+        </>
+      ) : (
+        <>
+          <path d={body} className="fill-slate-300" />
+          {windows.map((d) => (
+            <path key={d} d={d} className="fill-slate-100" />
+          ))}
+        </>
+      )}
+      {wheels.map((cx) =>
+        paint ? (
+          <g key={cx}>
+            <circle cx={cx} cy={38} r={r} fill="#111" />
+            <circle cx={cx} cy={38} r={r * 0.5} fill="#9ca3af" />
+            <circle cx={cx} cy={38} r={r * 0.18} fill="#4b5563" />
+          </g>
+        ) : (
+          <g key={cx}>
+            <circle cx={cx} cy={38} r={r} className="fill-slate-400" />
+            <circle cx={cx} cy={38} r={r * 0.5} className="fill-slate-200" />
+          </g>
+        ),
+      )}
     </svg>
   )
 }

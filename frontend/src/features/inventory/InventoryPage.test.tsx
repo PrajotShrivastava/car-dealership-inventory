@@ -221,3 +221,18 @@ describe('vehicle details drawer and purchase', () => {
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(/out of stock/i)
   })
 })
+
+describe('vehicle image placeholder', () => {
+  it('shows a body-style drawing in the list and "No photo available" in the details', async () => {
+    seedVehicle({ make: 'Ford', model: 'Kuga', category: 'suv' })
+    const { user } = renderApp({ path: '/app', user: seedUser('customer') })
+    const row = within(await screen.findByRole('list', { name: /vehicles/i })).getByText('Ford Kuga').closest('li')!
+    expect(within(row).getByTestId('vehicle-photo-fallback')).toBeInTheDocument()
+
+    await user.click(within(row).getByRole('button', { name: /view details/i }))
+    const dialog = await screen.findByRole('dialog', { name: /ford kuga/i })
+
+    expect(within(dialog).getByText(/no photo available/i)).toBeInTheDocument()
+    expect(within(dialog).queryByRole('img')).not.toBeInTheDocument()
+  })
+})

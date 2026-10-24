@@ -11,7 +11,7 @@ import {
   ShoppingCart,
   type LucideIcon,
 } from 'lucide-react'
-import { CarLineArt } from './CarIllustration'
+import { CarLineArt } from '../components/CarIllustration'
 import { DashboardPreview } from './DashboardPreview'
 import { HeroMarquee } from './HeroMarquee'
 import { Reveal } from './Reveal'
