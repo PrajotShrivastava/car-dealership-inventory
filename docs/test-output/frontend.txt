@@ -1,0 +1,132 @@
+$ npm run lint
+
+> drivestock-web@0.0.0 lint
+> oxlint
+
+
+$ npm run typecheck
+
+> drivestock-web@0.0.0 typecheck
+> tsc -b --noEmit
+
+
+$ npx vitest run --coverage --reporter=verbose
+
+ RUN  v5.0.5 /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend
+      Coverage enabled with v8
+
+ ✓ src/features/inventory/format.test.ts > formatPrice > formats decimal strings as whole-dollar currency 1ms
+ ✓ src/features/inventory/format.test.ts > formatPrice > keeps cents when present 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 0 is out 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 1 is low 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 2 is low 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 3 is in 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 40 is in 0ms
+ ✓ src/features/inventory/format.test.ts > labels > title-cases enum values 0ms
+ ✓ src/features/inventory/format.test.ts > labels > builds a vehicle title without a trailing trim 0ms
+ ✓ src/api/client.test.ts > apiFetch > sends JSON and the bearer token when one is set 33ms
+ ✓ src/api/client.test.ts > apiFetch > turns structured API errors into ApiError 3ms
+ ✓ src/api/client.test.ts > apiFetch > returns undefined for 204 responses 1ms
+ ✓ src/api/client.test.ts > apiFetch > notifies the unauthorized handler on 401 for authenticated requests 2ms
+ ✓ src/api/client.test.ts > apiFetch > reports network failures as ApiError with status 0 2ms
+ ✓ src/auth/auth.test.tsx > authentication flow > redirects anonymous visitors to the sign-in page 76ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows each vehicle with price and stock status 138ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > explains an empty inventory 25ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows an error with a retry when loading fails 54ms
+ ✓ src/features/admin/admin.test.tsx > customer experience > hides every admin control 182ms
+ ✓ src/auth/auth.test.tsx > authentication flow > signs in with valid credentials and lands on the inventory 180ms
+ ✓ src/auth/auth.test.tsx > authentication flow > shows a generic error for wrong credentials 116ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates required fields before calling the API 16ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > creates a vehicle that then appears in the list 239ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > validates input before sending 65ms
+ ✓ src/auth/auth.test.tsx > authentication flow > registers a new customer and signs them in 157ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > shows field errors returned by the API 105ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by free-text search 388ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by category and shows the active filter count 57ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates registration input 74ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > edits vehicle details 105ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > restocks a vehicle 87ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by availability and shows counts 58ms
+ ✓ src/auth/auth.test.tsx > authentication flow > reports an email that is already registered 118ms
+ ✓ src/auth/auth.test.tsx > authentication flow > restores a stored session and shows the user and role 17ms
+ ✓ src/auth/auth.test.tsx > authentication flow > drops an invalid stored token and asks to sign in 8ms
+ ✓ src/auth/auth.test.tsx > authentication flow > redirects signed-in users away from the sign-in page 13ms
+ ✓ src/auth/auth.test.tsx > authentication flow > signs out 30ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > rejects an invalid restock amount 66ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > deletes a vehicle after confirmation 70ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > keeps the vehicle when deletion is cancelled 57ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by price range 381ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > clears all filters and offers that when nothing matches 442ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > sorts by price 58ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > paginates long result sets 133ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > opens details and closes with Escape 44ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > purchases a vehicle and updates stock everywhere 62ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > limits the quantity to what is in stock 41ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > disables purchasing when out of stock 34ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > shows the server reason when a purchase is rejected 46ms
+
+ Test Files  5 passed (5)
+      Tests  49 passed (49)
+   Start at  10:24:44
+   Duration  2.98s (tests 51%, environment 28%, setup 8%, transform 6%, import 6%, worker 1%)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   93.04 |    84.31 |   90.24 |   93.75 |                   
+ src               |   55.55 |       30 |      50 |      50 |                   
+  App.tsx          |       0 |      100 |       0 |       0 | 4-7               
+  AppProviders.tsx |      60 |    14.28 |      50 |      50 | 9-16              
+  routes.tsx       |     100 |    66.66 |     100 |     100 | 32                
+ src/api           |   96.22 |    86.84 |   94.44 |     100 |                   
+  client.ts        |   94.73 |    86.48 |    87.5 |     100 | 1,56-57,76        
+ src/auth          |   95.58 |    83.33 |     100 |   98.27 |                   
+  AuthContext.ts   |      80 |       50 |     100 |     100 | 19                
+  AuthProvider.tsx |   97.56 |       75 |     100 |     100 | 36-41             
+  tokenStorage.ts  |   88.88 |      100 |     100 |   88.88 | 11                
+ src/components    |   93.61 |    93.61 |   95.65 |   93.33 |                   
+  ...irmDialog.tsx |      75 |        0 |      75 |   72.72 | 21-23             
+  Field.tsx        |     100 |    93.75 |     100 |     100 | 73                
+ ...features/admin |   97.18 |     87.3 |     100 |   96.87 |                   
+  RestockForm.tsx  |     100 |    72.72 |     100 |     100 | 45-46             
+  VehicleForm.tsx  |   97.29 |       75 |     100 |   96.87 | 47                
+  ...eFormModel.ts |   94.44 |    97.22 |     100 |   93.75 | 42                
+ ...ures/inventory |   95.31 |    93.93 |    90.9 |   95.95 |                   
+  FilterPanel.tsx  |   76.92 |     87.5 |   72.72 |   83.33 | 26,93             
+  ...ntoryPage.tsx |   92.59 |    96.22 |   83.33 |    92.3 | 224,289,314-321   
+  ...hasePanel.tsx |   93.33 |       90 |      80 |   93.33 | 52                
+  ...leDetails.tsx |     100 |    83.33 |     100 |     100 | 10                
+  queries.ts       |     100 |       50 |     100 |     100 | 21                
+  ...oryFilters.ts |   98.21 |    94.11 |     100 |     100 | 24,120            
+ src/layout        |   59.09 |    64.28 |      50 |   59.09 |                   
+  AppShell.tsx     |   59.09 |    64.28 |      50 |   59.09 | 14,68-74,119-142  
+ src/pages         |   92.06 |    68.42 |    92.3 |   93.22 |                   
+  LoginPage.tsx    |     100 |    81.25 |     100 |     100 | 34-36             
+  NotFoundPage.tsx |       0 |      100 |       0 |       0 | 4                 
+  RegisterPage.tsx |   89.28 |    55.55 |     100 |   88.88 | 45-48             
+  validation.ts    |   83.33 |       75 |     100 |     100 | 4                 
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 93.04% ( 495/532 )
+Branches     : 84.31% ( 328/389 )
+Functions    : 90.24% ( 185/205 )
+Lines        : 93.75% ( 450/480 )
+================================================================================
+
+$ npm run build
+
+> drivestock-web@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 2093 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.73 kB │ gzip:   0.40 kB
+dist/assets/index-DZohTN3-.css   31.06 kB │ gzip:   6.54 kB
+dist/assets/index-BPrZ2gm_.js   405.84 kB │ gzip: 125.21 kB
+
+✓ built in 155ms

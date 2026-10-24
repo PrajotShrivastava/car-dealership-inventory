@@ -1,0 +1,137 @@
+$ ruff check . && ruff format --check . && mypy app
+All checks passed!
+31 files already formatted
+Success: no issues found in 17 source files
+
+$ pytest -o addopts='' -v --cov=app --cov-report=term-missing
+============================= test session starts ==============================
+platform darwin -- Python 3.14.6, pytest-9.1.1, pluggy-1.7.0 -- /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/backend/.venv/bin/python3
+rootdir: /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/backend
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, anyio-4.15.1, platformdirs-4.13.5
+collecting ... collected 97 items
+
+tests/test_auth.py::TestRegister::test_creates_a_customer_and_returns_public_profile PASSED [  1%]
+tests/test_auth.py::TestRegister::test_stores_an_argon2_hash_never_the_plain_password PASSED [  2%]
+tests/test_auth.py::TestRegister::test_cannot_self_assign_admin_role PASSED [  3%]
+tests/test_auth.py::TestRegister::test_rejects_duplicate_email_case_insensitively PASSED [  4%]
+tests/test_auth.py::TestRegister::test_rejects_invalid_input_with_structured_errors PASSED [  5%]
+tests/test_auth.py::TestLogin::test_returns_bearer_token_and_user PASSED [  6%]
+tests/test_auth.py::TestLogin::test_wrong_password_and_unknown_email_get_the_same_generic_401 PASSED [  7%]
+tests/test_auth.py::TestMe::test_returns_current_user_for_valid_token PASSED [  8%]
+tests/test_auth.py::TestMe::test_requires_a_token PASSED                 [  9%]
+tests/test_auth.py::TestMe::test_rejects_a_tampered_token PASSED         [ 10%]
+tests/test_auth.py::TestMe::test_rejects_an_expired_token PASSED         [ 11%]
+tests/test_cli.py::test_create_admin_creates_an_admin_with_a_hashed_password PASSED [ 12%]
+tests/test_cli.py::test_create_admin_refuses_an_existing_email PASSED    [ 13%]
+tests/test_cli.py::test_create_admin_validates_password_length PASSED    [ 14%]
+tests/test_cli.py::test_cli_entrypoint_reads_password_from_environment PASSED [ 15%]
+tests/test_cli.py::test_seed_loads_demo_inventory_once PASSED            [ 16%]
+tests/test_cli.py::test_cli_seed_command PASSED                          [ 17%]
+tests/test_hardening.py::test_unexpected_errors_return_a_json_500_without_internals PASSED [ 18%]
+tests/test_hardening.py::test_out_of_range_ids_are_rejected_cleanly[get--None] PASSED [ 19%]
+tests/test_hardening.py::test_out_of_range_ids_are_rejected_cleanly[put--update] PASSED [ 20%]
+tests/test_hardening.py::test_out_of_range_ids_are_rejected_cleanly[delete--None] PASSED [ 21%]
+tests/test_hardening.py::test_out_of_range_ids_are_rejected_cleanly[post-/purchase-body3] PASSED [ 22%]
+tests/test_hardening.py::test_out_of_range_ids_are_rejected_cleanly[post-/restock-body4] PASSED [ 23%]
+tests/test_hardening.py::test_huge_offset_is_rejected PASSED             [ 24%]
+tests/test_hardening.py::test_restock_cannot_push_stock_past_the_limit PASSED [ 25%]
+tests/test_health.py::test_health_endpoint_reports_ok PASSED             [ 26%]
+tests/test_inventory_actions.py::TestPurchase::test_requires_authentication PASSED [ 27%]
+tests/test_inventory_actions.py::TestPurchase::test_buys_one_unit_by_default_and_records_the_sale PASSED [ 28%]
+tests/test_inventory_actions.py::TestPurchase::test_buys_several_units PASSED [ 29%]
+tests/test_inventory_actions.py::TestPurchase::test_out_of_stock_is_rejected_without_side_effects PASSED [ 30%]
+tests/test_inventory_actions.py::TestPurchase::test_buying_more_than_available_is_rejected PASSED [ 31%]
+tests/test_inventory_actions.py::TestPurchase::test_missing_vehicle_is_404 PASSED [ 32%]
+tests/test_inventory_actions.py::TestPurchase::test_rejects_invalid_quantity[0] PASSED [ 34%]
+tests/test_inventory_actions.py::TestPurchase::test_rejects_invalid_quantity[-1] PASSED [ 35%]
+tests/test_inventory_actions.py::TestPurchase::test_rejects_invalid_quantity[11] PASSED [ 36%]
+tests/test_inventory_actions.py::TestPurchase::test_rejects_invalid_quantity[two] PASSED [ 37%]
+tests/test_inventory_actions.py::TestPurchase::test_concurrent_purchases_never_oversell PASSED [ 38%]
+tests/test_inventory_actions.py::TestRestock::test_admin_adds_stock PASSED [ 39%]
+tests/test_inventory_actions.py::TestRestock::test_restocked_vehicle_becomes_purchasable PASSED [ 40%]
+tests/test_inventory_actions.py::TestRestock::test_customer_cannot_restock PASSED [ 41%]
+tests/test_inventory_actions.py::TestRestock::test_requires_authentication PASSED [ 42%]
+tests/test_inventory_actions.py::TestRestock::test_rejects_invalid_quantity[0] PASSED [ 43%]
+tests/test_inventory_actions.py::TestRestock::test_rejects_invalid_quantity[-3] PASSED [ 44%]
+tests/test_inventory_actions.py::TestRestock::test_rejects_invalid_quantity[1001] PASSED [ 45%]
+tests/test_inventory_actions.py::TestRestock::test_missing_vehicle_is_404 PASSED [ 46%]
+tests/test_inventory_actions.py::test_deleting_a_sold_vehicle_keeps_purchase_history PASSED [ 47%]
+tests/test_vehicles_crud.py::TestAuthorization::test_every_vehicle_endpoint_requires_authentication[get-/api/vehicles] PASSED [ 48%]
+tests/test_vehicles_crud.py::TestAuthorization::test_every_vehicle_endpoint_requires_authentication[get-/api/vehicles/1] PASSED [ 49%]
+tests/test_vehicles_crud.py::TestAuthorization::test_every_vehicle_endpoint_requires_authentication[post-/api/vehicles] PASSED [ 50%]
+tests/test_vehicles_crud.py::TestAuthorization::test_every_vehicle_endpoint_requires_authentication[put-/api/vehicles/1] PASSED [ 51%]
+tests/test_vehicles_crud.py::TestAuthorization::test_every_vehicle_endpoint_requires_authentication[delete-/api/vehicles/1] PASSED [ 52%]
+tests/test_vehicles_crud.py::TestAuthorization::test_customer_cannot_create PASSED [ 53%]
+tests/test_vehicles_crud.py::TestAuthorization::test_customer_cannot_update PASSED [ 54%]
+tests/test_vehicles_crud.py::TestAuthorization::test_customer_cannot_delete PASSED [ 55%]
+tests/test_vehicles_crud.py::TestCreate::test_admin_creates_vehicle PASSED [ 56%]
+tests/test_vehicles_crud.py::TestCreate::test_trims_text_and_allows_missing_trim PASSED [ 57%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[make-   ] PASSED [ 58%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[model-] PASSED [ 59%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[price-0] PASSED [ 60%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[price--1] PASSED [ 61%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[price-12.345] PASSED [ 62%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[quantity--1] PASSED [ 63%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[year-1899] PASSED [ 64%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[year-2028] PASSED [ 65%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[category-spaceship] PASSED [ 67%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[fuel_type-steam] PASSED [ 68%]
+tests/test_vehicles_crud.py::TestCreate::test_rejects_invalid_field[transmission-cvt-ish] PASSED [ 69%]
+tests/test_vehicles_crud.py::TestRead::test_empty_inventory_lists_nothing PASSED [ 70%]
+tests/test_vehicles_crud.py::TestRead::test_customer_lists_and_fetches_vehicles PASSED [ 71%]
+tests/test_vehicles_crud.py::TestRead::test_missing_vehicle_is_404 PASSED [ 72%]
+tests/test_vehicles_crud.py::TestUpdate::test_admin_updates_details PASSED [ 73%]
+tests/test_vehicles_crud.py::TestUpdate::test_quantity_cannot_be_edited_directly PASSED [ 74%]
+tests/test_vehicles_crud.py::TestUpdate::test_updating_missing_vehicle_is_404 PASSED [ 75%]
+tests/test_vehicles_crud.py::TestDelete::test_admin_deletes_vehicle PASSED [ 76%]
+tests/test_vehicles_crud.py::TestDelete::test_deleting_missing_vehicle_is_404 PASSED [ 77%]
+tests/test_vehicles_search.py::TestFiltering::test_search_requires_authentication PASSED [ 78%]
+tests/test_vehicles_search.py::TestFiltering::test_no_filters_returns_everything PASSED [ 79%]
+tests/test_vehicles_search.py::TestFiltering::test_free_text_matches_make_model_or_trim_case_insensitively PASSED [ 80%]
+tests/test_vehicles_search.py::TestFiltering::test_free_text_treats_like_wildcards_literally PASSED [ 81%]
+tests/test_vehicles_search.py::TestFiltering::test_filters_by_make_and_model PASSED [ 82%]
+tests/test_vehicles_search.py::TestFiltering::test_filters_by_category PASSED [ 83%]
+tests/test_vehicles_search.py::TestFiltering::test_filters_by_inclusive_price_range PASSED [ 84%]
+tests/test_vehicles_search.py::TestFiltering::test_filters_by_availability PASSED [ 85%]
+tests/test_vehicles_search.py::TestFiltering::test_combines_filters PASSED [ 86%]
+tests/test_vehicles_search.py::TestFiltering::test_list_endpoint_accepts_the_same_filters PASSED [ 87%]
+tests/test_vehicles_search.py::TestCounts::test_availability_counts_ignore_the_availability_filter PASSED [ 88%]
+tests/test_vehicles_search.py::TestSortingAndPaging::test_sorts_by_price PASSED [ 89%]
+tests/test_vehicles_search.py::TestSortingAndPaging::test_default_sort_is_newest_first PASSED [ 90%]
+tests/test_vehicles_search.py::TestSortingAndPaging::test_paginates_with_limit_and_offset PASSED [ 91%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params0-min_price] PASSED [ 92%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params1-max_price] PASSED [ 93%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params2-category] PASSED [ 94%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params3-availability] PASSED [ 95%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params4-sort] PASSED [ 96%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params5-limit] PASSED [ 97%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params6-limit] PASSED [ 98%]
+tests/test_vehicles_search.py::TestValidation::test_rejects_invalid_query[params7-offset] PASSED [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform darwin, python 3.14.6-final-0 _______________
+
+Name                        Stmts   Miss  Cover   Missing
+---------------------------------------------------------
+app/__init__.py                 0      0   100%
+app/cli.py                     53      4    92%   69-71, 76
+app/config.py                  15      0   100%
+app/db.py                      18      0   100%
+app/errors.py                  38      2    95%   73-74
+app/main.py                    16      0   100%
+app/models.py                  65      0   100%
+app/routers/__init__.py         0      0   100%
+app/routers/auth.py            33      3    91%   29-31
+app/routers/vehicles.py        55      0   100%
+app/schemas/__init__.py         0      0   100%
+app/schemas/auth.py            16      0   100%
+app/schemas/vehicles.py        73      0   100%
+app/security.py                46      1    98%   69
+app/seed_data.py                3      0   100%
+app/services/__init__.py        0      0   100%
+app/services/inventory.py      69      0   100%
+---------------------------------------------------------
+TOTAL                         500     10    98%
+============================== 97 passed in 9.03s ==============================
