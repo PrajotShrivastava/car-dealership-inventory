@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 // End-to-end tests run the real API against the isolated *_test database.
@@ -30,7 +32,12 @@ export default defineConfig({
       command: `.venv/bin/python scripts/prepare_e2e_db.py && .venv/bin/uvicorn app.main:app --port ${API_PORT}`,
       cwd: '../backend',
       url: `http://localhost:${API_PORT}/api/health`,
-      env: { DATABASE_URL: testDb, CORS_ORIGINS: `http://localhost:${WEB_PORT}` },
+      // Uploaded photos go to a temporary folder, never the dev media folder.
+      env: {
+        DATABASE_URL: testDb,
+        CORS_ORIGINS: `http://localhost:${WEB_PORT}`,
+        MEDIA_DIR: join(tmpdir(), 'drivestock-e2e-media'),
+      },
       reuseExistingServer: false,
       timeout: 60_000,
     },
