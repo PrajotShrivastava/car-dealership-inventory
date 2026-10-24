@@ -11,5 +11,9 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     exclude: ['e2e/**', 'node_modules/**'],
     css: false,
+    coverage: {
+      include: ['src/**'],
+      exclude: ['src/test/**', 'src/**/*.test.*', 'src/main.tsx', 'src/vite-env.d.ts'],
+    },
   },
 })
