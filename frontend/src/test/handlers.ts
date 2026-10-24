@@ -50,6 +50,15 @@ export function getApplication(id: number) {
   return applications.find((a) => a.id === id)
 }
 
+/** An admin approving the application from another browser session. */
+export function approveElsewhere(id: number) {
+  const application = getApplication(id)!
+  application.status = 'approved'
+  application.reviewed_at = new Date().toISOString()
+  application.applicant = { ...application.applicant, role: 'admin' }
+  users.find((u) => u.id === application.applicant.id)!.role = 'admin'
+}
+
 export function seedUser(role: User['role'] = 'customer', email = `${role}@example.com`): User {
   const user: StoredUser = { id: nextId++, email, full_name: `Test ${role}`, role, password: PASSWORD }
   users.push(user)

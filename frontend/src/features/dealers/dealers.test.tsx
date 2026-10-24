@@ -1,6 +1,6 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { getApplication, PASSWORD, seedApplication, seedUser } from '../../test/handlers'
+import { approveElsewhere, getApplication, PASSWORD, seedApplication, seedUser } from '../../test/handlers'
 import { renderApp } from '../../test/utils'
 
 describe('dealer sign-in entry point', () => {
@@ -103,6 +103,24 @@ describe('application status banner', () => {
     const banner = await screen.findByRole('status', { name: /dealer application/i })
     expect(banner).toHaveTextContent(/not approved/i)
     expect(banner).toHaveTextContent('Could not verify the business.')
+  })
+
+  it('picks up an approval while the applicant is still signed in, without signing out', async () => {
+    const applicant = seedUser('customer', 'dana@motors.example')
+    const application = seedApplication(applicant)
+    renderApp({ path: '/app', user: applicant })
+    expect(await screen.findByRole('status', { name: /dealer application/i })).toHaveTextContent(/pending review/i)
+    expect(screen.queryByRole('button', { name: /add vehicle/i })).not.toBeInTheDocument()
+
+    approveElsewhere(application.id)
+    // The applicant comes back to the tab.
+    act(() => {
+      window.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(await screen.findByRole('button', { name: /add vehicle/i })).toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: /dealer application/i })).not.toBeInTheDocument()
+    expect(screen.getByText('admin')).toBeInTheDocument()
   })
 
   it('is absent for ordinary customers', async () => {
