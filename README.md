@@ -38,10 +38,13 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 - Sorting (newest, price, year, make) and pagination
 - Details drawer with a photo gallery, full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
 
-**Admins** (server-enforced)
+**Dealers and admins** (server-enforced)
 - Add vehicles (with initial stock), edit details and price, **restock**, delete (with confirmation)
 - **Upload vehicle photos** from their device: several at once when adding a vehicle, then add or remove photos in the Edit tab (up to 10 per vehicle, JPEG/PNG/WebP, 5 MB each). The first photo is the cover
-- Prospective dealers **register as a dealer**; they get admin rights only after an existing admin **approves** the application. The first admin is created with a CLI command. See [Accounts & Roles](#accounts--roles)
+- Dealers **sign up as a dealer** and can manage inventory straight away; no approval is needed
+
+**Admins only**
+- Review dealer applications made before direct dealer sign-up existed. The first admin is created with a CLI command. See [Accounts & Roles](#accounts--roles)
 
 **Guarantees**
 - No overselling and no negative stock, even with concurrent buyers (atomic conditional `UPDATE` plus a database `CHECK`)
@@ -165,23 +168,23 @@ The public site is at <http://localhost:5173/> and the app at <http://localhost:
 
 ## Accounts & Roles
 
-DriveStock has two roles. The role is stored on the account and **checked by the API on every request**. The interface only hides controls a role can't use.
+DriveStock has three roles. The role is stored on the account and **checked by the API on every request**. The interface only hides controls a role can't use.
 
-| | **Customer** | **Admin** (dealer staff) |
-|---|---|---|
-| Browse, search, filter, view details | ✅ | ✅ |
-| Purchase vehicles | ✅ | ✅ |
-| Add, edit, restock, delete vehicles | — | ✅ |
-| Review dealer applications | — | ✅ |
-| How the account is created | **Sign Up** (`/signup`) | Approved **dealer application**, or the `create-admin` CLI command (first admin) |
+| | **Customer** | **Dealer** | **Admin** |
+|---|---|---|---|
+| Browse, search, filter, view details | ✅ | ✅ | ✅ |
+| Purchase vehicles | ✅ | ✅ | ✅ |
+| Add, edit, restock, delete vehicles; upload and delete photos | — | ✅ | ✅ |
+| Review dealer applications | — | — | ✅ |
+| How the account is created | **Sign Up** (`/signup`) | **Register as a Dealer** (`/dealer/register`) | `create-admin` CLI command |
 
-**Signing in.** Everyone uses the same secure page, `/login`. It has a **Customer / Dealer Sign In** switch (`/login?as=dealer` opens the dealer side). The switch only changes the wording and links; what you can do afterwards depends on the account's role. After signing in, everyone lands on `/app`. Admins see an **Admin** badge, an **Add vehicle** button, **Edit / Restock** tabs and a delete action in each vehicle's panel, plus **Dealer applications** in the sidebar.
+**Signing in.** Everyone uses the same secure page, `/login`. It has a **Customer / Dealer Sign In** switch (`/login?as=dealer` opens the dealer side). The switch only changes the wording and links; what you can do afterwards depends on the account's role. After signing in, everyone lands on `/app`. Dealers and admins see their role badge, an **Add vehicle** button, and **Edit / Restock** tabs and a delete action in each vehicle's panel. Admins also get **Dealer applications** in the sidebar.
 
-**Dealer registration and approval**
-1. A prospective dealer opens **Register as a Dealer** (`/dealer/register`, linked from Dealer Sign In, the sign-up page and the footer). They submit name, email, password, dealership name, and optionally a phone number and message.
-2. This creates a **customer** account and a **pending** application in one transaction. Public registration can never grant admin, even if a `role` field is sent. The applicant is signed in and sees a banner saying the application is pending, with customer access only.
-3. An admin opens **Dealer applications** (`/app/dealer-applications`, admin-only; customers are redirected away and the API returns 403) and clicks **Approve** or **Reject**, adding an optional note when rejecting.
-4. **Approve** changes the account's role to `admin` and records who approved it and when. The API grants the new rights straight away (it reads the role from the database on every request), and an applicant who is signed in sees the inventory tools within a minute, or as soon as they return to the tab, without signing out. **Reject** keeps customer access, and the applicant sees the note. An application can be reviewed only once: the decision is a single conditional update, so two admins acting at once can't both succeed.
+**Dealer sign-up.** **Register as a Dealer** (`/dealer/register`, linked from Dealer Sign In, the sign-up page and the footer) asks for name, email and password, the same as customer sign-up. It creates a **dealer** account straight away and signs the dealer in, with the inventory tools available immediately. A `role` field in the request is ignored, so public sign-up can never create an admin.
+
+**Shared inventory.** There is one inventory, so every dealer can edit or delete any vehicle, including ones other dealers added. Open dealer sign-up is a deliberate trade-off for this project; limiting dealers to their own vehicles would need an owner on each vehicle.
+
+**Older dealer applications.** Before direct sign-up, dealer registration created a customer plus a *pending* application. Those records are kept. An admin reviews them under **Dealer applications** (`/app/dealer-applications`; dealers and customers are redirected away and the API returns 403). **Approve** makes the account a **dealer** and records who approved it and when; an applicant who is signed in sees the inventory tools within a minute, or as soon as they return to the tab. **Reject** keeps customer access, and the applicant sees the note. Each application can be reviewed only once.
 
 **Creating the first admin** (needed once, on any new database):
 ```sh
@@ -190,7 +193,7 @@ cd backend && .venv/bin/python -m app.cli create-admin --email you@example.com -
 
 ### Testing both roles locally
 
-The quickest way is the **demo accounts** command. It creates a demo admin, a demo customer and a demo dealer applicant with a **pending** application, so you can try the approval flow.
+The quickest way is the **demo accounts** command. It creates a demo admin, a demo customer and a demo dealer.
 ```sh
 cd backend
 .venv/bin/python -m app.cli seed               # demo vehicles, if not already loaded
@@ -201,14 +204,13 @@ cd backend
 |---|---|---|
 | Admin | `demo-admin@example.com` | `demo-admin-pass` |
 | Customer | `demo-customer@example.com` | `demo-customer-pass` |
-| Dealer applicant (pending) | `demo-dealer@example.com` | `demo-dealer-pass` |
+| Dealer | `demo-dealer@example.com` | `demo-dealer-pass` |
 
-These passwords are public on purpose and for **local development only**. The command refuses to run unless `APP_ENV=development` **and** the database host is `localhost`. `APP_ENV` defaults to `production`, so a server without that setting can't create them. It's idempotent: running it again doesn't create duplicates.
+These passwords are public on purpose and for **local development only**. The command refuses to run unless `APP_ENV=development` **and** the database host is `localhost`. `APP_ENV` defaults to `production`, so a server without that setting can't create them. It's idempotent: running it again doesn't create duplicates, and it never changes accounts that already exist (on a database seeded before dealers could sign up directly, `demo-dealer` stays a customer with a pending application until an admin approves it).
 
 1. **Customer:** go to <http://localhost:5173/login>, sign in as the demo customer, then browse and purchase. You'll see no admin controls.
-2. **Dealer applicant:** sign out and choose **Dealer Sign In** as the demo dealer. You'll see the "application pending" banner and customer access only.
-3. **Admin:** sign out and sign in as the demo admin. Open **Dealer applications** (sidebar, with a pending count) and approve *Demo Motors*. Try **Add vehicle**, or **View details** then **Edit / Restock** and the trash icon.
-4. **Approved dealer:** sign out and sign in as the demo dealer again. The banner is gone and the inventory tools are available.
+2. **Dealer:** sign out and choose **Dealer Sign In** as the demo dealer (or create one at **Register as a Dealer**). Try **Add vehicle** with photos, or **View details** then **Edit / Restock** and the trash icon. There is no Dealer applications page.
+3. **Admin:** sign out and sign in as the demo admin. You have the same inventory tools plus **Dealer applications** in the sidebar.
 
 ## Running the tests
 
@@ -216,9 +218,9 @@ These passwords are public on purpose and for **local development only**. The co
 
 | Level | Tools | What it covers |
 |---|---|---|
-| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 164 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
-| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 108 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
-| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), dealer onboarding (apply → admin approves → dealer gets inventory tools), and photo upload (add with a new vehicle, add and remove in Edit, still there after a reload, non-images rejected). Also captures the README screenshots. |
+| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 170 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
+| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 109 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
+| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), dealer sign-up (a new dealer adds, edits and deletes a vehicle with a photo straight away; the API allows inventory changes and refuses application review), customer sign-up still giving a customer, and photo upload (add with a new vehicle, add and remove in Edit, still there after a reload, non-images rejected). Also captures the README screenshots. |
 | **Static checks** | **ruff** (lint + formatting), **mypy `--strict`**, **oxlint**, **`tsc --noEmit`** | Lint and type checks for both apps. |
 | **CI** | **GitHub Actions** | Runs the backend (with a Postgres 17 service) and frontend jobs on every push. Playwright currently runs locally only. |
 
@@ -256,18 +258,18 @@ Base URL `/api`. Every endpoint except register, login and health requires `Auth
 | GET | `/vehicles` | user | List with filters, sort and paging → `VehicleList` |
 | GET | `/vehicles/search` | user | Same parameters and response as `/vehicles` |
 | GET | `/vehicles/{id}` | user | One vehicle |
-| POST | `/vehicles` | **admin** | Create (with initial `quantity`) → `201` |
-| PUT | `/vehicles/{id}` | **admin** | Replace details (`quantity` **not** allowed) |
-| DELETE | `/vehicles/{id}` | **admin** | → `204` (purchase history is kept) |
+| POST | `/vehicles` | **dealer, admin** | Create (with initial `quantity`) → `201` |
+| PUT | `/vehicles/{id}` | **dealer, admin** | Replace details (`quantity` **not** allowed) |
+| DELETE | `/vehicles/{id}` | **dealer, admin** | → `204` (purchase history is kept) |
 | POST | `/vehicles/{id}/purchase` | user | `{quantity?: 1–10}` → `{purchase, vehicle}` |
-| POST | `/vehicles/{id}/restock` | **admin** | `{quantity: 1–1000}` → `Vehicle` |
-| POST | `/vehicles/{id}/photos` | **admin** | `multipart/form-data` with one or more `files` (JPEG, PNG or WebP, ≤ 5 MB each, ≤ 10 per vehicle) → `201 Vehicle`. All or nothing: one bad file rejects the upload |
-| DELETE | `/vehicles/{id}/photos/{photo_id}` | **admin** | → `204`; the files are deleted too |
+| POST | `/vehicles/{id}/restock` | **dealer, admin** | `{quantity: 1–1000}` → `Vehicle` |
+| POST | `/vehicles/{id}/photos` | **dealer, admin** | `multipart/form-data` with one or more `files` (JPEG, PNG or WebP, ≤ 5 MB each, ≤ 10 per vehicle) → `201 Vehicle`. All or nothing: one bad file rejects the upload |
+| DELETE | `/vehicles/{id}/photos/{photo_id}` | **dealer, admin** | → `204`; the files are deleted too |
 | GET | `/media/vehicles/{key}.webp` | none | Photo files (full size and `-thumb`), served as static files |
-| POST | `/auth/register-dealer` | none | `{full_name, email, password, business_name, phone?, message?}` → `201 {user, application}`. The account is a **customer**; the application is `pending` |
+| POST | `/auth/register-dealer` | none | `{full_name, email, password}` → `201 User` with role **dealer**, usable straight away |
 | GET | `/dealer-applications/me` | user | Your own application, or `404 APPLICATION_NOT_FOUND` |
 | GET | `/dealer-applications` | **admin** | `?status=pending\|approved\|rejected` → `[Application]` |
-| POST | `/dealer-applications/{id}/approve` | **admin** | Pending only (409 `APPLICATION_NOT_PENDING` otherwise); sets the applicant's role to `admin` |
+| POST | `/dealer-applications/{id}/approve` | **admin** | Pending only (409 `APPLICATION_NOT_PENDING` otherwise); sets the applicant's role to `dealer` |
 | POST | `/dealer-applications/{id}/reject` | **admin** | `{note?}`; pending only; the account stays a customer |
 
 **Search/list query parameters:** `q` (free text over make/model/trim; every word must match), `make`, `model` (exact, case-insensitive), `category`, `min_price`, `max_price`, `availability` (`all` \| `in_stock` \| `out_of_stock`), `sort` (`newest` \| `price_asc` \| `price_desc` \| `year_desc` \| `year_asc` \| `make_asc`), `limit` (1–100, default 20), `offset`.
@@ -294,7 +296,7 @@ Base URL `/api`. Every endpoint except register, login and health requires `Auth
 | Status | Codes |
 |---|---|
 | 401 | `NOT_AUTHENTICATED`, `INVALID_TOKEN`, `INVALID_CREDENTIALS` |
-| 403 | `FORBIDDEN` (customer calling an admin endpoint) |
+| 403 | `FORBIDDEN` (a customer changing inventory, or a non-admin reviewing dealer applications) |
 | 404 | `VEHICLE_NOT_FOUND`, `PHOTO_NOT_FOUND`, `NOT_FOUND` |
 | 409 | `EMAIL_TAKEN`, `OUT_OF_STOCK`, `INSUFFICIENT_STOCK`, `STOCK_LIMIT_EXCEEDED`, `PHOTO_LIMIT_EXCEEDED` |
 | 413 | `PHOTO_TOO_LARGE` (over 5 MB, or over 40 megapixels) |
@@ -316,7 +318,7 @@ curl -s -X POST localhost:8000/api/vehicles/1/purchase -H "Authorization: Bearer
 
 | Table | Columns | Constraints |
 |---|---|---|
-| `users` | id, email, password_hash, full_name, role (`customer`\|`admin`), created_at | unique lowercase email |
+| `users` | id, email, password_hash, full_name, role (`customer`\|`dealer`\|`admin`; `dealer` added in migration `0007`), created_at | unique lowercase email |
 | `vehicles` | id, make, model, trim?, year, category, fuel_type, transmission, price `NUMERIC(12,2)`, quantity, catalog_image_id? *(unused, see below)*, created_at, updated_at | `price > 0`, `quantity >= 0`, `year 1900–2100`; indexes on (make, model), category, price |
 | `vehicle_photos` | id, vehicle_id → vehicles **ON DELETE CASCADE**, file_key, position, created_at | `file_key` unique, 32 hex characters; `position >= 0`; index on vehicle_id |
 | `purchases` | id, user_id → users, vehicle_id → vehicles **ON DELETE SET NULL**, vehicle_label, quantity, unit_price, created_at | `quantity > 0`, `unit_price > 0` |
@@ -332,7 +334,7 @@ Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade 
 - **Overselling is impossible by construction.** A purchase is one statement, `UPDATE vehicles SET quantity = quantity - :n WHERE id = :id AND quantity >= :n RETURNING *`, and the purchase row is inserted in the same transaction. Zero rows updated means 404 or 409. No read-then-write race is possible. The database `CHECK (quantity >= 0)` backs it up.
 - **Stock changes only through purchase and restock.** `PUT` rejects `quantity`, so an admin edit can't silently overwrite concurrent sales.
 - **Purchase history survives deletion.** `purchases.vehicle_id` becomes `NULL` and a `vehicle_label` snapshot is kept.
-- **Admins via CLI.** Self-service admin sign-up would be a privilege-escalation path.
+- **Admins via CLI, dealers self-service.** Admin sign-up stays CLI-only, since it would be a privilege-escalation path. Dealer sign-up is open by decision: any dealer can change the shared inventory (see [Accounts & Roles](#accounts--roles)).
 - **Filters in the URL.** Shareable, reload-safe views. They're React state mirrored to the URL so form controls update immediately (see defect #3 in the test report).
 - **Public site and app share one SPA.** Marketing pages (`/`, `/about`, `/pricing`) and the app (`/app`) live in the same React build with separate layouts; `/register` redirects to `/signup`. The pricing page is deliberately a labelled placeholder: there is no billing.
 - **Single dealership today.** The backend serves one dealership. [`docs/MULTI_TENANCY.md`](docs/MULTI_TENANCY.md) explains why it can't yet host several safely and the recommended `dealership_id` plus row-level-security design. It's a plan, not implemented.
@@ -364,12 +366,12 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 | ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | ![Landing mobile menu](docs/screenshots/18-landing-mobile-menu.png) **Landing page, mobile menu** |
 | ![Landing](docs/screenshots/15-landing.png) **Landing page** | ![Pricing](docs/screenshots/17-pricing.png) **Pricing (placeholder)** |
 | ![About](docs/screenshots/16-about.png) **About** | ![Dealer sign in](docs/screenshots/19-dealer-sign-in.png) **Dealer Sign In** |
-| ![Dealer registration](docs/screenshots/20-dealer-register.png) **Register as a Dealer** | ![Pending banner](docs/screenshots/21-dealer-pending.png) **Applicant: pending banner** |
+| ![Dealer registration](docs/screenshots/20-dealer-register.png) **Register as a Dealer** | ![Dealer inventory](docs/screenshots/21-dealer-inventory.png) **Dealer: inventory tools right after sign-up** |
 | ![Dealer applications](docs/screenshots/22-admin-dealer-applications.png) **Admin: dealer applications** | |
 
 ## Test report
 
-See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **164 backend tests (98 % coverage), 108 frontend tests (94 % statement coverage), 12 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
+See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **170 backend tests (98 % coverage), 109 frontend tests (94 % statement coverage), 12 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
 
 The git history follows red → green → refactor: `test(...): … (red)` commits hold failing tests, followed by `feat(...)/fix(...): … (green)` commits that make them pass. Where a test and its implementation landed in one commit, the commit message says so.
 
