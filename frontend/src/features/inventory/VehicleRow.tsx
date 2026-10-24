@@ -6,7 +6,7 @@ import { formatPrice, specLine, vehicleTitle } from './format'
 import { StockBadge } from './StockBadge'
 import { VehicleThumb } from './VehicleThumb'
 
-export const ROW_GRID = 'md:grid md:grid-cols-[minmax(0,2.4fr)_70px_minmax(0,1fr)_minmax(0,0.9fr)_auto] md:items-center md:gap-4'
+export const ROW_GRID = 'md:grid md:grid-cols-[minmax(0,1fr)_56px_128px_96px_auto] md:items-center md:gap-4'
 
 export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onView: () => void; actions?: ReactNode }) {
   return (

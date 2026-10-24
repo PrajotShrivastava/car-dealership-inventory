@@ -24,29 +24,36 @@ function initials(name: string) {
     .join('')
 }
 
-function SidebarNav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+/** `rail` = icon-only; `responsive` = icon-only on tablet, full on desktop. */
+type NavMode = 'full' | 'rail' | 'responsive'
+
+function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => void }) {
+  const hideText = mode === 'rail' ? 'sr-only' : mode === 'responsive' ? 'max-lg:sr-only' : ''
   return (
     <nav aria-label="Main" className="flex-1 px-3 py-4">
-      {!collapsed && (
-        <p className="px-3 pb-2 text-[11px] font-medium tracking-wide text-slate-400 uppercase">Inventory</p>
+      {mode !== 'rail' && (
+        <p className={cn('px-3 pb-2 text-[11px] font-medium tracking-wide text-slate-400 uppercase', mode === 'responsive' && 'max-lg:hidden')}>
+          Inventory
+        </p>
       )}
       <NavLink
         to="/"
         end
         onClick={onNavigate}
-        title={collapsed ? 'Vehicles' : undefined}
+        title={mode === 'full' ? undefined : 'Vehicles'}
         className={({ isActive }) =>
           cn(
             'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
             isActive
               ? 'bg-navy-800 text-white shadow-[inset_3px_0_0_var(--color-brand-500)]'
               : 'text-slate-300 hover:bg-navy-800/60 hover:text-white',
-            collapsed && 'justify-center px-0',
+            mode === 'rail' && 'justify-center px-0',
+            mode === 'responsive' && 'max-lg:justify-center max-lg:px-0',
           )
         }
       >
         <CarFront aria-hidden className="size-[18px] shrink-0" />
-        <span className={cn(collapsed && 'sr-only')}>Vehicles</span>
+        <span className={hideText}>Vehicles</span>
       </NavLink>
     </nav>
   )
@@ -74,18 +81,30 @@ export function AppShell() {
       <aside
         className={cn(
           'hidden shrink-0 flex-col bg-navy-900 transition-[width] md:flex',
-          collapsed ? 'w-[72px]' : 'w-60',
+          collapsed ? 'w-[72px]' : 'w-[72px] lg:w-60',
         )}
       >
-        <div className={cn('flex h-16 items-center border-b border-white/10', collapsed ? 'justify-center' : 'px-5')}>
-          <Logo inverted compact={collapsed} />
+        <div
+          className={cn(
+            'flex h-16 items-center border-b border-white/10',
+            collapsed ? 'justify-center' : 'justify-center lg:justify-start lg:px-5',
+          )}
+        >
+          <span className={cn(!collapsed && 'lg:hidden')}>
+            <Logo inverted compact />
+          </span>
+          {!collapsed && (
+            <span className="hidden lg:inline">
+              <Logo inverted />
+            </span>
+          )}
         </div>
-        <SidebarNav collapsed={collapsed} />
+        <SidebarNav mode={collapsed ? 'rail' : 'responsive'} />
         <button
           type="button"
           onClick={toggleCollapsed}
           className={cn(
-            'flex h-12 items-center gap-3 border-t border-white/10 bg-navy-950/40 text-sm text-slate-300 hover:text-white',
+            'hidden h-12 items-center gap-3 border-t border-white/10 bg-navy-950/40 text-sm text-slate-300 hover:text-white lg:flex',
             collapsed ? 'justify-center' : 'px-6',
           )}
         >
@@ -110,7 +129,7 @@ export function AppShell() {
                 <X className="size-5" />
               </button>
             </div>
-            <SidebarNav collapsed={false} onNavigate={() => setMobileOpen(false)} />
+            <SidebarNav mode="full" onNavigate={() => setMobileOpen(false)} />
           </aside>
         </div>
       )}
