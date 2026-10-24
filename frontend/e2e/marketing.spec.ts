@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('visitor goes from the landing page to sign-up and lands in the app', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Every car on your lot')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Know your stock. Own your lot.')
   await expect(page.getByRole('figure', { name: 'Dashboard preview' })).toContainText('Sample data')
 
   await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Pricing' }).click()

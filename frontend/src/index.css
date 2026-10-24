@@ -116,3 +116,76 @@ body {
     animation: none;
   }
 }
+
+/* Hero headline marquees. The track is two identical halves; moving it by -50%
+   lands on an identical frame, so the loop is seamless. Height never changes
+   (single nowrap line), so there is no layout shift. */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee-half,
+.marquee-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+/* Spacing between repeats: a plain gap on the top line, a small car silhouette on the
+   bottom line (elements, not flex gap, so both halves stay exactly equal). */
+.marquee-gap {
+  width: 0.9em;
+}
+/* Bottom-line separator: a small car silhouette. */
+.marquee-separator {
+  width: 0.9em;
+  height: 0.36em;
+  margin-inline: 0.45em;
+  background-color: var(--color-brand-500);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48'%3E%3Cpath d='M8 37 L8 30 Q8 27 13 26 L24 25 Q38 14 54 13 L68 13 Q75 13 80 17 L92 25 L107 26.5 Q113 27.5 113 32 L113 37 Q113 38 112 38 L9 38 Q8 38 8 37 Z'/%3E%3Ccircle cx='30' cy='39' r='8'/%3E%3Ccircle cx='92' cy='39' r='8'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0.85;
+}
+.marquee-to-left {
+  animation: marquee-left 60s linear infinite;
+}
+.marquee-to-right {
+  animation: marquee-left 60s linear infinite reverse;
+}
+.marquee-paused .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-left {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion: no movement, just the phrase once, centred and free to wrap. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    mask-image: none;
+  }
+  .marquee-track {
+    width: auto;
+    justify-content: center;
+    animation: none;
+  }
+  .marquee-half + .marquee-half,
+  .marquee-item + .marquee-item,
+  .marquee-gap,
+  .marquee-separator {
+    display: none;
+  }
+  .marquee-half,
+  .marquee-item {
+    flex-shrink: 1;
+    white-space: normal;
+    text-align: center;
+  }
+}

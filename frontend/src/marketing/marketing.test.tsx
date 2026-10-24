@@ -67,6 +67,26 @@ describe('home page', () => {
     expect(within(hero).getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login')
   })
 
+  it('announces the marquee headline once, with the animated copies hidden from assistive tech', async () => {
+    renderApp({ path: '/' })
+
+    const heading = await screen.findByRole('heading', { level: 1 })
+    expect(heading).toHaveAccessibleName('Know your stock. Own your lot.')
+    for (const line of heading.querySelectorAll('.marquee')) {
+      expect(line).toHaveAttribute('aria-hidden', 'true')
+    }
+  })
+
+  it('lets visitors pause and resume the headline animation', async () => {
+    const { user } = renderApp({ path: '/' })
+    const toggle = await screen.findByRole('button', { name: /pause headline animation/i })
+
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  })
+
   it('shows a dashboard preview clearly marked as sample data', async () => {
     renderApp({ path: '/' })
 
