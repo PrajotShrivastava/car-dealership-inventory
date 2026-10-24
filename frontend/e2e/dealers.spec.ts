@@ -1,78 +1,72 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-const ADMIN = { email: 'e2e-admin@drivestock.dev', password: process.env.E2E_ADMIN_PASSWORD ?? 'e2e-admin-pass' }
-
-async function signIn(page: Page, email: string, password: string, dealer = false) {
-  await page.goto(dealer ? '/login?as=dealer' : '/login')
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill(password)
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
-  await expect(page).toHaveURL(/\/app/)
-}
-
-test('dealer applies, admin approves, dealer gets inventory tools', async ({ page, request }) => {
+test('dealer signs up and manages inventory straight away, without admin approval', async ({ page, request }) => {
   const email = `dealer-${Date.now()}@motors.example`
 
-  // 1. Apply via Dealer Sign In -> Register as a Dealer
+  // 1. Dealer Sign In -> Register as a Dealer
   await page.goto('/login')
   await page.getByRole('tab', { name: 'Dealer Sign In' }).click()
   await page.getByRole('link', { name: 'Register as a Dealer' }).click()
   await page.getByLabel('Full name').fill('Dana Dealer')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('dealer-pass-1')
-  await page.getByLabel('Dealership name').fill('Dana Motors')
-  await page.getByRole('button', { name: 'Submit application' }).click()
+  await page.getByRole('button', { name: 'Create dealer account' }).click()
 
-  // 2. Pending: customer access only, enforced by the API too
-  await expect(page.getByRole('status', { name: 'Dealer application' })).toContainText('pending review')
-  await expect(page.getByRole('button', { name: 'Add vehicle' })).toHaveCount(0)
-  const login = await request.post('http://localhost:8001/api/auth/login', { data: { email, password: 'dealer-pass-1' } })
-  const headers = { Authorization: `Bearer ${(await login.json()).access_token}` }
-  // quantity 0 never changes data: 403 = not allowed; 422 = allowed but invalid input.
-  const probeRestock = () =>
-    request.post('http://localhost:8001/api/vehicles/1/restock', { headers, data: { quantity: 0 } })
-  expect((await probeRestock()).status()).toBe(403)
-  await page.getByRole('button', { name: 'Sign out' }).click()
-
-  // 3. Admin approves
-  await signIn(page, ADMIN.email, ADMIN.password, true)
-  await page.getByRole('link', { name: /Dealer applications/ }).click()
-  const card = page.getByRole('listitem').filter({ hasText: 'Dana Motors' })
-  await card.getByRole('button', { name: 'Approve' }).click()
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Approve', exact: true }).click()
-  await expect(page.getByText('Dana Motors')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Sign out' }).click()
-
-  // 4. Dealer signs in and now has the management view
-  await signIn(page, email, 'dealer-pass-1', true)
+  // 2. A dealer at once: tools visible, no pending banner, no admin-only page
   await expect(page.getByRole('button', { name: 'Add vehicle' })).toBeVisible()
+  await expect(page.getByText('dealer', { exact: true })).toBeVisible()
   await expect(page.getByRole('status', { name: 'Dealer application' })).toHaveCount(0)
-  expect((await probeRestock()).status()).toBe(422)
+  await expect(page.getByRole('link', { name: /Dealer applications/ })).toHaveCount(0)
+
+  // 3. Adds a vehicle with a photo, edits it, then deletes it
+  await page.getByRole('button', { name: 'Add vehicle' }).click()
+  const add = page.getByRole('dialog', { name: 'Add vehicle' })
+  await add.getByLabel('Make').fill('Kia')
+  await add.getByLabel('Model').fill('Sportage')
+  await add.getByLabel('Category').selectOption('suv')
+  await add.getByLabel('Price (USD)').fill('29990')
+  await add.getByLabel(/^Photos/).setInputFiles('e2e/fixtures/test-car.jpg')
+  await add.getByRole('button', { name: 'Create vehicle' }).click()
+  const row = page.getByRole('list', { name: 'Vehicles' }).getByRole('listitem').filter({ hasText: 'Kia Sportage' })
+  await expect(row.getByRole('img', { name: /Kia Sportage/ })).toBeVisible()
+  await row.getByRole('button', { name: 'View details' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Kia Sportage' })
+  await drawer.getByRole('tab', { name: 'Edit' }).click()
+  await drawer.getByLabel('Price (USD)').fill('28990')
+  await drawer.getByRole('button', { name: 'Save changes' }).click()
+  await expect(drawer.getByText('Changes saved.')).toBeVisible()
+
+  // 4. The API agrees: inventory changes allowed, application review not
+  const login = await request.post('http://localhost:8001/api/auth/login', { data: { email, password: 'dealer-pass-1' } })
+  expect((await login.json()).user.role).toBe('dealer')
+  const headers = { Authorization: `Bearer ${(await login.json()).access_token}` }
+  // quantity 0 never changes data: 422 = allowed but invalid input (403 would mean not allowed).
+  expect((await request.post('http://localhost:8001/api/vehicles/1/restock', { headers, data: { quantity: 0 } })).status()).toBe(422)
+  expect((await request.get('http://localhost:8001/api/dealer-applications', { headers })).status()).toBe(403)
+
+  await page.goto('/app/dealer-applications')
+  await expect(page).toHaveURL(/\/app$/)
+
+  // Clean up so reruns start from the same state.
+  await page.getByRole('list', { name: 'Vehicles' }).getByRole('listitem').filter({ hasText: 'Kia Sportage' }).getByRole('button', { name: 'View details' }).click()
+  await page.getByRole('button', { name: 'Delete vehicle' }).click()
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click()
+  await expect(page.getByText('Kia Sportage')).toHaveCount(0)
 })
 
-test('a rejected applicant keeps customer access and sees the note', async ({ page }) => {
-  const email = `rejected-${Date.now()}@motors.example`
-  await page.goto('/dealer/register')
-  await page.getByLabel('Full name').fill('Rex Rejected')
+test('customer sign-up still creates a customer without inventory tools', async ({ page, request }) => {
+  const email = `customer-${Date.now()}@example.com`
+  await page.goto('/signup')
+  await page.getByLabel('Full name').fill('Casey Customer')
   await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password').fill('dealer-pass-1')
-  await page.getByLabel('Dealership name').fill('Rex Autos')
-  await page.getByRole('button', { name: 'Submit application' }).click()
-  await expect(page.getByRole('status', { name: 'Dealer application' })).toBeVisible()
-  await page.getByRole('button', { name: 'Sign out' }).click()
-
-  await signIn(page, ADMIN.email, ADMIN.password)
-  await page.goto('/app/dealer-applications')
-  await page.getByRole('listitem').filter({ hasText: 'Rex Autos' }).getByRole('button', { name: 'Reject' }).click()
-  const dialog = page.getByRole('alertdialog')
-  await dialog.getByLabel('Note (optional)').fill('Could not verify the business.')
-  await dialog.getByRole('button', { name: 'Reject', exact: true }).click()
-  await expect(page.getByText('Rex Autos')).toHaveCount(0)
-  await page.getByRole('button', { name: 'Sign out' }).click()
-
-  await signIn(page, email, 'dealer-pass-1')
-  await expect(page.getByRole('status', { name: 'Dealer application' })).toContainText('Could not verify the business.')
+  await page.getByLabel('Password').fill('customer-pass-1')
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/app$/)
+  await expect(page.getByRole('heading', { name: 'Inventory', level: 1 })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add vehicle' })).toHaveCount(0)
+
+  const login = await request.post('http://localhost:8001/api/auth/login', { data: { email, password: 'customer-pass-1' } })
+  expect((await login.json()).user.role).toBe('customer')
 })
 
 test('customers cannot open the admin review page', async ({ page }) => {
