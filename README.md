@@ -153,6 +153,18 @@ Register a customer from the sign-up page, or sign in with the admin you created
 
 ## Running the tests
 
+### Test stack
+
+| Level | Tools | What it covers |
+|---|---|---|
+| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 97 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
+| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 49 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
+| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, and a server-side 403 check. Also captures the README screenshots. |
+| **Static checks** | **ruff** (lint + formatting), **mypy `--strict`**, **oxlint**, **`tsc --noEmit`** | Lint and type checks for both apps. |
+| **CI** | **GitHub Actions** | Runs the backend (with a Postgres 17 service) and frontend jobs on every push. Playwright currently runs locally only. |
+
+### Commands
+
 ```sh
 # Backend: lint, types, tests (uses drivestock_test; migrates it down and up on every run)
 cd backend
