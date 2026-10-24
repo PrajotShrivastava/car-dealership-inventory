@@ -214,9 +214,9 @@ These passwords are public on purpose and for **local development only**. The co
 
 | Level | Tools | What it covers |
 |---|---|---|
-| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 97 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
-| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 73 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
-| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, and the public-site journey (landing → pricing → sign-up → `/app`). Also captures the README screenshots. |
+| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 129 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
+| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 88 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
+| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), and dealer onboarding (apply → admin approves → dealer gets inventory tools). Also captures the README screenshots. |
 | **Static checks** | **ruff** (lint + formatting), **mypy `--strict`**, **oxlint**, **`tsc --noEmit`** | Lint and type checks for both apps. |
 | **CI** | **GitHub Actions** | Runs the backend (with a Postgres 17 service) and frontend jobs on every push. Playwright currently runs locally only. |
 
@@ -357,7 +357,7 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 
 ## Test report
 
-See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **97 backend tests (98 % coverage), 73 frontend tests (93 % statement coverage), 7 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
+See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **129 backend tests (98 % coverage), 88 frontend tests (94 % statement coverage), 10 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
 
 The git history follows red → green → refactor: `test(...): … (red)` commits hold failing tests, followed by `feat(...)/fix(...): … (green)` commits that make them pass. Where a test and its implementation landed in one commit, the commit message says so.
 
