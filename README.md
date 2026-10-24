@@ -275,7 +275,7 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 
 ## Test report
 
-See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **97 backend tests (98 % coverage), 49 frontend tests (93 % statement coverage), 4 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. It also lists what has **not** been verified (CI never run, docker-compose untested, Python 3.14 and Chromium only).
+See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **97 backend tests (98 % coverage), 49 frontend tests (93 % statement coverage), 4 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
 
 The git history follows red → green → refactor: `test(...): … (red)` commits hold failing tests, followed by `feat(...)/fix(...): … (green)` commits that make them pass. Where a test and its implementation landed in one commit, the commit message says so.
 

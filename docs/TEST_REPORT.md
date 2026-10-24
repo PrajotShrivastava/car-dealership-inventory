@@ -86,7 +86,7 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 
 ## Not verified / known gaps
 
-- **CI workflow** (`.github/workflows/ci.yml`) has **never run**: nothing has been pushed to a remote.
+- **CI workflow** (`.github/workflows/ci.yml`): first GitHub Actions run after pushing, [run 40064767293](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40064767293), **passed**: backend job (ruff, mypy, pytest with coverage on a Postgres 17 service) in 1m10s, frontend job (lint, typecheck, tests, build) in 28s. Playwright e2e is not part of CI; it was run locally only.
 - **`docker-compose.yml`** has **not been tested**: Docker isn't installed on this machine. Local development uses Homebrew Postgres 17.
 - Only tested on **Python 3.14** and **Chromium**. `requires-python >=3.12` is declared but 3.12 and 3.13 weren't run.
 - No load or performance testing, no automated accessibility audit, no penetration testing.
