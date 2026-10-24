@@ -12,7 +12,11 @@ export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onV
   return (
     <li className={`flex flex-col gap-3 px-4 py-4 sm:px-5 ${ROW_GRID}`}>
       <div className="flex min-w-0 items-center gap-4">
-        <VehicleThumb category={vehicle.category} />
+        <VehicleThumb
+          category={vehicle.category}
+          photo={vehicle.photos[0]}
+          alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+        />
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-slate-900">{vehicleTitle(vehicle)}</h3>
           {vehicle.trim && <p className="truncate text-[13px] text-slate-500">{vehicle.trim}</p>}

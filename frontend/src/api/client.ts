@@ -1,5 +1,10 @@
 export const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
+/** Absolute URL for a media path returned by the API (photos are served by the API host). */
+export function mediaUrl(path: string): string {
+  return new URL(path, API_URL).href
+}
+
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
@@ -60,8 +65,10 @@ async function toApiError(response: Response): Promise<ApiError> {
 }
 
 export async function apiFetch<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { body } = options
   const headers: Record<string, string> = {}
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  // FormData sets its own multipart Content-Type (with the boundary).
+  if (body !== undefined && !(body instanceof FormData)) headers['Content-Type'] = 'application/json'
   if (authToken) headers.Authorization = `Bearer ${authToken}`
 
   let response: Response
@@ -69,7 +76,7 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
     response = await fetch(buildUrl(path, options.query), {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
       signal: options.signal,
     })
   } catch (cause) {

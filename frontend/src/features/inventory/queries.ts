@@ -60,6 +60,27 @@ export function useRestock(id: number) {
   return useMutation({ mutationFn: (quantity: number) => vehiclesApi.restock(id, quantity), onSuccess: sync })
 }
 
+export function useUploadPhotos() {
+  const sync = useSyncVehicle()
+  return useMutation({
+    mutationFn: ({ id, files }: { id: number; files: File[] }) => vehiclesApi.uploadPhotos(id, files),
+    onSuccess: sync,
+  })
+}
+
+export function useDeletePhoto(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (photoId: number) => vehiclesApi.deletePhoto(id, photoId),
+    onSuccess: (_, photoId) => {
+      queryClient.setQueryData<Vehicle>(vehicleKeys.detail(id), (vehicle) =>
+        vehicle && { ...vehicle, photos: vehicle.photos.filter((photo) => photo.id !== photoId) },
+      )
+      return queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] })
+    },
+  })
+}
+
 export function useDeleteVehicle() {
   const queryClient = useQueryClient()
   return useMutation({

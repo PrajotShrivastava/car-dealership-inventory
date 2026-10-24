@@ -5,7 +5,7 @@ import { StockBadge } from '../features/inventory/StockBadge'
 import { CarIllustration } from '../components/CarIllustration'
 
 // Illustrative sample rows; not live data.
-const SAMPLE: (Vehicle & { paint: string })[] = [
+const SAMPLE: (Omit<Vehicle, 'photos'> & { paint: string })[] = [
   { id: 1, make: 'Ford', model: 'Kuga', trim: 'ST-Line', year: 2024, category: 'suv', fuel_type: 'hybrid', transmission: 'automatic', price: '35990.00', quantity: 6, paint: '#a8adb4' },
   { id: 2, make: 'Tesla', model: 'Model 3', trim: 'Long Range', year: 2025, category: 'sedan', fuel_type: 'electric', transmission: 'automatic', price: '42990.00', quantity: 2, paint: '#f4f4f5' },
   { id: 3, make: 'Ford', model: 'Ranger', trim: 'Wildtrak', year: 2024, category: 'truck', fuel_type: 'diesel', transmission: 'automatic', price: '44800.00', quantity: 3, paint: '#3f4650' },

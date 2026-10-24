@@ -43,9 +43,18 @@ export interface VehicleFields {
   price: string
 }
 
+/** Paths on the API host, e.g. "/api/media/vehicles/<key>.webp"; resolve with mediaUrl(). */
+export interface VehiclePhoto {
+  id: number
+  url: string
+  thumb_url: string
+}
+
 export interface Vehicle extends VehicleFields {
   id: number
   quantity: number
+  /** In display order; the first is the cover photo. */
+  photos: VehiclePhoto[]
 }
 
 export type VehicleCreate = VehicleFields & { quantity: number }

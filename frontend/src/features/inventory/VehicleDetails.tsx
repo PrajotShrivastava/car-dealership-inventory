@@ -1,7 +1,7 @@
 import type { Vehicle } from '../../api/types'
 import { formatPrice, titleCase } from './format'
+import { PhotoGallery } from './PhotoGallery'
 import { StockBadge } from './StockBadge'
-import { VehicleThumb } from './VehicleThumb'
 
 export function VehicleDetails({ vehicle }: { vehicle: Vehicle }) {
   const specs: [string, string][] = [
@@ -16,7 +16,7 @@ export function VehicleDetails({ vehicle }: { vehicle: Vehicle }) {
   ]
   return (
     <div className="space-y-6 px-6 py-5">
-      <VehicleThumb category={vehicle.category} size="lg" />
+      <PhotoGallery vehicle={vehicle} />
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">Price</p>

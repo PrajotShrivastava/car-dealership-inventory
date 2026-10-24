@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight, PackageSearch, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { ApiError } from '../../api/client'
+import type { Vehicle } from '../../api/types'
 import type { SortOrder } from '../../api/types'
 import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
@@ -8,12 +10,20 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Drawer } from '../../components/Drawer'
 import { Spinner } from '../../components/Spinner'
 import { Tabs } from '../../components/Tabs'
+import { PhotoManager } from '../admin/PhotoManager'
 import { RestockForm } from '../admin/RestockForm'
 import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
 import { vehicleTitle } from './format'
 import { PurchasePanel } from './PurchasePanel'
-import { useCreateVehicle, useDeleteVehicle, useUpdateVehicle, useVehicle, useVehicleSearch } from './queries'
+import {
+  useCreateVehicle,
+  useDeleteVehicle,
+  useUpdateVehicle,
+  useUploadPhotos,
+  useVehicle,
+  useVehicleSearch,
+} from './queries'
 import { PAGE_SIZE, useInventoryFilters, useTextDrafts } from './useInventoryFilters'
 import { VehicleDetails } from './VehicleDetails'
 import { ROW_GRID, VehicleRow } from './VehicleRow'
@@ -56,12 +66,13 @@ const ADMIN_TABS: { value: DrawerTab; label: string }[] = [
   { value: 'restock', label: 'Restock' },
 ]
 
-function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
+/** `notice` (e.g. a failed photo upload after creating the vehicle) opens the Edit tab with it shown. */
+function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; onClose: () => void }) {
   const { isAdmin } = useAuth()
   const { data: vehicle, isError, error } = useVehicle(id)
   const update = useUpdateVehicle(id)
   const remove = useDeleteVehicle()
-  const [tab, setTab] = useState<DrawerTab>('details')
+  const [tab, setTab] = useState<DrawerTab>(notice ? 'edit' : 'details')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   if (isError) {
@@ -108,13 +119,21 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
       >
         {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
         {tab === 'edit' && (
-          <VehicleForm
-            key={vehicle.id}
-            vehicle={vehicle}
-            submitLabel="Save changes"
-            successMessage="Changes saved."
-            onSubmit={(fields) => update.mutateAsync(fields)}
-          />
+          <>
+            {notice && (
+              <div className="px-6 pt-5">
+                <Alert>{notice}</Alert>
+              </div>
+            )}
+            <VehicleForm
+              key={vehicle.id}
+              vehicle={vehicle}
+              submitLabel="Save changes"
+              successMessage="Changes saved."
+              onSubmit={(fields) => update.mutateAsync(fields)}
+            />
+            <PhotoManager vehicle={vehicle} />
+          </>
         )}
         {tab === 'restock' && <RestockForm key={vehicle.id} vehicle={vehicle} />}
       </Drawer>
@@ -141,15 +160,33 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
   )
 }
 
-function AddVehicleDrawer({ onClose }: { onClose: () => void }) {
+function AddVehicleDrawer({
+  onClose,
+  onPhotoUploadFailed,
+}: {
+  onClose: () => void
+  onPhotoUploadFailed: (vehicle: Vehicle, notice: string) => void
+}) {
   const create = useCreateVehicle()
+  const upload = useUploadPhotos()
   return (
     <Drawer title="Add vehicle" subtitle="New listings appear at the top of the inventory." onClose={onClose}>
       <VehicleForm
         withQuantity
+        withPhotos
         submitLabel="Create vehicle"
-        onSubmit={async (fields, quantity) => {
-          await create.mutateAsync({ ...fields, quantity })
+        onSubmit={async (fields, quantity, photos) => {
+          const vehicle = await create.mutateAsync({ ...fields, quantity })
+          if (photos.length) {
+            try {
+              await upload.mutateAsync({ id: vehicle.id, files: photos })
+            } catch (error) {
+              // The vehicle exists now, so resubmitting this form would duplicate it.
+              const reason = error instanceof ApiError ? error.message : 'Please try again.'
+              onPhotoUploadFailed(vehicle, `Vehicle saved, but the photos could not be uploaded: ${reason} Add them below.`)
+              return
+            }
+          }
           onClose()
         }}
       />
@@ -163,13 +200,17 @@ export function InventoryPage() {
   const { drafts, change: changeDrafts, reset: resetDrafts } = useTextDrafts(filters, update)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [drawerNotice, setDrawerNotice] = useState<{ id: number; text: string } | null>(null)
   const { isAdmin } = useAuth()
 
   const clearAll = useCallback(() => {
     resetDrafts()
     clear()
   }, [clear, resetDrafts])
-  const closeDrawer = useCallback(() => select(null), [select])
+  const closeDrawer = useCallback(() => {
+    setDrawerNotice(null)
+    select(null)
+  }, [select])
 
   const total = data?.total ?? 0
   const firstShown = total === 0 ? 0 : query.offset! + 1
@@ -329,8 +370,24 @@ export function InventoryPage() {
         </div>
       )}
 
-      {selectedId !== null && <VehicleDrawer key={selectedId} id={selectedId} onClose={closeDrawer} />}
-      {adding && <AddVehicleDrawer onClose={() => setAdding(false)} />}
+      {selectedId !== null && (
+        <VehicleDrawer
+          key={selectedId}
+          id={selectedId}
+          notice={drawerNotice?.id === selectedId ? drawerNotice.text : undefined}
+          onClose={closeDrawer}
+        />
+      )}
+      {adding && (
+        <AddVehicleDrawer
+          onClose={() => setAdding(false)}
+          onPhotoUploadFailed={(vehicle, text) => {
+            setAdding(false)
+            setDrawerNotice({ id: vehicle.id, text })
+            select(vehicle.id)
+          }}
+        />
+      )}
     </div>
   )
 }

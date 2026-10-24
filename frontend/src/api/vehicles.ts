@@ -20,4 +20,11 @@ export const vehiclesApi = {
     apiFetch<PurchaseResult>(`/vehicles/${id}/purchase`, { method: 'POST', body: { quantity } }),
   restock: (id: number, quantity: number) =>
     apiFetch<Vehicle>(`/vehicles/${id}/restock`, { method: 'POST', body: { quantity } }),
+  uploadPhotos: (id: number, files: File[]) => {
+    const body = new FormData()
+    for (const file of files) body.append('files', file)
+    return apiFetch<Vehicle>(`/vehicles/${id}/photos`, { method: 'POST', body })
+  },
+  deletePhoto: (id: number, photoId: number) =>
+    apiFetch<void>(`/vehicles/${id}/photos/${photoId}`, { method: 'DELETE' }),
 }

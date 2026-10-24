@@ -5,6 +5,7 @@ import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
 import { SelectField, TextField } from '../../components/Field'
 import { titleCase } from '../inventory/format'
+import { PhotoPicker } from './PhotoPicker'
 import { initialValues, MAX_YEAR, toFields, validate, type VehicleFormErrors, type VehicleFormValues } from './vehicleFormModel'
 
 const options = (values: readonly string[]) => values.map((value) => ({ value, label: titleCase(value) }))
@@ -12,17 +13,27 @@ const options = (values: readonly string[]) => values.map((value) => ({ value, l
 interface VehicleFormProps {
   vehicle?: Vehicle
   withQuantity?: boolean
+  /** New vehicles only: photos chosen here are passed to onSubmit to upload after saving. */
+  withPhotos?: boolean
   submitLabel: string
-  onSubmit: (fields: VehicleFields, quantity: number) => Promise<unknown>
+  onSubmit: (fields: VehicleFields, quantity: number, photos: File[]) => Promise<unknown>
   successMessage?: string
 }
 
-export function VehicleForm({ vehicle, withQuantity = false, submitLabel, onSubmit, successMessage }: VehicleFormProps) {
+export function VehicleForm({
+  vehicle,
+  withQuantity = false,
+  withPhotos = false,
+  submitLabel,
+  onSubmit,
+  successMessage,
+}: VehicleFormProps) {
   const [values, setValues] = useState<VehicleFormValues>(() => initialValues(vehicle))
   const [errors, setErrors] = useState<VehicleFormErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [photos, setPhotos] = useState<File[]>([])
 
   const set = <K extends keyof VehicleFormValues>(key: K, value: VehicleFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }))
@@ -38,7 +49,7 @@ export function VehicleForm({ vehicle, withQuantity = false, submitLabel, onSubm
 
     setSubmitting(true)
     try {
-      await onSubmit(toFields(values), Number(values.quantity))
+      await onSubmit(toFields(values), Number(values.quantity), photos)
       setSaved(true)
     } catch (error) {
       if (error instanceof ApiError && Object.keys(error.fieldErrors).length) {
@@ -116,6 +127,7 @@ export function VehicleForm({ vehicle, withQuantity = false, submitLabel, onSubm
           />
         )}
       </div>
+      {withPhotos && <PhotoPicker files={photos} onChange={setPhotos} />}
       <div className="flex justify-end">
         <Button type="submit" loading={submitting}>
           {submitLabel}
