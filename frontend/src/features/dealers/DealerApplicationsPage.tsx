@@ -60,8 +60,8 @@ export function DealerApplicationsPage() {
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-900">Dealer applications</h1>
         <p className="mt-1 text-sm text-canvas-muted">
-          Approving an application gives that account admin access: adding, editing, restocking and deleting
-          vehicles.
+          Applications made before dealers could sign up directly. Approving one makes the account a dealer: it
+          can add, edit, restock and delete vehicles and their photos.
         </p>
       </div>
       <section className="rounded-lg border border-slate-200 bg-white">
@@ -107,8 +107,8 @@ export function DealerApplicationsPage() {
         >
           {deciding.decision === 'approve' ? (
             <>
-              {deciding.application.applicant.full_name} ({deciding.application.applicant.email}) will get admin
-              access to manage inventory.
+              {deciding.application.applicant.full_name} ({deciding.application.applicant.email}) will become a
+              dealer and can manage inventory.
             </>
           ) : (
             <span className="block space-y-2">

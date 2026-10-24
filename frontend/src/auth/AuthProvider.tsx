@@ -75,7 +75,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, isAdmin: user?.role === 'admin', login, register, registerDealer, logout, refreshUser }),
+    () => ({
+      status,
+      user,
+      isAdmin: user?.role === 'admin',
+      canManageInventory: user?.role === 'admin' || user?.role === 'dealer',
+      login,
+      register,
+      registerDealer,
+      logout,
+      refreshUser,
+    }),
     [status, user, login, register, registerDealer, logout, refreshUser],
   )
 

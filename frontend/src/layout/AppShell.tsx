@@ -216,7 +216,9 @@ export function AppShell() {
                     'rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize',
                     user.role === 'admin'
                       ? 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300'
-                      : 'bg-brand-50 text-brand-700',
+                      : user.role === 'dealer'
+                        ? 'bg-sky-100 text-sky-800 dark:bg-sky-400/15 dark:text-sky-300'
+                        : 'bg-brand-50 text-brand-700',
                   )}
                 >
                   {user.role}

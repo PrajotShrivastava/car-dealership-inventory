@@ -1,4 +1,4 @@
-export type Role = 'customer' | 'admin'
+export type Role = 'customer' | 'dealer' | 'admin'
 
 export interface User {
   id: number
@@ -116,11 +116,9 @@ export interface DealerApplication {
   applicant: User
 }
 
+/** Same fields as customer sign-up; the account is created as a dealer. */
 export interface DealerRegisterRequest {
   full_name: string
   email: string
   password: string
-  business_name: string
-  phone?: string
-  message?: string
 }

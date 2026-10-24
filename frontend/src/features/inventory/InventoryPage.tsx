@@ -60,7 +60,7 @@ function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => v
 
 type DrawerTab = 'details' | 'edit' | 'restock'
 
-const ADMIN_TABS: { value: DrawerTab; label: string }[] = [
+const MANAGER_TABS: { value: DrawerTab; label: string }[] = [
   { value: 'details', label: 'Details' },
   { value: 'edit', label: 'Edit' },
   { value: 'restock', label: 'Restock' },
@@ -68,7 +68,7 @@ const ADMIN_TABS: { value: DrawerTab; label: string }[] = [
 
 /** `notice` (e.g. a failed photo upload after creating the vehicle) opens the Edit tab with it shown. */
 function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; onClose: () => void }) {
-  const { isAdmin } = useAuth()
+  const { canManageInventory } = useAuth()
   const { data: vehicle, isError, error } = useVehicle(id)
   const update = useUpdateVehicle(id)
   const remove = useDeleteVehicle()
@@ -102,7 +102,7 @@ function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; o
         subtitle={[vehicle.trim, vehicle.year].filter(Boolean).join(' · ')}
         onClose={onClose}
         actions={
-          isAdmin && (
+          canManageInventory && (
             <button
               type="button"
               aria-label="Delete vehicle"
@@ -114,7 +114,7 @@ function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; o
             </button>
           )
         }
-        tabs={isAdmin && <Tabs label="Vehicle sections" tabs={ADMIN_TABS} value={tab} onChange={setTab} />}
+        tabs={canManageInventory && <Tabs label="Vehicle sections" tabs={MANAGER_TABS} value={tab} onChange={setTab} />}
         footer={tab === 'details' ? <PurchasePanel key={vehicle.id} vehicle={vehicle} /> : undefined}
       >
         {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
@@ -201,7 +201,7 @@ export function InventoryPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [drawerNotice, setDrawerNotice] = useState<{ id: number; text: string } | null>(null)
-  const { isAdmin } = useAuth()
+  const { canManageInventory } = useAuth()
 
   const clearAll = useCallback(() => {
     resetDrafts()
@@ -235,12 +235,12 @@ export function InventoryPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
           <p className="mt-1 text-sm text-canvas-muted">
-            {isAdmin
+            {canManageInventory
               ? 'Manage listings, pricing and stock levels.'
               : 'Browse vehicles on the lot and check live availability.'}
           </p>
         </div>
-        {isAdmin && (
+        {canManageInventory && (
           <Button icon={<Plus aria-hidden className="size-4" />} onClick={() => setAdding(true)}>
             Add vehicle
           </Button>

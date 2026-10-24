@@ -3,16 +3,20 @@ import { useEffect } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import { useMyApplication } from './queries'
 
-/** Tells applicants where their dealer application stands. Admins never see it. */
+/**
+ * Tells customers with an older dealer application where it stands. (New dealer sign-ups
+ * become dealers directly and have no application.) Dealers and admins never see it.
+ */
 export function ApplicationBanner() {
-  const { user, isAdmin, refreshUser } = useAuth()
-  const { data: application } = useMyApplication(Boolean(user) && !isAdmin)
+  const { user, refreshUser } = useAuth()
+  const isCustomer = user?.role === 'customer'
+  const { data: application } = useMyApplication(isCustomer)
   const approved = application?.status === 'approved'
 
-  // Approved while signed in: load the new (admin) role so the tools appear without signing out.
+  // Approved while signed in: load the new (dealer) role so the tools appear without signing out.
   useEffect(() => {
-    if (approved && !isAdmin) refreshUser().catch(() => {}) // a 401 already signs the user out
-  }, [approved, isAdmin, refreshUser])
+    if (approved && isCustomer) refreshUser().catch(() => {}) // a 401 already signs the user out
+  }, [approved, isCustomer, refreshUser])
 
   if (!application || approved) return null
 

@@ -47,7 +47,7 @@ export function LoginPage() {
       title={dealer ? 'Dealer sign in' : 'Sign in'}
       subtitle={
         dealer
-          ? 'For dealership staff. Approved dealer accounts can manage vehicles, prices and stock.'
+          ? 'For dealership staff. Dealer accounts can manage vehicles, prices, stock and photos.'
           : 'Welcome back. Sign in to browse the inventory and buy.'
       }
       above={

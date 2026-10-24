@@ -12,30 +12,14 @@ interface Values {
   full_name: string
   email: string
   password: string
-  business_name: string
-  phone: string
-  message: string
 }
 
 type Errors = Partial<Record<keyof Values, string>>
 
-const STEPS = [
-  'Submit your details below. You get a customer account straight away.',
-  'An administrator reviews your application.',
-  'Once approved, the same account can add, edit, restock and delete vehicles.',
-]
-
 export function DealerRegisterPage() {
   const { registerDealer } = useAuth()
   const navigate = useNavigate()
-  const [values, setValues] = useState<Values>({
-    full_name: '',
-    email: '',
-    password: '',
-    business_name: '',
-    phone: '',
-    message: '',
-  })
+  const [values, setValues] = useState<Values>({ full_name: '', email: '', password: '' })
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -48,11 +32,6 @@ export function DealerRegisterPage() {
       full_name: values.full_name.trim() ? undefined : 'Full name is required',
       email: validateEmail(values.email),
       password: values.password.length >= 8 ? undefined : 'Password must be at least 8 characters',
-      business_name: values.business_name.trim() ? undefined : 'Dealership name is required',
-      phone:
-        !values.phone.trim() || /^[0-9+()\-.\s]{5,30}$/.test(values.phone.trim())
-          ? undefined
-          : 'Enter a valid phone number',
     }
     setErrors(nextErrors)
     if (Object.values(nextErrors).some(Boolean)) return
@@ -64,9 +43,6 @@ export function DealerRegisterPage() {
         full_name: values.full_name.trim(),
         email: values.email.trim(),
         password: values.password,
-        business_name: values.business_name.trim(),
-        phone: values.phone.trim() || undefined,
-        message: values.message.trim() || undefined,
       })
       navigate('/app', { replace: true })
     } catch (error) {
@@ -79,19 +55,9 @@ export function DealerRegisterPage() {
 
   return (
     <AuthLayout
-      title="Register as a dealer"
-      subtitle="Apply for a dealer account to manage your dealership's inventory on DriveStock."
+      title="Create a dealer account"
+      subtitle="For dealership staff. Add, edit and restock vehicles and upload photos as soon as you sign up."
     >
-      <ol className="mb-6 space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        {STEPS.map((step, index) => (
-          <li key={step} className="flex gap-3">
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
-              {index + 1}
-            </span>
-            {step}
-          </li>
-        ))}
-      </ol>
       <form noValidate onSubmit={handleSubmit} className="space-y-5">
         {formError && <Alert>{formError}</Alert>}
         <TextField label="Full name" autoComplete="name" value={values.full_name} onChange={set('full_name')} error={errors.full_name} />
@@ -105,30 +71,8 @@ export function DealerRegisterPage() {
           error={errors.password}
           hint="At least 8 characters"
         />
-        <TextField
-          label="Dealership name"
-          autoComplete="organization"
-          value={values.business_name}
-          onChange={set('business_name')}
-          error={errors.business_name}
-        />
-        <TextField label="Phone (optional)" type="tel" autoComplete="tel" value={values.phone} onChange={set('phone')} error={errors.phone} />
-        <div className="space-y-1.5">
-          <label htmlFor="dealer-message" className="block text-[13px] font-medium text-slate-700">
-            Message for the reviewer (optional)
-          </label>
-          <textarea
-            id="dealer-message"
-            rows={3}
-            maxLength={1000}
-            value={values.message}
-            onChange={set('message')}
-            className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
-            placeholder="e.g. location and size of your lot"
-          />
-        </div>
         <Button type="submit" loading={submitting} className="w-full">
-          Submit application
+          Create dealer account
         </Button>
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">
