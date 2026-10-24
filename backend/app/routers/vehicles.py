@@ -4,9 +4,12 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.errors import AppError
 from app.models import User, Vehicle
 from app.schemas.vehicles import (
+    PurchaseOut,
+    PurchaseRequest,
+    PurchaseResult,
+    RestockRequest,
     VehicleCreate,
     VehicleList,
     VehicleOut,
@@ -14,7 +17,12 @@ from app.schemas.vehicles import (
     VehicleUpdate,
 )
 from app.security import get_current_user, require_admin
-from app.services.inventory import search_vehicles
+from app.services.inventory import (
+    purchase_vehicle,
+    restock_vehicle,
+    search_vehicles,
+    vehicle_not_found,
+)
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
@@ -22,7 +30,7 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 def _get_or_404(db: Session, vehicle_id: int) -> Vehicle:
     vehicle = db.get(Vehicle, vehicle_id)
     if vehicle is None:
-        raise AppError(404, "VEHICLE_NOT_FOUND", f"Vehicle {vehicle_id} not found")
+        raise vehicle_not_found(vehicle_id)
     return vehicle
 
 
@@ -92,3 +100,28 @@ def delete_vehicle(
     db.delete(_get_or_404(db, vehicle_id))
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{vehicle_id}/purchase", response_model=PurchaseResult)
+def purchase(
+    vehicle_id: int,
+    payload: PurchaseRequest | None = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> PurchaseResult:
+    quantity = payload.quantity if payload else 1
+    record = purchase_vehicle(db, vehicle_id, user.id, quantity)
+    return PurchaseResult(
+        purchase=PurchaseOut.model_validate(record),
+        vehicle=VehicleOut.model_validate(_get_or_404(db, vehicle_id)),
+    )
+
+
+@router.post("/{vehicle_id}/restock", response_model=VehicleOut)
+def restock(
+    vehicle_id: int,
+    payload: RestockRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> Vehicle:
+    return restock_vehicle(db, vehicle_id, payload.quantity)

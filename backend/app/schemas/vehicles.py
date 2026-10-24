@@ -1,5 +1,5 @@
 import enum
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated
 
@@ -113,3 +113,32 @@ class VehicleList(BaseModel):
     items: list[VehicleOut]
     total: int
     counts: AvailabilityCounts
+
+
+class PurchaseRequest(BaseModel):
+    quantity: int = Field(default=1, ge=1, le=10)
+
+
+class RestockRequest(BaseModel):
+    quantity: int = Field(ge=1, le=1000)
+
+
+class PurchaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    vehicle_id: int | None
+    vehicle_label: str
+    quantity: int
+    unit_price: Decimal
+    total_price: Decimal
+    created_at: datetime
+
+    @field_serializer("unit_price", "total_price")
+    def _money(self, value: Decimal) -> str:
+        return f"{value:.2f}"
+
+
+class PurchaseResult(BaseModel):
+    purchase: PurchaseOut
+    vehicle: VehicleOut

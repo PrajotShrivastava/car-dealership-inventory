@@ -1,10 +1,11 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import ColumnElement, and_, func, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select, update
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
-from app.models import Vehicle
+from app.errors import AppError
+from app.models import Purchase, Vehicle
 from app.schemas.vehicles import Availability, AvailabilityCounts, SortOrder, VehicleQuery
 
 _ORDERING: dict[SortOrder, tuple[ColumnElement[Any], ...]] = {
@@ -84,3 +85,61 @@ def search_vehicles(
         all=counts_row[0], in_stock=counts_row[1], out_of_stock=counts_row[2]
     )
     return items, total, counts
+
+
+def vehicle_not_found(vehicle_id: int) -> AppError:
+    return AppError(404, "VEHICLE_NOT_FOUND", f"Vehicle {vehicle_id} not found")
+
+
+def purchase_vehicle(db: Session, vehicle_id: int, user_id: int, quantity: int) -> Purchase:
+    """Atomically take `quantity` units out of stock and record the sale.
+
+    The conditional UPDATE only matches while enough stock remains, so concurrent
+    buyers can never drive the quantity negative or oversell.
+    """
+    vehicle = db.scalars(
+        update(Vehicle)
+        .where(Vehicle.id == vehicle_id, Vehicle.quantity >= quantity)
+        .values(quantity=Vehicle.quantity - quantity)
+        .returning(Vehicle)
+        .execution_options(populate_existing=True)
+    ).first()
+
+    if vehicle is None:
+        db.rollback()
+        current = db.get(Vehicle, vehicle_id)
+        if current is None:
+            raise vehicle_not_found(vehicle_id)
+        if current.quantity == 0:
+            raise AppError(409, "OUT_OF_STOCK", f"{current.label} is out of stock")
+        raise AppError(
+            409,
+            "INSUFFICIENT_STOCK",
+            f"Only {current.quantity} unit(s) of {current.label} available",
+        )
+
+    record = Purchase(
+        user_id=user_id,
+        vehicle_id=vehicle.id,
+        vehicle_label=vehicle.label,
+        quantity=quantity,
+        unit_price=vehicle.price,
+    )
+    db.add(record)
+    db.commit()
+    return record
+
+
+def restock_vehicle(db: Session, vehicle_id: int, quantity: int) -> Vehicle:
+    vehicle = db.scalars(
+        update(Vehicle)
+        .where(Vehicle.id == vehicle_id)
+        .values(quantity=Vehicle.quantity + quantity)
+        .returning(Vehicle)
+        .execution_options(populate_existing=True)
+    ).first()
+    if vehicle is None:
+        db.rollback()
+        raise vehicle_not_found(vehicle_id)
+    db.commit()
+    return vehicle
