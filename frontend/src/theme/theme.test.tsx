@@ -23,7 +23,7 @@ describe('theme toggle', () => {
   })
 
   it('switches to dark mode and back from the app header', async () => {
-    const { user } = renderApp({ path: '/', user: seedUser('customer') })
+    const { user } = renderApp({ path: '/app', user: seedUser('customer') })
 
     await user.click(await screen.findByRole('button', { name: /switch to dark mode/i }))
 

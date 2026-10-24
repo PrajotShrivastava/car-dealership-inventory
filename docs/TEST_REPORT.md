@@ -16,11 +16,11 @@ Every number below is copied from real runs. The full, unedited console output i
 | Suite | Result | Coverage |
 |---|---|---|
 | Backend (pytest, real PostgreSQL `drivestock_test`) | **97 passed**, 0 failed (≈9 s) | **98 %** statements (500 stmts, 10 missed) |
-| Frontend (Vitest + React Testing Library + MSW) | **54 passed**, 0 failed | **93.3 %** stmts · 84.7 % branches · 90.5 % funcs · 94.0 % lines |
-| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **4 passed**, 5 skipped¹ | n/a |
+| Frontend (Vitest + React Testing Library + MSW) | **73 passed**, 0 failed | **93.0 %** stmts · 86.0 % branches · 91.6 % funcs · 93.7 % lines |
+| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **7 passed**, 6 skipped¹ | n/a |
 | Static checks | ruff ✔ · ruff format ✔ · mypy `--strict` ✔ · oxlint 0 warnings · `tsc --noEmit` ✔ · production build ✔ | |
 
-¹ The 5 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
+¹ The 6 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
 
 ## Backend tests by file
 
@@ -51,6 +51,8 @@ Every number below is copied from real runs. The full, unedited console output i
 | `features/inventory/InventoryPage.test.tsx` | 15 | list, empty inventory, load error and retry, search, category, availability counts, price range, clear filters, sort, paging, details drawer (Escape), purchase updates stock, quantity capped at stock, out-of-stock disabled, server rejection shown |
 | `features/inventory/format.test.ts` | 9 | price formatting, stock thresholds, labels |
 | `features/admin/admin.test.tsx` | 9 | customers see no admin controls; admin add (with client-side and API field errors), edit, restock (valid and invalid amounts), delete with confirm and cancel |
+| `routing.test.tsx` | 9 | public `/`, app behind sign-in at `/app`, `/register` → `/signup`, redirects to `/app` after sign-in and sign-up, deep `/app?…` link preserved, signed-in users can browse public pages, 404 |
+| `marketing/marketing.test.tsx` | 10 | navbar links and navigation, mobile menu, "Open dashboard" when signed in, hero calls to action, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |
 | `theme/theme.test.tsx` | 5 | light/dark toggle in the header and on sign-in, saved choice persisted and restored, system setting used when nothing is saved |
 
 Unit tests use an in-memory MSW fake of the API contract (`src/test/handlers.ts`). The Playwright suite then checks the same flows against the real API and database.
@@ -63,6 +65,9 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 2. An out-of-stock vehicle's purchase button is disabled.
 3. An admin adds a vehicle with 0 stock, edits its price, restocks 3 units, then deletes it.
 4. Direct API calls with a customer token to `restock` and `DELETE` return **403**, so permissions are enforced on the server, not just hidden in the UI.
+5. A visitor goes from the landing page to Pricing, then Get Started, signs up and lands on `/app`; public pages stay reachable while signed in, with **Open dashboard** leading back.
+6. The navbar's **Features** link scrolls to the features section.
+7. A deep link (`/app?category=suv`) survives the sign-in detour, query included.
 
 ## Security review
 

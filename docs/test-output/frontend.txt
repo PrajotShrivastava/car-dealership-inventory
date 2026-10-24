@@ -24,69 +24,103 @@ $ npx vitest run --coverage --reporter=verbose
  ✓ src/features/inventory/format.test.ts > stockLevel > quantity 40 is in 0ms
  ✓ src/features/inventory/format.test.ts > labels > title-cases enum values 0ms
  ✓ src/features/inventory/format.test.ts > labels > builds a vehicle title without a trailing trim 0ms
- ✓ src/api/client.test.ts > apiFetch > sends JSON and the bearer token when one is set 43ms
+ ✓ src/api/client.test.ts > apiFetch > sends JSON and the bearer token when one is set 47ms
  ✓ src/api/client.test.ts > apiFetch > turns structured API errors into ApiError 3ms
- ✓ src/api/client.test.ts > apiFetch > returns undefined for 204 responses 1ms
- ✓ src/api/client.test.ts > apiFetch > notifies the unauthorized handler on 401 for authenticated requests 2ms
+ ✓ src/api/client.test.ts > apiFetch > returns undefined for 204 responses 2ms
+ ✓ src/api/client.test.ts > apiFetch > notifies the unauthorized handler on 401 for authenticated requests 4ms
  ✓ src/api/client.test.ts > apiFetch > reports network failures as ApiError with status 0 4ms
- ✓ src/auth/auth.test.tsx > authentication flow > redirects anonymous visitors to the sign-in page 79ms
- ✓ src/theme/theme.test.tsx > theme toggle > switches to dark mode and back from the app header 156ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/auth/auth.test.tsx > authentication flow > redirects anonymous visitors to the sign-in page 102ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows each vehicle with price and stock status 190ms
+ ✓ src/marketing/marketing.test.tsx > navbar > links to every public section and the auth entry points 118ms
+Not implemented: Window's scrollTo() method
+ ✓ src/routing.test.tsx > routing > serves the public home page at / without signing in 154ms
+ ✓ src/routing.test.tsx > routing > keeps the inventory app behind sign-in at /app 24ms
+ ✓ src/routing.test.tsx > routing > redirects the old /register path to /signup 18ms
+ ✓ src/theme/theme.test.tsx > theme toggle > switches to dark mode and back from the app header 222ms
  ✓ src/theme/theme.test.tsx > theme toggle > is available on the sign-in page 11ms
  ✓ src/theme/theme.test.tsx > theme toggle > starts from the saved preference 9ms
  ✓ src/theme/theme.test.tsx > theme toggle > follows the system setting when nothing is saved 1ms
  ✓ src/theme/theme.test.tsx > theme toggle > a saved choice beats the system setting 0ms
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows each vehicle with price and stock status 153ms
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > explains an empty inventory 25ms
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows an error with a retry when loading fails 56ms
- ✓ src/features/admin/admin.test.tsx > customer experience > hides every admin control 190ms
- ✓ src/auth/auth.test.tsx > authentication flow > signs in with valid credentials and lands on the inventory 213ms
- ✓ src/auth/auth.test.tsx > authentication flow > shows a generic error for wrong credentials 126ms
- ✓ src/auth/auth.test.tsx > authentication flow > validates required fields before calling the API 19ms
- ✓ src/features/admin/admin.test.tsx > admin: add vehicle > creates a vehicle that then appears in the list 252ms
- ✓ src/features/admin/admin.test.tsx > admin: add vehicle > validates input before sending 71ms
- ✓ src/auth/auth.test.tsx > authentication flow > registers a new customer and signs them in 172ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by free-text search 388ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by category and shows the active filter count 62ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > explains an empty inventory 27ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows an error with a retry when loading fails 67ms
+ ✓ src/marketing/marketing.test.tsx > navbar > navigates between public pages 99ms
+ ✓ src/marketing/marketing.test.tsx > navbar > has a mobile menu that opens and closes 74ms
+ ✓ src/features/admin/admin.test.tsx > customer experience > hides every admin control 244ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/marketing/marketing.test.tsx > navbar > offers the dashboard instead of sign-in to signed-in users 48ms
+ ✓ src/marketing/marketing.test.tsx > home page > explains the product with clear calls to action 26ms
+ ✓ src/marketing/marketing.test.tsx > home page > shows a dashboard preview clearly marked as sample data 24ms
+ ✓ src/marketing/marketing.test.tsx > home page > has a features section that the Features link targets 24ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/auth/auth.test.tsx > authentication flow > signs in with valid credentials and lands on the inventory 270ms
+ ✓ src/marketing/marketing.test.tsx > about page > covers mission, purpose and audience 27ms
+ ✓ src/marketing/marketing.test.tsx > pricing page > shows three plans clearly labelled as placeholders 16ms
+ ✓ src/marketing/marketing.test.tsx > pricing page > sends plan buttons to sign-up, not to any checkout 15ms
+ ✓ src/routing.test.tsx > routing > sends users to /app after signing in 225ms
+ ✓ src/auth/auth.test.tsx > authentication flow > shows a generic error for wrong credentials 137ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates required fields before calling the API 20ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > creates a vehicle that then appears in the list 281ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > validates input before sending 70ms
+ ✓ src/routing.test.tsx > routing > sends users to /app after signing up 170ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/auth/auth.test.tsx > authentication flow > registers a new customer and signs them in 167ms
+ ✓ src/routing.test.tsx > routing > returns to the originally requested app URL, query included, after signing in 123ms
+ ✓ src/routing.test.tsx > routing > sends signed-in users away from sign-in and sign-up to /app 11ms
+ ✓ src/routing.test.tsx > routing > lets signed-in users browse public pages 38ms
+ ✓ src/routing.test.tsx > routing > shows a 404 page for unknown URLs 6ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by free-text search 404ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by category and shows the active filter count 66ms
  ✓ src/features/admin/admin.test.tsx > admin: add vehicle > shows field errors returned by the API 117ms
- ✓ src/auth/auth.test.tsx > authentication flow > validates registration input 83ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by availability and shows counts 61ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > edits vehicle details 113ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > restocks a vehicle 87ms
- ✓ src/auth/auth.test.tsx > authentication flow > reports an email that is already registered 129ms
- ✓ src/auth/auth.test.tsx > authentication flow > restores a stored session and shows the user and role 18ms
- ✓ src/auth/auth.test.tsx > authentication flow > drops an invalid stored token and asks to sign in 9ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates registration input 81ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by availability and shows counts 62ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > edits vehicle details 117ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > restocks a vehicle 82ms
+ ✓ src/auth/auth.test.tsx > authentication flow > reports an email that is already registered 122ms
+ ✓ src/auth/auth.test.tsx > authentication flow > restores a stored session and shows the user and role 17ms
+ ✓ src/auth/auth.test.tsx > authentication flow > drops an invalid stored token and asks to sign in 8ms
  ✓ src/auth/auth.test.tsx > authentication flow > redirects signed-in users away from the sign-in page 12ms
  ✓ src/auth/auth.test.tsx > authentication flow > signs out 29ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > rejects an invalid restock amount 76ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > deletes a vehicle after confirmation 76ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > keeps the vehicle when deletion is cancelled 57ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by price range 380ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > clears all filters and offers that when nothing matches 445ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > sorts by price 57ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > paginates long result sets 141ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > opens details and closes with Escape 59ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > purchases a vehicle and updates stock everywhere 66ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > limits the quantity to what is in stock 40ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > disables purchasing when out of stock 32ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > shows the server reason when a purchase is rejected 46ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > rejects an invalid restock amount 67ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > deletes a vehicle after confirmation 82ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > keeps the vehicle when deletion is cancelled 68ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by price range 383ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > clears all filters and offers that when nothing matches 462ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > sorts by price 56ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > paginates long result sets 123ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > opens details and closes with Escape 45ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > purchases a vehicle and updates stock everywhere 63ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > limits the quantity to what is in stock 43ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > disables purchasing when out of stock 31ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > shows the server reason when a purchase is rejected 47ms
 
- Test Files  6 passed (6)
-      Tests  54 passed (54)
-   Start at  10:49:35
-   Duration  2.89s (tests 54%, environment 24%, setup 8%, import 8%, transform 5%, worker 2%)
+ Test Files  8 passed (8)
+      Tests  73 passed (73)
+   Start at  11:16:26
+   Duration  3.20s (tests 46%, environment 29%, setup 9%, import 9%, transform 6%, worker 2%)
 
  % Coverage report from v8
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   93.27 |    84.71 |   90.52 |   93.95 |                   
- src               |   55.55 |       30 |      50 |      50 |                   
+All files          |   92.99 |    85.96 |   91.63 |   93.66 |                   
+ src               |      60 |       30 |      50 |   55.55 |                   
   App.tsx          |       0 |      100 |       0 |       0 | 4-7               
   AppProviders.tsx |      60 |    14.28 |      50 |      50 | 9-16              
-  routes.tsx       |     100 |    66.66 |     100 |     100 | 32                
+  routes.tsx       |     100 |    66.66 |     100 |     100 | 50                
  src/api           |   96.22 |    86.84 |   94.44 |     100 |                   
   client.ts        |   94.73 |    86.48 |    87.5 |     100 | 1,56-57,76        
- src/auth          |   95.58 |    83.33 |     100 |   98.27 |                   
+ src/auth          |   95.77 |       85 |     100 |   98.38 |                   
   AuthContext.ts   |      80 |       50 |     100 |     100 | 19                
   AuthProvider.tsx |   97.56 |       75 |     100 |     100 | 36-41             
   tokenStorage.ts  |   88.88 |      100 |     100 |   88.88 | 11                
@@ -97,27 +131,30 @@ All files          |   93.27 |    84.71 |   90.52 |   93.95 |
   RestockForm.tsx  |     100 |    72.72 |     100 |     100 | 45-46             
   VehicleForm.tsx  |   97.29 |       75 |     100 |   96.87 | 47                
   ...eFormModel.ts |   94.44 |    97.22 |     100 |   93.75 | 42                
- ...ures/inventory |   95.31 |    93.93 |    90.9 |   95.95 |                   
+ ...ures/inventory |   95.31 |    94.69 |    90.9 |   95.95 |                   
   FilterPanel.tsx  |   76.92 |     87.5 |   72.72 |   83.33 | 26,93             
   ...ntoryPage.tsx |   92.59 |    96.22 |   83.33 |    92.3 | 224,289,314-321   
   ...hasePanel.tsx |   93.33 |       90 |      80 |   93.33 | 52                
   ...leDetails.tsx |     100 |    83.33 |     100 |     100 | 10                
   queries.ts       |     100 |       50 |     100 |     100 | 21                
-  ...oryFilters.ts |   98.21 |    94.11 |     100 |     100 | 24,120            
+  ...oryFilters.ts |   98.21 |    97.05 |     100 |     100 | 120               
  src/layout        |   59.09 |    64.28 |      50 |   59.09 |                   
   AppShell.tsx     |   59.09 |    64.28 |      50 |   59.09 | 15,69-75,120-143  
- src/pages         |   92.06 |    68.42 |    92.3 |   93.22 |                   
-  LoginPage.tsx    |     100 |    81.25 |     100 |     100 | 34-36             
-  NotFoundPage.tsx |       0 |      100 |       0 |       0 | 4                 
+ src/marketing     |   89.33 |    90.38 |   94.87 |    89.7 |                   
+  ...ingLayout.tsx |   96.96 |    95.45 |     100 |   96.55 | 152               
+  Reveal.tsx       |   53.33 |    66.66 |      60 |      50 | 12-22             
+  ui.tsx           |     100 |    93.33 |     100 |     100 | 11                
+ src/pages         |   93.54 |    70.58 |     100 |   94.82 |                   
+  LoginPage.tsx    |     100 |    91.66 |     100 |     100 | 36                
   RegisterPage.tsx |   89.28 |    55.55 |     100 |   88.88 | 45-48             
   validation.ts    |   83.33 |       75 |     100 |     100 | 4                 
 -------------------|---------|----------|---------|---------|-------------------
 
 =============================== Coverage summary ===============================
-Statements   : 93.27% ( 513/550 )
-Branches     : 84.71% ( 338/399 )
-Functions    : 90.52% ( 191/211 )
-Lines        : 93.95% ( 466/496 )
+Statements   : 92.99% ( 584/628 )
+Branches     : 85.96% ( 386/449 )
+Functions    : 91.63% ( 230/251 )
+Lines        : 93.66% ( 532/568 )
 ================================================================================
 
 $ npm run build
@@ -127,11 +164,11 @@ $ npm run build
 
 vite v8.3.5 building client environment for production...
 transforming...
-✓ 2095 modules transformed.
+✓ 2103 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                   1.17 kB │ gzip:   0.61 kB
-dist/assets/index-CZOjFg0U.css   35.98 kB │ gzip:   7.23 kB
-dist/assets/index-hXpy-FlD.js   408.14 kB │ gzip: 125.88 kB
+dist/assets/index-CnmKlWCX.css   52.57 kB │ gzip:   9.52 kB
+dist/assets/index-DAM9y5Vr.js   438.58 kB │ gzip: 133.28 kB
 
-✓ built in 146ms
+✓ built in 150ms

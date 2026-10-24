@@ -24,6 +24,26 @@
   --color-on-accent: #ffffff;
   --color-nav-text: #cbd5e1;
   --color-nav-muted: #94a3b8;
+
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
 }
 
 /* Dark mode: remap the neutral scale and surfaces so existing utilities
@@ -53,4 +73,26 @@ body,
 
 body {
   @apply bg-canvas font-sans text-sm text-slate-800 antialiased;
+}
+
+/* Scroll-reveal for marketing sections; disabled for reduced-motion users. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 700ms ease-out,
+      transform 700ms ease-out;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-fade-in {
+    animation: none;
+  }
 }

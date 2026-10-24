@@ -16,7 +16,7 @@ async function openDetails(user: ReturnType<typeof renderApp>['user'], title: st
 describe('customer experience', () => {
   it('hides every admin control', async () => {
     seedVehicle({ make: 'Ford', model: 'Kuga' })
-    const { user } = renderApp({ path: '/', user: seedUser('customer') })
+    const { user } = renderApp({ path: '/app', user: seedUser('customer') })
 
     const dialog = await openDetails(user, 'Ford Kuga')
 
@@ -28,7 +28,7 @@ describe('customer experience', () => {
 
 describe('admin: add vehicle', () => {
   it('creates a vehicle that then appears in the list', async () => {
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
 
     await user.click(await screen.findByRole('button', { name: /add vehicle/i }))
     const dialog = await screen.findByRole('dialog', { name: /add vehicle/i })
@@ -51,7 +51,7 @@ describe('admin: add vehicle', () => {
   })
 
   it('validates input before sending', async () => {
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
 
     await user.click(await screen.findByRole('button', { name: /add vehicle/i }))
     const dialog = await screen.findByRole('dialog', { name: /add vehicle/i })
@@ -80,7 +80,7 @@ describe('admin: add vehicle', () => {
         ),
       ),
     )
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
 
     await user.click(await screen.findByRole('button', { name: /add vehicle/i }))
     const dialog = await screen.findByRole('dialog', { name: /add vehicle/i })
@@ -96,7 +96,7 @@ describe('admin: add vehicle', () => {
 describe('admin: manage an existing vehicle', () => {
   it('edits vehicle details', async () => {
     const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga', price: '35990.00' })
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
     const dialog = await openDetails(user, 'Ford Kuga')
 
     await user.click(within(dialog).getByRole('tab', { name: /edit/i }))
@@ -113,7 +113,7 @@ describe('admin: manage an existing vehicle', () => {
 
   it('restocks a vehicle', async () => {
     const vehicle = seedVehicle({ make: 'Renault', model: 'Zoe', quantity: 0 })
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
     const dialog = await openDetails(user, 'Renault Zoe')
 
     await user.click(within(dialog).getByRole('tab', { name: /restock/i }))
@@ -126,7 +126,7 @@ describe('admin: manage an existing vehicle', () => {
 
   it('rejects an invalid restock amount', async () => {
     seedVehicle({ make: 'Renault', model: 'Zoe', quantity: 0 })
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
     const dialog = await openDetails(user, 'Renault Zoe')
 
     await user.click(within(dialog).getByRole('tab', { name: /restock/i }))
@@ -139,7 +139,7 @@ describe('admin: manage an existing vehicle', () => {
   it('deletes a vehicle after confirmation', async () => {
     const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga' })
     seedVehicle({ make: 'Dacia', model: 'Duster' })
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
     const dialog = await openDetails(user, 'Ford Kuga')
 
     await user.click(within(dialog).getByRole('button', { name: /delete vehicle/i }))
@@ -154,7 +154,7 @@ describe('admin: manage an existing vehicle', () => {
 
   it('keeps the vehicle when deletion is cancelled', async () => {
     const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga' })
-    const { user } = renderApp({ path: '/', user: seedUser('admin') })
+    const { user } = renderApp({ path: '/app', user: seedUser('admin') })
     const dialog = await openDetails(user, 'Ford Kuga')
 
     await user.click(within(dialog).getByRole('button', { name: /delete vehicle/i }))

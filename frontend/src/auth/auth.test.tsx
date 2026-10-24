@@ -6,7 +6,7 @@ import { TOKEN_STORAGE_KEY } from './tokenStorage'
 
 describe('authentication flow', () => {
   it('redirects anonymous visitors to the sign-in page', async () => {
-    renderApp({ path: '/' })
+    renderApp({ path: '/app' })
 
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument()
   })
@@ -44,7 +44,7 @@ describe('authentication flow', () => {
   })
 
   it('registers a new customer and signs them in', async () => {
-    const { user } = renderApp({ path: '/register' })
+    const { user } = renderApp({ path: '/signup' })
 
     await user.type(await screen.findByLabelText(/full name/i), 'New Buyer')
     await user.type(screen.getByLabelText(/email/i), 'buyer@example.com')
@@ -56,7 +56,7 @@ describe('authentication flow', () => {
   })
 
   it('validates registration input', async () => {
-    const { user } = renderApp({ path: '/register' })
+    const { user } = renderApp({ path: '/signup' })
 
     await user.type(await screen.findByLabelText(/email/i), 'not-an-email')
     await user.type(screen.getByLabelText(/password/i), 'short')
@@ -69,7 +69,7 @@ describe('authentication flow', () => {
 
   it('reports an email that is already registered', async () => {
     seedUser('customer', 'taken@example.com')
-    const { user } = renderApp({ path: '/register' })
+    const { user } = renderApp({ path: '/signup' })
 
     await user.type(await screen.findByLabelText(/full name/i), 'Someone')
     await user.type(screen.getByLabelText(/email/i), 'taken@example.com')
@@ -81,7 +81,7 @@ describe('authentication flow', () => {
 
   it('restores a stored session and shows the user and role', async () => {
     const admin = seedUser('admin')
-    renderApp({ path: '/', user: admin })
+    renderApp({ path: '/app', user: admin })
 
     expect(await screen.findByRole('heading', { name: /inventory/i })).toBeInTheDocument()
     expect(screen.getByText(admin.full_name)).toBeInTheDocument()
@@ -89,7 +89,7 @@ describe('authentication flow', () => {
   })
 
   it('drops an invalid stored token and asks to sign in', async () => {
-    renderApp({ path: '/', token: 'stale-token' })
+    renderApp({ path: '/app', token: 'stale-token' })
 
     expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument()
     expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeNull()
@@ -104,7 +104,7 @@ describe('authentication flow', () => {
 
   it('signs out', async () => {
     const customer = seedUser('customer')
-    const { user } = renderApp({ path: '/', user: customer })
+    const { user } = renderApp({ path: '/app', user: customer })
 
     await user.click(await screen.findByRole('button', { name: /sign out/i }))
 

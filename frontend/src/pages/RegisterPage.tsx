@@ -38,7 +38,7 @@ export function RegisterPage() {
     setFormError(null)
     try {
       await register(fullName.trim(), email.trim(), password)
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
     } catch (error) {
       if (error instanceof ApiError && error.code === 'EMAIL_TAKEN') {
         setErrors({ email: error.message })
@@ -52,7 +52,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthLayout title="Create your account" subtitle="Browse the full inventory and buy in a few clicks.">
+    <AuthLayout title="Create your account" subtitle="Create a free account to browse the live inventory and try DriveStock.">
       <form noValidate onSubmit={handleSubmit} className="space-y-5">
         {formError && <Alert>{formError}</Alert>}
         <TextField

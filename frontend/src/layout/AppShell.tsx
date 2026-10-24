@@ -38,7 +38,7 @@ function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => vo
         </p>
       )}
       <NavLink
-        to="/"
+        to="/app"
         end
         onClick={onNavigate}
         title={mode === 'full' ? undefined : 'Vehicles'}

@@ -19,7 +19,7 @@ async function signIn(page: Page, email: string, password: string) {
 
 // The e2e database is reset at the start of every Playwright run, so fixed emails are safe.
 async function registerCustomer(page: Page, email = 'alex.morgan@example.com') {
-  await page.goto('/register')
+  await page.goto('/signup')
   await page.getByLabel('Full name').fill('Alex Morgan')
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('customer-pass-1')
@@ -30,7 +30,7 @@ async function registerCustomer(page: Page, email = 'alex.morgan@example.com') {
 test('auth screens', async ({ page }) => {
   await page.goto('/login')
   await page.screenshot({ path: `${OUT}/01-sign-in.png` })
-  await page.goto('/register')
+  await page.goto('/signup')
   await page.getByRole('button', { name: 'Create account' }).click()
   await page.screenshot({ path: `${OUT}/02-register-validation.png` })
 })
@@ -72,6 +72,25 @@ test('admin screens', async ({ page }) => {
   await page.screenshot({ path: `${OUT}/09-admin-edit.png` })
   await drawer.getByRole('button', { name: 'Delete vehicle' }).click()
   await page.screenshot({ path: `${OUT}/10-admin-delete-confirm.png` })
+})
+
+test('marketing site', async ({ browser }) => {
+  for (const [name, path] of [
+    ['15-landing', '/'],
+    ['16-about', '/about'],
+    ['17-pricing', '/pricing'],
+  ] as const) {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })
+    await page.goto(path)
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true })
+    await page.close()
+  }
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
+  await mobile.goto('/')
+  await mobile.getByRole('button', { name: 'Open menu' }).click()
+  await mobile.screenshot({ path: `${OUT}/18-landing-mobile-menu.png` })
+  await mobile.close()
 })
 
 test('dark mode', async ({ page }) => {

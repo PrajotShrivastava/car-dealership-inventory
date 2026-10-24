@@ -4,8 +4,8 @@ Exported verbatim from the Claude Code session transcript by `scripts/export_pro
 
 - **Tool:** Claude Code (CLI), model(s): claude-opus-5-5
 - **Session:** `a70cfeda-1bf2-4ea1-ac9f-bc52055669dc`
-- **Span:** 2026-10-24T03:48:20.103Z → 2026-10-24T05:25:37.199Z (UTC)
-- **Exported:** 2026-10-24T10:55:54+05:30
+- **Span:** 2026-10-24T03:48:20.103Z → 2026-10-24T05:48:09.756Z (UTC)
+- **Exported:** 2026-10-24T11:18:25+05:30
 - **Omitted:** tool outputs (command results, file reads), images/screenshots, the model's private reasoning blocks, harness bookkeeping, and sub-agent side-chains. Tool *calls* are shown with their full input.
 - **Redacted:** 3 occurrence(s) of personal data replaced with `[redacted]`.
 
@@ -3575,4 +3575,589 @@ Before you submit, two things are still yours to do:
 
 ````text
 re-export PROMPTS.md and push
+````
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Re-export PROMPTS.md, commit and push</summary>
+
+````json
+{
+  "command": "python3 scripts/export_prompts.py ~/.claude/projects/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc.jsonl PROMPTS.md --redact \"$(git config user.email)\" && sed -n '5,11p' PROMPTS.md && grep -c \"^## 🧑 User\" PROMPTS.md && grep -c \"$(git config user.email)\" PROMPTS.md; git add PROMPTS.md && git commit -q -m \"docs: re-export PROMPTS.md with the full session\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git push -q 2>&1 | tail -2; git status -sb | head -1; git log --oneline -1",
+  "description": "Re-export PROMPTS.md, commit and push",
+  "timeout": 120000
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:25:59.415Z</sub>
+
+I re-exported PROMPTS.md and pushed it to GitHub as commit `a3f9552`. It now covers the whole session up to this request: all 23 of your messages and every reply word for word, with your git email redacted (3 places, noted in the file's header). GitHub is up to date with your local copy.
+
+My reply here and any later messages aren't in the export. To capture them, run the same command again before you submit.
+
+The one thing left before you submit is the **Reflection** paragraph in the README's "My AI Usage" section. It's still marked TODO because it should be in your own words.
+
+## 🧑 User — turn 24  
+<sub>2026-10-24T05:36:43.825Z</sub>
+
+````text
+<pasted_content id="fece">
+I want to evolve our Car Dealership Inventory System into a professional SaaS-style product.
+
+Before making changes, inspect the existing application and propose how to integrate a public marketing website without breaking the current inventory system.
+
+1. Public Landing Page
+
+Create a polished homepage that explains:
+
+* What our product does.
+* How it helps car dealerships manage their inventory.
+* Key features and benefits.
+* A visually appealing preview of the inventory dashboard.
+* Clear calls to action: “Get Started” and “Sign In”.
+
+2. About Us
+
+Add an About page explaining the product’s mission, purpose, and target audience. Do not invent company history, customer testimonials, or business claims.
+
+3. Pricing
+
+Create a pricing page with a clean SaaS pricing layout.
+
+For now, use clearly labelled placeholder pricing plans. Do not implement subscriptions, payment processing, or billing functionality yet.
+
+4. Authentication
+
+Provide separate Login and Sign Up entry points.
+
+After successful authentication, users should be redirected to the appropriate application dashboard.
+
+5. Navigation
+
+Create a consistent navbar with:
+
+* Home
+* Features
+* About
+* Pricing
+* Sign In
+* Get Started
+
+Make the navigation responsive and visually consistent with our existing Dribbble-inspired design.
+
+6. Important Product Architecture Decision
+
+I may eventually want to offer this product to multiple dealerships as a commercial SaaS.
+
+Evaluate whether our current backend and database architecture can support multiple dealerships securely. If changes are needed, explain the recommended approach before implementing them.
+
+Do not assume multi-tenancy is already implemented. Do not introduce subscription billing or other unnecessary features.
+
+7. Design
+
+Use a premium, modern automotive SaaS aesthetic, smooth animations, responsive layouts, and consistent typography.
+
+Use React, TypeScript, and Tailwind CSS, following our existing project architecture.
+
+First, present the proposed pages, routing structure, and any necessary architectural changes. Wait for my approval before modifying files.
+</pasted_content id="fece">
+````
+
+### 🤖 Claude  
+<sub>2026-10-24T05:37:34.162Z</sub>
+
+Here's the proposal. I haven't modified any files.
+
+## Where things stand today
+- **Routes:** `/` is the inventory app (sign-in required), plus `/login` and `/register`. There are no public pages.
+- **Backend:** built for a single dealership. Details in section 4.
+- **Your submission:** `main` is the Incubyte submission and has passing CI. **I'd do all of this on a separate branch (`saas-site`)** so the submitted version stays stable until you choose to merge.
+
+## 1. Routes
+
+| Route | Page | Access |
+|---|---|---|
+| `/` | Landing page; **Features** is a section on it (`/#features`) | Public |
+| `/about` | About | Public |
+| `/pricing` | Pricing (placeholder plans) | Public |
+| `/login` | Sign in | Signed-out only |
+| `/signup` | Sign up (`/register` redirects here) | Signed-out only |
+| `/app` | The current inventory app, unchanged inside | Signed-in only |
+| `*` | 404 page | Public |
+
+- **After sign-in or sign-up:** everyone goes to `/app`. If they were sent to sign in from a deeper link, they go back there instead. Admins and customers share `/app`, and admins see their extra controls, as now. "The appropriate dashboard" therefore means the same page with role-based controls, not two separate dashboards.
+- **Visiting the public pages while signed in:** you stay on the page, and the navbar shows **"Open dashboard"** instead of Sign In / Get Started. No automatic redirect.
+- **Layouts:** a new `MarketingLayout` (navbar and footer) wraps the public pages. The existing `AppShell` stays as it is.
+- **Tests:** existing tests that open the app at `/` move to `/app`. New tests cover the routing, the navbar (including the mobile menu), what you see signed in vs signed out, and redirects after auth.
+
+## 2. Pages and design
+- **Navbar:** Home · Features · About · Pricing · Sign In · **Get Started**. It's sticky with a blur effect once you scroll, collapses to a menu on mobile, and includes the light/dark toggle.
+- **Landing:** a hero with a headline and both buttons, plus a **live-coded dashboard preview** built from our real components with sample data. That keeps it sharp, theme-aware and fast; a screenshot would only be a static image. It also explains how the product helps (stock visibility, oversell protection, roles) and has a features grid, a benefits section, a closing call to action and a footer.
+- **About:** mission, purpose and who it's for, written only from what the product actually does. No company history, team, testimonials, customer logos or numbers.
+- **Pricing:** three cards (e.g. Starter / Professional / Enterprise) with a clear banner: *"Placeholder pricing — plans, prices and limits are not final and are not enforced."* Buttons go to `/signup`. No billing, checkout or subscription code.
+- **Look:** a dark navy hero, the same blue accent, Inter, and soft gradients and glows. Sections fade in as you scroll and cards lift on hover, all in CSS. Motion is switched off for users who've asked their device to reduce it. No new animation library.
+
+## 3. Product question to settle first
+Right now "Sign up" creates a **car-buyer (customer)** account in the one dealership. A SaaS site's "Get Started" normally signs up a **dealership** (its staff). Until multi-tenancy exists, I'd keep sign-up as is and word it honestly ("Create an account to try DriveStock"), rather than imply dealerships can onboard themselves.
+
+## 4. Multi-dealership readiness
+
+**Verdict: the current architecture can't safely serve multiple dealerships.**
+- There's no dealership concept. `users`, `vehicles` and `purchases` have no owner, so every user sees and buys from one shared inventory.
+- An admin is a **global** admin who could edit or delete any dealership's vehicles.
+- Login tokens only identify the user, not a dealership. Emails are unique across the whole system, and open registration drops everyone into the same store.
+- There's nothing that limits each request to one dealership's data, and no tests that one dealership can't see another's.
+
+**Recommended approach: one database, with a `dealership_id` column on each table.**
+- **New table:** `dealerships` (id, name, unique slug, created_at).
+- **New column:** `dealership_id` (required, foreign key) on `users`, `vehicles` and `purchases`. Indexes and uniqueness rules include it, e.g. one email per dealership or system-wide (your call).
+- **Backfill:** an Alembic migration creates a "Default dealership", assigns existing data to it, then makes the column required.
+- **Every query is limited to the signed-in user's dealership,** taken from their account on the server, never from the request. This is done once in a shared dependency, not repeated in each endpoint. Another dealership's vehicle returns **404**, so its existence isn't revealed.
+- **Second safety net (recommended):** PostgreSQL row-level security on those tables. Even a query bug can't leak another dealership's rows.
+- **Roles per dealership:** `owner` / `admin` / customer.
+- **Onboarding:** "Get Started" creates a dealership plus its owner. Customers join a specific dealership via its slug, e.g. `/d/{slug}/signup`.
+- **Tests:** isolation tests for every endpoint (dealership A's admin cannot list, read, edit, restock or delete B's data), plus migration tests.
+
+**Alternatives I'd avoid for now:** a separate database schema or a separate database per dealership. Both give stronger isolation but are much heavier to migrate and run than this product needs.
+
+**Caveat:** this changes the data model and sign-up flow the assignment is built around. I recommend it as a **separate phase on its own branch**, after the marketing site, and only if you decide to pursue the commercial version.
+
+## Order of work (each phase test-first, committed on the branch)
+1. Routing and layout split (`/app`), tests updated. No change in behaviour.
+2. Marketing layout and navbar, then the landing page, then About, then Pricing.
+3. Separate sign-in and sign-up entry points, and redirects after sign-in.
+4. Responsive and dark-mode screenshot review, then README and screenshot updates.
+5. *(Only if you approve separately)* the multi-dealership backend described in section 4.
+
+## Decisions I need from you
+1. **Branch:** work on `saas-site` (recommended) or straight on `main`?
+2. **Sign-up meaning for now:** keep it as buyer sign-up with honest wording (recommended), or wait for multi-tenancy?
+3. **Multi-tenancy:** plan only for now (recommended), or include phase 5 in this round? If included: one email per dealership, or system-wide?
+4. **App URL:** `/app` OK?
+
+## 🧑 User — turn 25  
+<sub>2026-10-24T05:38:45.028Z</sub>
+
+````text
+go with your recommendations, use /app
+````
+
+### 🤖 Claude  
+<sub>2026-10-24T05:38:47.532Z</sub>
+
+Decisions noted: work on a `saas-site` branch, keep buyer sign-up with honest wording, multi-tenancy as a written plan only, and the app at `/app`. Creating the branch and starting Phase 1, the routing split.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Create branch and find root-path references</summary>
+
+````json
+{
+  "command": "git switch -c saas-site && cat frontend/src/routes.tsx && grep -rn \"path: '/'\\|renderApp({ path: '/'\\|renderApp({ path: \\\"/\\\"\\|goto('/')\\|navigate('/'\\|to=\\\"/\\\"\\|<Navigate to=\\\"/\\\"\\|'/login'\\|'/register'\\|\\\"/register\\\"\\|\\\"/login\\\"\" frontend/src frontend/e2e | cut -c1-140",
+  "description": "Create branch and find root-path references"
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:38:59.400Z</sub>
+
+Tests first. Existing tests that open the app at `/` now open `/app`, and a new routing test file specifies the new structure.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Move tests to /app and add failing routing tests</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && sed -i '' \"s|renderApp({ path: '/', |renderApp({ path: '/app', |g; s|renderApp({ path: '/' })|renderApp({ path: '/app' })|g; s|renderApp({ path: '/register' })|renderApp({ path: '/signup' })|g\" src/features/admin/admin.test.tsx src/auth/auth.test.tsx src/features/inventory/InventoryPage.test.tsx src/theme/theme.test.tsx && grep -rn \"path: '/'\" src | head; cat > src/routing.test.tsx <<'EOF'\nimport { screen, waitFor } from '@testing-library/react'\nimport { describe, expect, it } from 'vitest'\nimport { PASSWORD, seedUser } from './test/handlers'\nimport { renderApp } from './test/utils'\n\ndescribe('routing', () => {\n  it('serves the public home page at / without signing in', async () => {\n    renderApp({ path: '/' })\n\n    expect(await screen.findByRole('navigation', { name: /primary/i })).toBeInTheDocument()\n    expect(screen.queryByRole('heading', { name: /^inventory$/i })).not.toBeInTheDocument()\n  })\n\n  it('keeps the inventory app behind sign-in at /app', async () => {\n    renderApp({ path: '/app' })\n\n    expect(await screen.findByRole('heading', { name: /sign in/i })).toBeInTheDocument()\n  })\n\n  it('redirects the old /register path to /signup', async () => {\n    const { router } = renderApp({ path: '/register' })\n\n    expect(await screen.findByRole('heading', { name: /create your account/i })).toBeInTheDocument()\n    expect(router.state.location.pathname).toBe('/signup')\n  })\n\n  it('sends users to /app after signing in', async () => {\n    seedUser('customer', 'jane@example.com')\n    const { user, router } = renderApp({ path: '/login' })\n\n    await user.type(await screen.findByLabelText(/email/i), 'jane@example.com')\n    await user.type(screen.getByLabelText(/password/i), PASSWORD)\n    await user.click(screen.getByRole('button', { name: /sign in/i }))\n\n    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))\n  })\n\n  it('sends users to /app after signing up', async () => {\n    const { user, router } = renderApp({ path: '/signup' })\n\n    await user.type(await screen.findByLabelText(/full name/i), 'New Buyer')\n    await user.type(screen.getByLabelText(/email/i), 'buyer@example.com')\n    await user.type(screen.getByLabelText(/password/i), 'long-enough-1')\n    await user.click(screen.getByRole('button', { name: /create account/i }))\n\n    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))\n  })\n\n  it('returns to the originally requested app URL, query included, after signing in', async () => {\n    seedUser('customer', 'jane@example.com')\n    const { user, router } = renderApp({ path: '/app?category=suv' })\n\n    await user.type(await screen.findByLabelText(/email/i), 'jane@example.com')\n    await user.type(screen.getByLabelText(/password/i), PASSWORD)\n    await user.click(screen.getByRole('button', { name: /sign in/i }))\n\n    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))\n    expect(router.state.location.search).toBe('?category=suv')\n  })\n\n  it('sends signed-in users away from sign-in and sign-up to /app', async () => {\n    const customer = seedUser('customer')\n    const { router } = renderApp({ path: '/signup', user: customer })\n\n    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))\n  })\n\n  it('lets signed-in users browse public pages', async () => {\n    const customer = seedUser('customer')\n    const { router } = renderApp({ path: '/', user: customer })\n\n    expect(await screen.findByRole('link', { name: /open dashboard/i })).toHaveAttribute('href', '/app')\n    expect(router.state.location.pathname).toBe('/')\n  })\n\n  it('shows a 404 page for unknown URLs', async () => {\n    renderApp({ path: '/no-such-page' })\n\n    expect(await screen.findByRole('heading', { name: /page not found/i })).toBeInTheDocument()\n  })\n})\nEOF\nnpx vitest run 2>&1 | grep -E \"×|Tests \" | head -20",
+  "description": "Move tests to /app and add failing routing tests",
+  "timeout": 180000
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:39:31.381Z</sub>
+
+Red as expected: `/app` and `/signup` don't exist yet, so these tests fail. Committing, then implementing the routing with a minimal public layout. The full landing page comes in the next phase.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Commit failing routing tests</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory && git add frontend && git commit -q -m \"test(web): specify public site at /, app at /app, /signup, post-auth redirects (red)\n\nExisting app tests now open /app instead of /.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1",
+  "description": "Commit failing routing tests"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Implement marketing layout, routing split, redirects; run checks</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && mkdir -p src/marketing && cat > src/marketing/MarketingLayout.tsx <<'EOF'\nimport { Menu, X } from 'lucide-react'\nimport { useEffect, useState } from 'react'\nimport { Link, NavLink, Outlet, useLocation } from 'react-router'\nimport { useAuth } from '../auth/AuthContext'\nimport { cn } from '../components/cn'\nimport { Logo } from '../components/Logo'\nimport { ThemeToggle } from '../theme/ThemeToggle'\n\nconst LINKS = [\n  { to: '/', label: 'Home', end: true },\n  { to: '/#features', label: 'Features' },\n  { to: '/about', label: 'About' },\n  { to: '/pricing', label: 'Pricing' },\n]\n\nconst linkClass = 'text-sm font-medium text-slate-600 transition-colors hover:text-slate-900'\n\nfunction AuthActions({ stacked = false, onNavigate }: { stacked?: boolean; onNavigate?: () => void }) {\n  const { status } = useAuth()\n  const primary =\n    'inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-on-accent shadow-sm transition hover:bg-brand-700'\n  if (status === 'authenticated') {\n    return (\n      <Link to=\"/app\" onClick={onNavigate} className={primary}>\n        Open dashboard\n      </Link>\n    )\n  }\n  return (\n    <div className={cn('flex items-center gap-3', stacked && 'flex-col items-stretch')}>\n      <Link to=\"/login\" onClick={onNavigate} className={cn(linkClass, stacked && 'py-2 text-center')}>\n        Sign In\n      </Link>\n      <Link to=\"/signup\" onClick={onNavigate} className={primary}>\n        Get Started\n      </Link>\n    </div>\n  )\n}\n\nfunction Navbar() {\n  const [open, setOpen] = useState(false)\n  const [scrolled, setScrolled] = useState(false)\n  const close = () => setOpen(false)\n\n  useEffect(() => {\n    const onScroll = () => setScrolled(window.scrollY > 8)\n    onScroll()\n    window.addEventListener('scroll', onScroll, { passive: true })\n    return () => window.removeEventListener('scroll', onScroll)\n  }, [])\n\n  return (\n    <header\n      className={cn(\n        'sticky top-0 z-40 border-b transition-colors duration-300',\n        scrolled || open\n          ? 'border-slate-200 bg-white/80 backdrop-blur-lg'\n          : 'border-transparent bg-transparent',\n      )}\n    >\n      <nav aria-label=\"Primary\" className=\"mx-auto flex h-16 max-w-7xl items-center gap-8 px-4 sm:px-6 lg:px-8\">\n        <Link to=\"/\" onClick={close} aria-label=\"DriveStock home\">\n          <Logo />\n        </Link>\n        <ul className=\"hidden items-center gap-7 md:flex\">\n          {LINKS.map((link) => (\n            <li key={link.to}>\n              <NavLink\n                to={link.to}\n                end={link.end}\n                className={({ isActive }) =>\n                  cn(linkClass, isActive && !link.to.includes('#') && 'text-slate-900')\n                }\n              >\n                {link.label}\n              </NavLink>\n            </li>\n          ))}\n        </ul>\n        <div className=\"ml-auto hidden items-center gap-3 md:flex\">\n          <ThemeToggle />\n          <AuthActions />\n        </div>\n        <div className=\"ml-auto flex items-center gap-1 md:hidden\">\n          <ThemeToggle />\n          <button\n            type=\"button\"\n            aria-label={open ? 'Close menu' : 'Open menu'}\n            aria-expanded={open}\n            aria-controls=\"mobile-menu\"\n            onClick={() => setOpen((value) => !value)}\n            className=\"rounded-md p-2 text-slate-700 hover:bg-slate-100\"\n          >\n            {open ? <X className=\"size-5\" /> : <Menu className=\"size-5\" />}\n          </button>\n        </div>\n      </nav>\n      {open && (\n        <div id=\"mobile-menu\" className=\"animate-fade-in border-t border-slate-200 px-4 pt-2 pb-5 md:hidden\">\n          <ul className=\"space-y-1\">\n            {LINKS.map((link) => (\n              <li key={link.to}>\n                <Link\n                  to={link.to}\n                  onClick={close}\n                  className=\"block rounded-md px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100\"\n                >\n                  {link.label}\n                </Link>\n              </li>\n            ))}\n          </ul>\n          <div className=\"mt-4 border-t border-slate-200 pt-4\">\n            <AuthActions stacked onNavigate={close} />\n          </div>\n        </div>\n      )}\n    </header>\n  )\n}\n\nfunction Footer() {\n  return (\n    <footer className=\"border-t border-slate-200\">\n      <div className=\"mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8\">\n        <div className=\"space-y-2\">\n          <Logo />\n          <p className=\"text-sm text-slate-500\">Inventory management for car dealerships.</p>\n        </div>\n        <ul className=\"flex flex-wrap gap-x-6 gap-y-2 text-sm\">\n          {[...LINKS.slice(1), { to: '/login', label: 'Sign In' }, { to: '/signup', label: 'Get Started' }].map(\n            (link) => (\n              <li key={link.to}>\n                <Link to={link.to} className=\"text-slate-500 hover:text-slate-900\">\n                  {link.label}\n                </Link>\n              </li>\n            ),\n          )}\n        </ul>\n      </div>\n    </footer>\n  )\n}\n\n/** Scroll to #hash targets (e.g. /#features) and to the top on page changes. */\nfunction useScrollToHash() {\n  const { pathname, hash } = useLocation()\n  useEffect(() => {\n    if (hash) {\n      document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' })\n    } else {\n      window.scrollTo?.({ top: 0 })\n    }\n  }, [pathname, hash])\n}\n\nexport function MarketingLayout() {\n  useScrollToHash()\n  return (\n    <div className=\"flex min-h-full flex-col bg-canvas\">\n      <Navbar />\n      <main className=\"flex-1\">\n        <Outlet />\n      </main>\n      <Footer />\n    </div>\n  )\n}\nEOF\ncat > src/marketing/HomePage.tsx <<'EOF'\nexport function HomePage() {\n  return (\n    <section className=\"mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8\">\n      <h1 className=\"text-4xl font-semibold text-slate-900\">Inventory management for car dealerships</h1>\n    </section>\n  )\n}\nEOF\npython3 - <<'EOF'\nimport pathlib\ndef sub(path,pairs):\n    p=pathlib.Path(path);s=p.read_text()\n    for a,b in pairs:\n        assert a in s,(path,a); s=s.replace(a,b)\n    p.write_text(s)\npathlib.Path(\"src/routes.tsx\").write_text('''import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router'\nimport { GuestOnly, RequireAuth } from './auth/guards'\nimport { InventoryPage } from './features/inventory/InventoryPage'\nimport { AppShell } from './layout/AppShell'\nimport { HomePage } from './marketing/HomePage'\nimport { MarketingLayout } from './marketing/MarketingLayout'\nimport { LoginPage } from './pages/LoginPage'\nimport { NotFoundPage } from './pages/NotFoundPage'\nimport { RegisterPage } from './pages/RegisterPage'\n\n/** Where users land after signing in or up. */\nexport const APP_HOME = '/app'\n\nexport const routes: RouteObject[] = [\n  {\n    // Public marketing site\n    element: <MarketingLayout />,\n    children: [\n      { path: '/', element: <HomePage /> },\n      { path: '*', element: <NotFoundPage /> },\n    ],\n  },\n  {\n    element: <GuestOnly />,\n    children: [\n      { path: '/login', element: <LoginPage /> },\n      { path: '/signup', element: <RegisterPage /> },\n    ],\n  },\n  { path: '/register', element: <Navigate to=\"/signup\" replace /> },\n  {\n    // The inventory application\n    element: <RequireAuth />,\n    children: [\n      {\n        element: <AppShell />,\n        children: [{ path: APP_HOME, element: <InventoryPage /> }],\n      },\n    ],\n  },\n]\n\nexport type AppRouter = ReturnType<typeof createBrowserRouter>\n\nexport function createAppRouter(kind: 'browser' | 'memory' = 'browser', initialEntries?: string[]): AppRouter {\n  return kind === 'memory' ? createMemoryRouter(routes, { initialEntries }) : createBrowserRouter(routes)\n}\n''')\nsub(\"src/auth/guards.tsx\",[\n ('<Navigate to=\"/login\" replace state={{ from: location.pathname }} />','<Navigate to=\"/login\" replace state={{ from: location.pathname + location.search }} />'),\n ('if (status === \\'authenticated\\') return <Navigate to=\"/\" replace />','if (status === \\'authenticated\\') return <Navigate to=\"/app\" replace />'),\n])\nsub(\"src/pages/LoginPage.tsx\",[\n (\"navigate(from && from !== '/login' ? from : '/', { replace: true })\",\"navigate(from?.startsWith('/app') ? from : '/app', { replace: true })\"),\n ('<Link to=\"/register\"','<Link to=\"/signup\"'),\n])\nsub(\"src/pages/RegisterPage.tsx\",[\n (\"navigate('/', { replace: true })\",\"navigate('/app', { replace: true })\"),\n ('subtitle=\"Browse the full inventory and buy in a few clicks.\"','subtitle=\"Create a free account to browse the live inventory and try DriveStock.\"'),\n])\nsub(\"src/layout/AppShell.tsx\",[('        to=\"/\"\\n','        to=\"/app\"\\n')])\nsub(\"src/pages/NotFoundPage.tsx\",[('<Link to=\"/\"','<Link to=\"/\"'),('Back to inventory','Back to home'),('flex h-full flex-col','flex min-h-[60vh] flex-col')])\nsub(\"src/pages/AuthLayout.tsx\",[\n (\"        <Logo inverted />\\n        <div className=\\\"space-y-8\\\">\",\"        <Link to=\\\"/\\\" aria-label=\\\"DriveStock home\\\" className=\\\"self-start\\\">\\n          <Logo inverted />\\n        </Link>\\n        <div className=\\\"space-y-8\\\">\"),\n (\"          <div className=\\\"mb-8 lg:hidden\\\">\\n            <Logo />\\n          </div>\",\"          <Link to=\\\"/\\\" aria-label=\\\"DriveStock home\\\" className=\\\"mb-8 inline-block lg:hidden\\\">\\n            <Logo />\\n          </Link>\"),\n (\"import type { ReactNode } from 'react'\",\"import type { ReactNode } from 'react'\\nimport { Link } from 'react-router'\"),\n])\n# fade-in keyframes used by the mobile menu\nsub(\"src/index.css\",[(\"  --color-nav-muted: #94a3b8;\\n}\",\"  --color-nav-muted: #94a3b8;\\n\\n  --animate-fade-in: fade-in 200ms ease-out both;\\n\\n  @keyframes fade-in {\\n    from {\\n      opacity: 0;\\n      transform: translateY(-4px);\\n    }\\n  }\\n}\")])\nEOF\ngrep -n \"APP_HOME\" src/routes.tsx | head -2; npx vitest run 2>&1 | grep -E \"×|Tests \"; npm run typecheck 2>&1 | grep error; npm run lint 2>&1 | grep -E \"warning|error\"",
+  "description": "Implement marketing layout, routing split, redirects; run checks",
+  "timeout": 180000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Inspect the remaining failure</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && npx vitest run src/routing.test.tsx -t \"query included\" 2>&1 | grep -E \"Expected|Received|AssertionError\" | head -5",
+  "description": "Inspect the remaining failure",
+  "timeout": 120000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Honour requested URL in guard; rerun checks</summary>
+
+````json
+{
+  "command": "cat > src/auth/guards.tsx <<'EOF'\nimport { Navigate, Outlet, useLocation, type Location } from 'react-router'\nimport { FullPageSpinner } from '../components/Spinner'\nimport { useAuth } from './AuthContext'\n\n/** Where to go after signing in/up: the app URL originally requested, else /app. */\nexport function postAuthTarget(location: Location): string {\n  const from = (location.state as { from?: string } | null)?.from\n  return from?.startsWith('/app') ? from : '/app'\n}\n\nexport function RequireAuth() {\n  const { status } = useAuth()\n  const location = useLocation()\n  if (status === 'loading') return <FullPageSpinner />\n  if (status === 'anonymous') {\n    return <Navigate to=\"/login\" replace state={{ from: location.pathname + location.search }} />\n  }\n  return <Outlet />\n}\n\nexport function GuestOnly() {\n  const { status } = useAuth()\n  const location = useLocation()\n  if (status === 'loading') return <FullPageSpinner />\n  if (status === 'authenticated') return <Navigate to={postAuthTarget(location)} replace />\n  return <Outlet />\n}\nEOF\npython3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/pages/LoginPage.tsx\");s=p.read_text()\na='''      const from = (location.state as { from?: string } | null)?.from\n      navigate(from?.startsWith('/app') ? from : '/app', { replace: true })'''\nassert a in s\ns=s.replace(a,\"      navigate(postAuthTarget(location), { replace: true })\")\ns=s.replace(\"import { useAuth } from '../auth/AuthContext'\",\"import { useAuth } from '../auth/AuthContext'\\nimport { postAuthTarget } from '../auth/guards'\")\np.write_text(s)\nEOF\nnpx vitest run 2>&1 | grep -E \"×|Tests \"; npm run typecheck 2>&1 | grep error; npm run lint 2>&1 | grep -E \"warning|error\"",
+  "description": "Honour requested URL in guard; rerun checks",
+  "timeout": 180000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Move helper to own module, recheck, commit routing phase</summary>
+
+````json
+{
+  "command": "python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/auth/guards.tsx\");s=p.read_text()\nstart=s.index(\"/** Where to go after\"); end=s.index(\"export function RequireAuth\")\nfn=s[start:end]; s=s[:start]+s[end:]\ns=s.replace(\"import { Navigate, Outlet, useLocation, type Location } from 'react-router'\",\"import { Navigate, Outlet, useLocation } from 'react-router'\")\ns=s.replace(\"import { useAuth } from './AuthContext'\",\"import { useAuth } from './AuthContext'\\nimport { postAuthTarget } from './redirects'\")\np.write_text(s)\npathlib.Path(\"src/auth/redirects.ts\").write_text(\"import type { Location } from 'react-router'\\n\\n\"+fn.rstrip()+\"\\n\")\np=pathlib.Path(\"src/pages/LoginPage.tsx\");s=p.read_text()\ns=s.replace(\"import { postAuthTarget } from '../auth/guards'\",\"import { postAuthTarget } from '../auth/redirects'\"); p.write_text(s)\nEOF\nnpx vitest run 2>&1 | grep -E \"×|Tests \"; npm run typecheck 2>&1 | grep error; npm run lint 2>&1 | grep -E \"warning|error\"; cd .. && git add frontend && git commit -q -m \"feat(web): public site at /, inventory app at /app, /signup and post-auth redirects (green)\n\n- MarketingLayout: sticky responsive navbar (Home, Features, About,\n  Pricing, Sign In, Get Started; 'Open dashboard' when signed in), footer,\n  theme toggle, #hash scrolling; 404 page lives inside it\n- /register redirects to /signup; signed-in users on /login or /signup go\n  to /app or the originally requested /app URL (query preserved)\n- Fix found by the new test: GuestOnly redirected to bare /app before the\n  login page could navigate back to the requested URL\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1",
+  "description": "Move helper to own module, recheck, commit routing phase",
+  "timeout": 180000
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:41:14.576Z</sub>
+
+Phase 1 (routing) is done, with 63 tests passing. Starting Phase 2, the marketing pages, with tests first.
+
+<details><summary>🔧 Tool call: <code>Write</code> — /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend/src/marketing/marketing.test.tsx</summary>
+
+````json
+{
+  "file_path": "/Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend/src/marketing/marketing.test.tsx",
+  "content": "import { screen, waitFor, within } from '@testing-library/react'\nimport { describe, expect, it } from 'vitest'\nimport { seedUser } from '../test/handlers'\nimport { renderApp } from '../test/utils'\n\nfunction nav() {\n  return screen.findByRole('navigation', { name: /primary/i })\n}\n\ndescribe('navbar', () => {\n  it('links to every public section and the auth entry points', async () => {\n    renderApp({ path: '/' })\n    const primary = await nav()\n\n    for (const [name, href] of [\n      ['Home', '/'],\n      ['Features', '/#features'],\n      ['About', '/about'],\n      ['Pricing', '/pricing'],\n      ['Sign In', '/login'],\n      ['Get Started', '/signup'],\n    ]) {\n      expect(within(primary).getByRole('link', { name })).toHaveAttribute('href', href)\n    }\n  })\n\n  it('navigates between public pages', async () => {\n    const { user, router } = renderApp({ path: '/' })\n\n    await user.click(within(await nav()).getByRole('link', { name: 'Pricing' }))\n\n    await waitFor(() => expect(router.state.location.pathname).toBe('/pricing'))\n    expect(await screen.findByRole('heading', { level: 1, name: /pricing/i })).toBeInTheDocument()\n  })\n\n  it('has a mobile menu that opens and closes', async () => {\n    const { user } = renderApp({ path: '/' })\n    const toggle = within(await nav()).getByRole('button', { name: /open menu/i })\n\n    await user.click(toggle)\n\n    expect(toggle).toHaveAttribute('aria-expanded', 'true')\n    const menu = document.getElementById('mobile-menu')!\n    expect(within(menu).getByRole('link', { name: 'About' })).toBeInTheDocument()\n    expect(within(menu).getByRole('link', { name: 'Get Started' })).toBeInTheDocument()\n\n    await user.click(within(menu).getByRole('link', { name: 'About' }))\n    expect(document.getElementById('mobile-menu')).toBeNull()\n  })\n\n  it('offers the dashboard instead of sign-in to signed-in users', async () => {\n    renderApp({ path: '/', user: seedUser('customer') })\n    const primary = await nav()\n\n    expect(await within(primary).findByRole('link', { name: 'Open dashboard' })).toHaveAttribute('href', '/app')\n    expect(within(primary).queryByRole('link', { name: 'Sign In' })).not.toBeInTheDocument()\n  })\n})\n\ndescribe('home page', () => {\n  it('explains the product with clear calls to action', async () => {\n    renderApp({ path: '/' })\n\n    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument()\n    const hero = screen.getByRole('region', { name: /introduction/i })\n    expect(within(hero).getByRole('link', { name: /get started/i })).toHaveAttribute('href', '/signup')\n    expect(within(hero).getByRole('link', { name: /sign in/i })).toHaveAttribute('href', '/login')\n  })\n\n  it('shows a dashboard preview clearly marked as sample data', async () => {\n    renderApp({ path: '/' })\n\n    const preview = await screen.findByRole('figure', { name: /dashboard preview/i })\n    expect(within(preview).getByText(/sample data/i)).toBeInTheDocument()\n    expect(within(preview).getAllByText(/in stock|low stock|out of stock/i).length).toBeGreaterThan(0)\n  })\n\n  it('has a features section that the Features link targets', async () => {\n    renderApp({ path: '/' })\n\n    const features = await screen.findByRole('region', { name: /features/i })\n    expect(features).toHaveAttribute('id', 'features')\n    expect(within(features).getAllByRole('heading', { level: 3 }).length).toBeGreaterThanOrEqual(6)\n  })\n})\n\ndescribe('about page', () => {\n  it('covers mission, purpose and audience', async () => {\n    renderApp({ path: '/about' })\n\n    expect(await screen.findByRole('heading', { level: 1, name: /about/i })).toBeInTheDocument()\n    expect(screen.getByRole('heading', { name: /mission/i })).toBeInTheDocument()\n    expect(screen.getByRole('heading', { name: /why/i })).toBeInTheDocument()\n    expect(screen.getByRole('heading', { name: /who it.s for/i })).toBeInTheDocument()\n  })\n})\n\ndescribe('pricing page', () => {\n  it('shows three plans clearly labelled as placeholders', async () => {\n    renderApp({ path: '/pricing' })\n\n    expect(await screen.findByRole('heading', { level: 1, name: /pricing/i })).toBeInTheDocument()\n    expect(screen.getByRole('note')).toHaveTextContent(/placeholder/i)\n    const plans = within(screen.getByRole('list', { name: /plans/i })).getAllByRole('listitem')\n    expect(plans).toHaveLength(3)\n    for (const plan of plans) {\n      expect(within(plan).getByText(/placeholder/i)).toBeInTheDocument()\n    }\n  })\n\n  it('sends plan buttons to sign-up, not to any checkout', async () => {\n    renderApp({ path: '/pricing' })\n\n    const plans = within(await screen.findByRole('list', { name: /plans/i })).getAllByRole('listitem')\n    for (const plan of plans) {\n      expect(within(plan).getByRole('link')).toHaveAttribute('href', '/signup')\n    }\n  })\n})\n"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Run marketing tests (expect red) and commit</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && npx vitest run src/marketing 2>&1 | grep -E \"✓|×|Tests \"; cd .. && git add frontend && git commit -q -m \"test(web): specify navbar, landing, about and placeholder pricing pages (red)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1",
+  "description": "Run marketing tests (expect red) and commit",
+  "timeout": 120000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Add reveal animation, keyframes and dashboard preview</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/index.css\");s=p.read_text()\na=\"  --animate-fade-in: fade-in 200ms ease-out both;\\n\"\nassert a in s\ns=s.replace(a,a+\"  --animate-float: float 6s ease-in-out infinite;\\n\")\na=\"  @keyframes fade-in {\\n    from {\\n      opacity: 0;\\n      transform: translateY(-4px);\\n    }\\n  }\\n\"\nassert a in s\ns=s.replace(a,a+\"\\n  @keyframes float {\\n    0%,\\n    100% {\\n      transform: translateY(0);\\n    }\\n    50% {\\n      transform: translateY(-8px);\\n    }\\n  }\\n\")\ns+='''\n/* Scroll-reveal for marketing sections; disabled for reduced-motion users. */\n@media (prefers-reduced-motion: no-preference) {\n  .reveal {\n    opacity: 0;\n    transform: translateY(16px);\n    transition:\n      opacity 700ms ease-out,\n      transform 700ms ease-out;\n  }\n  .reveal.is-visible {\n    opacity: 1;\n    transform: none;\n  }\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .animate-float {\n    animation: none;\n  }\n}\n'''\np.write_text(s)\nEOF\ncat > src/marketing/Reveal.tsx <<'EOF'\nimport { useEffect, useRef, useState, type ReactNode } from 'react'\nimport { cn } from '../components/cn'\n\n/** Fades its children in when scrolled into view (CSS handles reduced motion). */\nexport function Reveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {\n  const ref = useRef<HTMLDivElement>(null)\n  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')\n\n  useEffect(() => {\n    const node = ref.current\n    if (!node || visible) return\n    const observer = new IntersectionObserver(\n      ([entry]) => {\n        if (entry?.isIntersecting) {\n          setVisible(true)\n          observer.disconnect()\n        }\n      },\n      { rootMargin: '0px 0px -10% 0px' },\n    )\n    observer.observe(node)\n    return () => observer.disconnect()\n  }, [visible])\n\n  return (\n    <div ref={ref} style={{ transitionDelay: `${delay}ms` }} className={cn('reveal', visible && 'is-visible', className)}>\n      {children}\n    </div>\n  )\n}\nEOF\ncat > src/marketing/DashboardPreview.tsx <<'EOF'\nimport { CarFront, ShoppingCart } from 'lucide-react'\nimport type { Vehicle } from '../api/types'\nimport { formatPrice, specLine, vehicleTitle } from '../features/inventory/format'\nimport { StockBadge } from '../features/inventory/StockBadge'\nimport { VehicleThumb } from '../features/inventory/VehicleThumb'\n\n// Illustrative sample rows; not live data.\nconst SAMPLE: Vehicle[] = [\n  { id: 1, make: 'Ford', model: 'Kuga', trim: 'ST-Line', year: 2024, category: 'suv', fuel_type: 'hybrid', transmission: 'automatic', price: '35990.00', quantity: 6 },\n  { id: 2, make: 'Tesla', model: 'Model 3', trim: 'Long Range', year: 2025, category: 'sedan', fuel_type: 'electric', transmission: 'automatic', price: '42990.00', quantity: 2 },\n  { id: 3, make: 'Ford', model: 'Ranger', trim: 'Wildtrak', year: 2024, category: 'truck', fuel_type: 'diesel', transmission: 'automatic', price: '44800.00', quantity: 3 },\n  { id: 4, make: 'BMW', model: '4 Series', trim: 'M Sport', year: 2024, category: 'convertible', fuel_type: 'petrol', transmission: 'automatic', price: '58900.00', quantity: 0 },\n]\n\nexport function DashboardPreview() {\n  const featured = SAMPLE[0]!\n  return (\n    <figure aria-label=\"Dashboard preview\" className=\"relative\">\n      <div className=\"overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-navy-900/20 ring-1 ring-slate-900/5\">\n        {/* window chrome */}\n        <div className=\"flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5\">\n          <span className=\"size-2.5 rounded-full bg-red-400\" />\n          <span className=\"size-2.5 rounded-full bg-amber-400\" />\n          <span className=\"size-2.5 rounded-full bg-emerald-400\" />\n          <span className=\"ml-3 truncate rounded bg-white px-3 py-0.5 text-[11px] text-slate-400 ring-1 ring-slate-200\">\n            drivestock / app\n          </span>\n          <span className=\"ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand-700 uppercase dark:bg-brand-500/15 dark:text-brand-100\">\n            Sample data\n          </span>\n        </div>\n        <div className=\"flex\">\n          <div aria-hidden className=\"hidden w-40 shrink-0 bg-navy-900 p-3 sm:block\">\n            <div className=\"flex items-center gap-2 px-1 py-1.5\">\n              <span className=\"flex size-6 items-center justify-center rounded bg-brand-500 text-on-accent\">\n                <CarFront className=\"size-3.5\" />\n              </span>\n              <span className=\"text-xs font-bold text-on-accent\">DriveStock</span>\n            </div>\n            <div className=\"mt-4 rounded bg-navy-800 px-2 py-1.5 text-[11px] font-medium text-on-accent shadow-[inset_2px_0_0_var(--color-brand-500)]\">\n              Vehicles\n            </div>\n          </div>\n          <div className=\"min-w-0 flex-1\">\n            <div className=\"flex items-center justify-between border-b border-slate-200 px-4 py-3\">\n              <p className=\"text-sm font-semibold text-slate-900\">\n                Vehicles <span className=\"font-normal text-slate-500\">(4)</span>\n              </p>\n              <span className=\"rounded border border-slate-200 px-2 py-1 text-[11px] text-slate-500\">Newest first</span>\n            </div>\n            <ul className=\"divide-y divide-slate-200\">\n              {SAMPLE.map((vehicle) => (\n                <li key={vehicle.id} className=\"flex items-center gap-3 px-4 py-2.5\">\n                  <div className=\"hidden scale-75 sm:block sm:-mx-2\">\n                    <VehicleThumb category={vehicle.category} />\n                  </div>\n                  <div className=\"min-w-0 flex-1\">\n                    <p className=\"truncate text-[13px] font-semibold text-slate-900\">{vehicleTitle(vehicle)}</p>\n                    <p className=\"truncate text-[11px] text-slate-500\">{specLine(vehicle).join(' • ')}</p>\n                  </div>\n                  <StockBadge quantity={vehicle.quantity} className=\"hidden md:inline-flex\" />\n                  <p className=\"w-20 text-right text-[13px] font-semibold text-slate-900 tabular-nums\">\n                    {formatPrice(vehicle.price)}\n                  </p>\n                </li>\n              ))}\n            </ul>\n          </div>\n        </div>\n      </div>\n\n      {/* floating details card */}\n      <div\n        aria-hidden\n        className=\"animate-float absolute -right-4 -bottom-10 hidden w-60 rounded-xl border border-slate-200 bg-white p-4 shadow-xl lg:block xl:-right-10\"\n      >\n        <p className=\"text-xs text-slate-500\">{featured.trim} · {featured.year}</p>\n        <p className=\"text-sm font-semibold text-slate-900\">{vehicleTitle(featured)}</p>\n        <div className=\"mt-3 flex items-center justify-between\">\n          <p className=\"text-lg font-semibold text-slate-900\">{formatPrice(featured.price)}</p>\n          <StockBadge quantity={featured.quantity} />\n        </div>\n        <div className=\"mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-brand-600 text-xs font-medium text-on-accent\">\n          <ShoppingCart className=\"size-3.5\" /> Purchase\n        </div>\n      </div>\n      <figcaption className=\"sr-only\">Illustration of the DriveStock inventory screen using sample data.</figcaption>\n    </figure>\n  )\n}\nEOF\necho ok",
+  "description": "Add reveal animation, keyframes and dashboard preview"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Add shared marketing UI and full landing page</summary>
+
+````json
+{
+  "command": "cat > src/marketing/ui.tsx <<'EOF'\nimport { ArrowRight } from 'lucide-react'\nimport type { ReactNode } from 'react'\nimport { Link } from 'react-router'\nimport { cn } from '../components/cn'\n\nexport function Eyebrow({ children, inverted = false }: { children: ReactNode; inverted?: boolean }) {\n  return (\n    <p\n      className={cn(\n        'text-xs font-semibold tracking-[0.18em] uppercase',\n        inverted ? 'text-blue-300' : 'text-brand-600 dark:text-blue-400',\n      )}\n    >\n      {children}\n    </p>\n  )\n}\n\nexport function SectionHeading({\n  id,\n  eyebrow,\n  title,\n  children,\n  center = false,\n}: {\n  id?: string\n  eyebrow: string\n  title: string\n  children?: ReactNode\n  center?: boolean\n}) {\n  return (\n    <div className={cn('max-w-2xl space-y-3', center && 'mx-auto text-center')}>\n      <Eyebrow>{eyebrow}</Eyebrow>\n      <h2 id={id} className=\"text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl\">\n        {title}\n      </h2>\n      {children && <p className=\"text-base leading-relaxed text-slate-600\">{children}</p>}\n    </div>\n  )\n}\n\nexport function PrimaryCta({ to = '/signup', children = 'Get Started', className }: { to?: string; children?: ReactNode; className?: string }) {\n  return (\n    <Link\n      to={to}\n      className={cn(\n        'group inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-sm font-semibold text-on-accent shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-brand-600/35',\n        className,\n      )}\n    >\n      {children}\n      <ArrowRight aria-hidden className=\"size-4 transition-transform group-hover:translate-x-0.5\" />\n    </Link>\n  )\n}\n\nexport function SecondaryCta({ to = '/login', children = 'Sign In', inverted = false }: { to?: string; children?: ReactNode; inverted?: boolean }) {\n  return (\n    <Link\n      to={to}\n      className={cn(\n        'inline-flex h-12 items-center justify-center rounded-lg px-6 text-sm font-semibold transition hover:-translate-y-0.5',\n        inverted\n          ? 'border border-on-accent/25 text-on-accent hover:bg-on-accent/10'\n          : 'border border-slate-300 bg-white text-slate-800 hover:border-slate-400',\n      )}\n    >\n      {children}\n    </Link>\n  )\n}\n\n/** Navy closing band shared by marketing pages. */\nexport function CtaBand({ title, children }: { title: string; children: ReactNode }) {\n  return (\n    <section aria-label=\"Get started\" className=\"px-4 py-20 sm:px-6 lg:px-8\">\n      <div className=\"relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-navy-900 px-6 py-14 text-center sm:px-12\">\n        <div aria-hidden className=\"pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-brand-500/30 blur-3xl\" />\n        <div className=\"relative space-y-5\">\n          <h2 className=\"text-3xl font-semibold tracking-tight text-on-accent sm:text-4xl\">{title}</h2>\n          <p className=\"mx-auto max-w-xl text-nav-text\">{children}</p>\n          <div className=\"flex flex-col justify-center gap-3 sm:flex-row\">\n            <PrimaryCta />\n            <SecondaryCta inverted />\n          </div>\n        </div>\n      </div>\n    </section>\n  )\n}\nEOF\ncat > src/marketing/HomePage.tsx <<'EOF'\nimport {\n  BadgeCheck,\n  Boxes,\n  Gauge,\n  KeyRound,\n  LayoutList,\n  MonitorSmartphone,\n  PackagePlus,\n  Search,\n  ShieldCheck,\n  ShoppingCart,\n  type LucideIcon,\n} from 'lucide-react'\nimport { DashboardPreview } from './DashboardPreview'\nimport { Reveal } from './Reveal'\nimport { CtaBand, Eyebrow, PrimaryCta, SecondaryCta, SectionHeading } from './ui'\n\nconst OUTCOMES: { icon: LucideIcon; title: string; body: string }[] = [\n  {\n    icon: Gauge,\n    title: 'Know exactly what is on the lot',\n    body: 'Every model shows live stock: in stock, running low or sold out. No spreadsheets to reconcile.',\n  },\n  {\n    icon: ShieldCheck,\n    title: 'Never sell the same car twice',\n    body: 'Purchases reduce stock in a single atomic step, so two buyers can’t claim the last unit.',\n  },\n  {\n    icon: KeyRound,\n    title: 'The right access for everyone',\n    body: 'Customers browse and buy; staff manage listings, pricing and stock. Permissions are enforced on the server.',\n  },\n]\n\nconst FEATURES: { icon: LucideIcon; title: string; body: string }[] = [\n  { icon: LayoutList, title: 'Inventory at a glance', body: 'A dense, readable list with make, model, trim, year, specs, price and stock.' },\n  { icon: Search, title: 'Search and filters', body: 'Find vehicles by make, model or trim, and filter by category, price range and availability.' },\n  { icon: BadgeCheck, title: 'Detailed vehicle view', body: 'A side panel with full specifications and stock status, without leaving the list.' },\n  { icon: ShoppingCart, title: 'Safe purchasing', body: 'Quantity limited to available stock, with clear feedback when a car sells out.' },\n  { icon: PackagePlus, title: 'Staff tools', body: 'Add vehicles, edit details and pricing, restock, and remove listings with confirmation.' },\n  { icon: ShieldCheck, title: 'Secure accounts', body: 'Hashed passwords, token-based sessions and role-based permissions.' },\n  { icon: Boxes, title: 'Reliable data', body: 'PostgreSQL storage with migrations and database-level stock constraints.' },\n  { icon: MonitorSmartphone, title: 'Works everywhere', body: 'Responsive on desktop, tablet and phone, in light or dark mode.' },\n]\n\nconst STEPS = [\n  { title: 'Add your vehicles', body: 'Staff list each model with its details, price and starting stock.' },\n  { title: 'Customers browse and buy', body: 'Buyers search, compare specs and purchase. Stock updates instantly.' },\n  { title: 'Restock as you go', body: 'Low and sold-out badges show what needs attention; restock in a few clicks.' },\n]\n\nexport function HomePage() {\n  return (\n    <>\n      {/* Hero */}\n      <section aria-label=\"Introduction\" className=\"relative overflow-hidden\">\n        <div aria-hidden className=\"pointer-events-none absolute inset-0 -z-0\">\n          <div className=\"absolute -top-40 left-1/2 h-[32rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl\" />\n          <div className=\"absolute inset-0 bg-[linear-gradient(to_right,var(--color-slate-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-slate-200)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_70%)] bg-[size:48px_48px] opacity-60\" />\n        </div>\n        <div className=\"relative mx-auto max-w-7xl px-4 pt-16 pb-24 sm:px-6 sm:pt-24 lg:px-8\">\n          <div className=\"mx-auto max-w-3xl text-center\">\n            <Reveal>\n              <span className=\"inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur\">\n                <span className=\"size-1.5 rounded-full bg-emerald-500\" />\n                Inventory management for car dealerships\n              </span>\n            </Reveal>\n            <Reveal delay={80}>\n              <h1 className=\"mt-6 text-4xl font-semibold tracking-tight text-balance text-slate-900 sm:text-6xl\">\n                Every car on your lot,{' '}\n                <span className=\"bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-sky-300\">\n                  accounted for.\n                </span>\n              </h1>\n            </Reveal>\n            <Reveal delay={160}>\n              <p className=\"mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600\">\n                DriveStock keeps your vehicle inventory accurate in real time. Track stock, manage listings and let\n                customers buy with confidence, from one clean dashboard.\n              </p>\n            </Reveal>\n            <Reveal delay={240}>\n              <div className=\"mt-9 flex flex-col justify-center gap-3 sm:flex-row\">\n                <PrimaryCta />\n                <SecondaryCta />\n              </div>\n            </Reveal>\n          </div>\n          <Reveal delay={320} className=\"mx-auto mt-16 max-w-5xl\">\n            <DashboardPreview />\n          </Reveal>\n        </div>\n      </section>\n\n      {/* How it helps */}\n      <section aria-labelledby=\"helps-title\" className=\"border-y border-slate-200 bg-white py-20\">\n        <div className=\"mx-auto max-w-7xl px-4 sm:px-6 lg:px-8\">\n          <Reveal>\n            <SectionHeading id=\"helps-title\" eyebrow=\"Why DriveStock\" title=\"Built around how a dealership works\">\n              Inventory is a dealership’s biggest asset. DriveStock makes sure everyone sees the same, correct\n              picture of it.\n            </SectionHeading>\n          </Reveal>\n          <div className=\"mt-12 grid gap-8 md:grid-cols-3\">\n            {OUTCOMES.map(({ icon: Icon, title, body }, index) => (\n              <Reveal key={title} delay={index * 90}>\n                <div className=\"space-y-3\">\n                  <span className=\"flex size-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-blue-300\">\n                    <Icon aria-hidden className=\"size-5\" />\n                  </span>\n                  <h3 className=\"text-lg font-semibold text-slate-900\">{title}</h3>\n                  <p className=\"text-sm leading-relaxed text-slate-600\">{body}</p>\n                </div>\n              </Reveal>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      {/* Features */}\n      <section id=\"features\" aria-labelledby=\"features-title\" className=\"scroll-mt-20 py-24\">\n        <div className=\"mx-auto max-w-7xl px-4 sm:px-6 lg:px-8\">\n          <Reveal>\n            <SectionHeading id=\"features-title\" eyebrow=\"Features\" title=\"Everything you need to run the lot\" center>\n              The essentials, done well. No clutter you will never use.\n            </SectionHeading>\n          </Reveal>\n          <div className=\"mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4\">\n            {FEATURES.map(({ icon: Icon, title, body }, index) => (\n              <Reveal key={title} delay={(index % 4) * 70}>\n                <div className=\"group h-full rounded-xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-600/5\">\n                  <Icon aria-hidden className=\"size-6 text-brand-600 transition-transform group-hover:scale-110 dark:text-blue-400\" />\n                  <h3 className=\"mt-4 font-semibold text-slate-900\">{title}</h3>\n                  <p className=\"mt-2 text-sm leading-relaxed text-slate-600\">{body}</p>\n                </div>\n              </Reveal>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      {/* How it works */}\n      <section aria-labelledby=\"steps-title\" className=\"border-t border-slate-200 bg-white py-20\">\n        <div className=\"mx-auto max-w-7xl px-4 sm:px-6 lg:px-8\">\n          <Reveal>\n            <SectionHeading id=\"steps-title\" eyebrow=\"How it works\" title=\"From listing to sale in three steps\" />\n          </Reveal>\n          <ol className=\"mt-12 grid gap-6 md:grid-cols-3\">\n            {STEPS.map((step, index) => (\n              <li key={step.title}>\n                <Reveal delay={index * 90}>\n                  <div className=\"relative h-full rounded-xl border border-slate-200 p-6\">\n                    <span className=\"text-sm font-semibold text-brand-600 tabular-nums dark:text-blue-400\">\n                      0{index + 1}\n                    </span>\n                    <h3 className=\"mt-3 font-semibold text-slate-900\">{step.title}</h3>\n                    <p className=\"mt-2 text-sm leading-relaxed text-slate-600\">{step.body}</p>\n                  </div>\n                </Reveal>\n              </li>\n            ))}\n          </ol>\n        </div>\n      </section>\n\n      <Reveal>\n        <CtaBand title=\"See your inventory clearly\">\n          Create an account in a minute and explore the live inventory dashboard.\n        </CtaBand>\n      </Reveal>\n      <span className=\"sr-only\">\n        <Eyebrow>DriveStock</Eyebrow>\n      </span>\n    </>\n  )\n}\nEOF\necho ok",
+  "description": "Add shared marketing UI and full landing page"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Add About and Pricing pages, routes; run checks</summary>
+
+````json
+{
+  "command": "python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/marketing/HomePage.tsx\");s=p.read_text()\nfor a,b in [('''      <span className=\"sr-only\">\n        <Eyebrow>DriveStock</Eyebrow>\n      </span>\n''',''),(\"import { CtaBand, Eyebrow, PrimaryCta, SecondaryCta, SectionHeading } from './ui'\",\"import { CtaBand, PrimaryCta, SecondaryCta, SectionHeading } from './ui'\"),\n('<section id=\"features\" aria-labelledby=\"features-title\" className=\"scroll-mt-20 py-24\">','<section id=\"features\" aria-label=\"Features\" className=\"scroll-mt-20 py-24\">')]:\n    assert a in s; s=s.replace(a,b)\np.write_text(s)\nEOF\ncat > src/marketing/AboutPage.tsx <<'EOF'\nimport { Building2, Compass, Crosshair, ShieldCheck, Sparkles, Users, type LucideIcon } from 'lucide-react'\nimport { Reveal } from './Reveal'\nimport { CtaBand, Eyebrow, SectionHeading } from './ui'\n\nconst AUDIENCE: { icon: LucideIcon; title: string; body: string }[] = [\n  {\n    icon: Building2,\n    title: 'Dealership owners and managers',\n    body: 'Who need an accurate, current view of stock and want fewer surprises at the end of the day.',\n  },\n  {\n    icon: Users,\n    title: 'Sales and inventory staff',\n    body: 'Who add listings, keep prices current and restock models as they sell.',\n  },\n  {\n    icon: Compass,\n    title: 'Car buyers',\n    body: 'Who want to see what is really available, compare specifications and buy without back-and-forth.',\n  },\n]\n\nconst PRINCIPLES: { icon: LucideIcon; title: string; body: string }[] = [\n  { icon: Crosshair, title: 'Accuracy first', body: 'Stock numbers you can trust, protected at the database level.' },\n  { icon: Sparkles, title: 'Simple by design', body: 'Focused on the core inventory workflow, with no feature clutter.' },\n  { icon: ShieldCheck, title: 'Secure by default', body: 'Permissions are enforced on the server, not just hidden in the interface.' },\n]\n\nexport function AboutPage() {\n  return (\n    <>\n      <section className=\"relative overflow-hidden\">\n        <div aria-hidden className=\"pointer-events-none absolute -top-40 left-1/2 h-[28rem] w-[50rem] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl\" />\n        <div className=\"relative mx-auto max-w-3xl px-4 pt-20 pb-16 text-center sm:px-6\">\n          <Reveal>\n            <Eyebrow>About</Eyebrow>\n            <h1 className=\"mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl\">About DriveStock</h1>\n            <p className=\"mt-6 text-lg leading-relaxed text-slate-600\">\n              DriveStock is inventory software for car dealerships: one place to see, manage and sell the vehicles\n              on your lot.\n            </p>\n          </Reveal>\n        </div>\n      </section>\n\n      <section className=\"border-y border-slate-200 bg-white py-20\">\n        <div className=\"mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8\">\n          <Reveal>\n            <SectionHeading eyebrow=\"Our mission\" title=\"Our mission\">\n              To give every dealership a clear, trustworthy picture of its inventory, so staff spend less time\n              checking stock and more time helping customers.\n            </SectionHeading>\n          </Reveal>\n          <Reveal delay={100}>\n            <SectionHeading eyebrow=\"Purpose\" title=\"Why DriveStock exists\">\n              Inventory changes all day: cars sell, new stock arrives, prices move. When that information lives in\n              spreadsheets or someone’s head, mistakes happen, like selling a car that is already gone. DriveStock\n              keeps a single, live record that customers and staff share.\n            </SectionHeading>\n          </Reveal>\n        </div>\n      </section>\n\n      <section className=\"py-20\">\n        <div className=\"mx-auto max-w-7xl px-4 sm:px-6 lg:px-8\">\n          <Reveal>\n            <SectionHeading eyebrow=\"Audience\" title=\"Who it’s for\" />\n          </Reveal>\n          <div className=\"mt-10 grid gap-5 md:grid-cols-3\">\n            {AUDIENCE.map(({ icon: Icon, title, body }, index) => (\n              <Reveal key={title} delay={index * 90}>\n                <div className=\"h-full rounded-xl border border-slate-200 bg-white p-6\">\n                  <Icon aria-hidden className=\"size-6 text-brand-600 dark:text-blue-400\" />\n                  <h3 className=\"mt-4 font-semibold text-slate-900\">{title}</h3>\n                  <p className=\"mt-2 text-sm leading-relaxed text-slate-600\">{body}</p>\n                </div>\n              </Reveal>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      <section className=\"border-t border-slate-200 bg-white py-20\">\n        <div className=\"mx-auto max-w-7xl px-4 sm:px-6 lg:px-8\">\n          <Reveal>\n            <SectionHeading eyebrow=\"Principles\" title=\"What guides the product\" />\n          </Reveal>\n          <div className=\"mt-10 grid gap-8 md:grid-cols-3\">\n            {PRINCIPLES.map(({ icon: Icon, title, body }, index) => (\n              <Reveal key={title} delay={index * 90}>\n                <div className=\"flex gap-4\">\n                  <span className=\"flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-blue-300\">\n                    <Icon aria-hidden className=\"size-5\" />\n                  </span>\n                  <div>\n                    <h3 className=\"font-semibold text-slate-900\">{title}</h3>\n                    <p className=\"mt-1 text-sm leading-relaxed text-slate-600\">{body}</p>\n                  </div>\n                </div>\n              </Reveal>\n            ))}\n          </div>\n        </div>\n      </section>\n\n      <Reveal>\n        <CtaBand title=\"Try DriveStock\">Create an account and explore the inventory dashboard.</CtaBand>\n      </Reveal>\n    </>\n  )\n}\nEOF\ncat > src/marketing/PricingPage.tsx <<'EOF'\nimport { Check, Info } from 'lucide-react'\nimport { Link } from 'react-router'\nimport { cn } from '../components/cn'\nimport { Reveal } from './Reveal'\nimport { Eyebrow } from './ui'\n\ninterface Plan {\n  name: string\n  price: string\n  period?: string\n  description: string\n  features: string[]\n  cta: string\n  highlighted?: boolean\n}\n\n// Placeholder plans: names, prices and limits are illustrative and not enforced anywhere.\nconst PLANS: Plan[] = [\n  {\n    name: 'Starter',\n    price: '$29',\n    period: '/month',\n    description: 'For a small lot getting organised.',\n    features: ['All inventory features', 'Up to 50 vehicle listings', '1 staff account'],\n    cta: 'Get Started',\n  },\n  {\n    name: 'Professional',\n    price: '$79',\n    period: '/month',\n    description: 'For busy dealerships with a larger team.',\n    features: ['All inventory features', 'Up to 500 vehicle listings', 'Up to 10 staff accounts'],\n    cta: 'Get Started',\n    highlighted: true,\n  },\n  {\n    name: 'Enterprise',\n    price: 'Custom',\n    description: 'For groups running several locations.',\n    features: ['All inventory features', 'Unlimited listings and staff', 'Multiple dealerships (planned)'],\n    cta: 'Get Started',\n  },\n]\n\nconst FAQ = [\n  {\n    q: 'Are these prices final?',\n    a: 'No. All plans, prices and limits on this page are placeholders while pricing is being decided.',\n  },\n  {\n    q: 'Will I be charged if I sign up?',\n    a: 'No. DriveStock does not take payments or store payment details. Signing up creates a free account.',\n  },\n  {\n    q: 'Are the plan limits enforced?',\n    a: 'Not yet. Every account currently has the same features; limits shown here are illustrative only.',\n  },\n]\n\nexport function PricingPage() {\n  return (\n    <>\n      <section className=\"relative overflow-hidden\">\n        <div aria-hidden className=\"pointer-events-none absolute -top-40 left-1/2 h-[28rem] w-[50rem] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl\" />\n        <div className=\"relative mx-auto max-w-3xl px-4 pt-20 pb-10 text-center sm:px-6\">\n          <Reveal>\n            <Eyebrow>Pricing</Eyebrow>\n            <h1 className=\"mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl\">Simple pricing</h1>\n            <p className=\"mt-5 text-lg text-slate-600\">Plans that grow with your dealership.</p>\n            <div\n              role=\"note\"\n              className=\"mx-auto mt-8 flex max-w-xl items-start gap-2.5 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200\"\n            >\n              <Info aria-hidden className=\"mt-0.5 size-4 shrink-0\" />\n              <span>\n                <strong>Placeholder pricing.</strong> Plans, prices and limits are not final and are not enforced. No\n                payment is taken.\n              </span>\n            </div>\n          </Reveal>\n        </div>\n      </section>\n\n      <section className=\"pb-20\">\n        <ul aria-label=\"Plans\" className=\"mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 md:grid-cols-3 lg:px-8\">\n          {PLANS.map((plan, index) => (\n            <li key={plan.name}>\n              <Reveal delay={index * 90} className=\"h-full\">\n                <div\n                  className={cn(\n                    'relative flex h-full flex-col rounded-2xl border bg-white p-7 transition duration-300 hover:-translate-y-1',\n                    plan.highlighted\n                      ? 'border-brand-500 shadow-xl shadow-brand-600/10 ring-1 ring-brand-500'\n                      : 'border-slate-200 hover:shadow-lg',\n                  )}\n                >\n                  <div className=\"flex items-center justify-between\">\n                    <h2 className=\"text-lg font-semibold text-slate-900\">{plan.name}</h2>\n                    <span className=\"rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500\">\n                      Placeholder\n                    </span>\n                  </div>\n                  <p className=\"mt-2 text-sm text-slate-500\">{plan.description}</p>\n                  <p className=\"mt-6 flex items-baseline gap-1\">\n                    <span className=\"text-4xl font-semibold tracking-tight text-slate-900\">{plan.price}</span>\n                    {plan.period && <span className=\"text-sm text-slate-500\">{plan.period}</span>}\n                  </p>\n                  <ul className=\"mt-6 flex-1 space-y-3 text-sm text-slate-700\">\n                    {plan.features.map((feature) => (\n                      <li key={feature} className=\"flex gap-2.5\">\n                        <Check aria-hidden className=\"mt-0.5 size-4 shrink-0 text-brand-600 dark:text-blue-400\" />\n                        {feature}\n                      </li>\n                    ))}\n                  </ul>\n                  <Link\n                    to=\"/signup\"\n                    className={cn(\n                      'mt-8 inline-flex h-11 items-center justify-center rounded-lg text-sm font-semibold transition',\n                      plan.highlighted\n                        ? 'bg-brand-600 text-on-accent hover:bg-brand-700'\n                        : 'border border-slate-300 text-slate-800 hover:border-slate-400 hover:bg-slate-50',\n                    )}\n                  >\n                    {plan.cta}\n                  </Link>\n                </div>\n              </Reveal>\n            </li>\n          ))}\n        </ul>\n      </section>\n\n      <section aria-labelledby=\"faq-title\" className=\"border-t border-slate-200 bg-white py-20\">\n        <div className=\"mx-auto max-w-3xl px-4 sm:px-6\">\n          <h2 id=\"faq-title\" className=\"text-2xl font-semibold text-slate-900\">\n            Questions\n          </h2>\n          <dl className=\"mt-8 divide-y divide-slate-200\">\n            {FAQ.map(({ q, a }) => (\n              <div key={q} className=\"py-5\">\n                <dt className=\"font-medium text-slate-900\">{q}</dt>\n                <dd className=\"mt-2 text-sm leading-relaxed text-slate-600\">{a}</dd>\n              </div>\n            ))}\n          </dl>\n        </div>\n      </section>\n    </>\n  )\n}\nEOF\npython3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/routes.tsx\");s=p.read_text()\ns=s.replace(\"import { HomePage } from './marketing/HomePage'\",\"import { AboutPage } from './marketing/AboutPage'\\nimport { HomePage } from './marketing/HomePage'\")\ns=s.replace(\"import { MarketingLayout } from './marketing/MarketingLayout'\",\"import { MarketingLayout } from './marketing/MarketingLayout'\\nimport { PricingPage } from './marketing/PricingPage'\")\ns=s.replace(\"      { path: '/', element: <HomePage /> },\\n\",\"      { path: '/', element: <HomePage /> },\\n      { path: '/about', element: <AboutPage /> },\\n      { path: '/pricing', element: <PricingPage /> },\\n\")\np.write_text(s)\nEOF\nnpx vitest run 2>&1 | grep -E \"×|Tests \"; npm run typecheck 2>&1 | grep error; npm run lint 2>&1 | grep -E \"warning|error\"",
+  "description": "Add About and Pricing pages, routes; run checks",
+  "timeout": 180000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Inspect marketing test failures</summary>
+
+````json
+{
+  "command": "npx vitest run src/marketing 2>&1 | grep -E \"^(TestingLibrary|AssertionError|Error)\" | head -5",
+  "description": "Inspect marketing test failures",
+  "timeout": 120000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Fix caption duplication and test selector; rerun</summary>
+
+````json
+{
+  "command": "python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/marketing/DashboardPreview.tsx\");s=p.read_text()\na=\"Illustration of the DriveStock inventory screen using sample data.\"\nassert a in s; s=s.replace(a,\"Illustration of the DriveStock inventory screen.\"); p.write_text(s)\np=pathlib.Path(\"src/marketing/marketing.test.tsx\");s=p.read_text()\ns=s.replace('''describe('pricing page', () => {''','''function planCards(list: HTMLElement) {\n  // Direct children only: each card also contains its own feature list.\n  return Array.from(list.children) as HTMLElement[]\n}\n\ndescribe('pricing page', () => {''')\ns=s.replace(\"const plans = within(screen.getByRole('list', { name: /plans/i })).getAllByRole('listitem')\",\"const plans = planCards(screen.getByRole('list', { name: /plans/i }))\")\ns=s.replace(\"const plans = within(await screen.findByRole('list', { name: /plans/i })).getAllByRole('listitem')\",\"const plans = planCards(await screen.findByRole('list', { name: /plans/i }))\")\np.write_text(s)\nEOF\nnpx vitest run 2>&1 | grep -E \"×|Tests \"; npm run typecheck 2>&1 | grep error; npm run lint 2>&1 | grep -E \"warning|error\"",
+  "description": "Fix caption duplication and test selector; rerun",
+  "timeout": 180000
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:43:55.859Z</sub>
+
+All 73 tests pass, with the type check and lint clean. Now a visual review of the real pages in light, dark and mobile views.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Capture marketing page screenshots</summary>
+
+````json
+{
+  "command": "S=/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots && cat > ./.mk-tmp.mjs <<'EOF'\nimport { chromium } from '@playwright/test'\nconst out = process.argv[2]\nconst browser = await chromium.launch()\nasync function shot(name, url, viewport, { dark = false, full = true, before } = {}) {\n  const ctx = await browser.newContext({ viewport, colorScheme: dark ? 'dark' : 'light', reducedMotion: 'reduce' })\n  const page = await ctx.newPage()\n  page.on('console', (m) => m.type() === 'error' && console.log(name, 'console error:', m.text()))\n  await page.goto(url)\n  await page.waitForTimeout(300)\n  if (before) await before(page)\n  await page.screenshot({ path: `${out}/${name}.png`, fullPage: full })\n  await ctx.close()\n}\nawait shot('mk-home', 'http://localhost:5173/', { width: 1440, height: 900 })\nawait shot('mk-home-dark', 'http://localhost:5173/', { width: 1440, height: 900 }, { dark: true, full: false })\nawait shot('mk-about', 'http://localhost:5173/about', { width: 1440, height: 900 })\nawait shot('mk-pricing', 'http://localhost:5173/pricing', { width: 1440, height: 900 })\nawait shot('mk-mobile', 'http://localhost:5173/', { width: 390, height: 844 }, { full: false })\nawait shot('mk-mobile-menu', 'http://localhost:5173/', { width: 390, height: 844 }, { full: false, before: (p) => p.getByRole('button', { name: 'Open menu' }).click() })\nawait browser.close()\nEOF\nnode ./.mk-tmp.mjs $S; rm -f ./.mk-tmp.mjs; ls $S | grep mk-",
+  "description": "Capture marketing page screenshots",
+  "timeout": 120000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-home.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-home.png"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-home-dark.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-home-dark.png"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-pricing.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-pricing.png"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-mobile-menu.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-mobile-menu.png"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Reposition preview card, respect reduced motion; reshoot</summary>
+
+````json
+{
+  "command": "python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"src/marketing/DashboardPreview.tsx\");s=p.read_text()\na='className=\"animate-float absolute -right-4 -bottom-10 hidden w-60 rounded-xl border border-slate-200 bg-white p-4 shadow-xl lg:block xl:-right-10\"'\nassert a in s\ns=s.replace(a,'className=\"animate-float absolute -bottom-12 -left-10 hidden w-60 rounded-xl border border-slate-200 bg-white p-4 shadow-xl lg:block xl:-left-16\"')\np.write_text(s)\np=pathlib.Path(\"src/index.css\");s=p.read_text()\na=\"@media (prefers-reduced-motion: reduce) {\\n  .animate-float {\\n    animation: none;\\n  }\\n}\"\nassert a in s\ns=s.replace(a,\"@media (prefers-reduced-motion: reduce) {\\n  .animate-float,\\n  .animate-fade-in {\\n    animation: none;\\n  }\\n}\")\np.write_text(s)\nEOF\nS=/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots && cat > ./.mk2-tmp.mjs <<'EOF'\nimport { chromium } from '@playwright/test'\nconst out = process.argv[2]\nconst browser = await chromium.launch()\nfor (const [name, viewport, menu] of [['mk-hero', { width: 1440, height: 1000 }, false], ['mk-hero-lg', { width: 1100, height: 1000 }, false], ['mk-mobile-menu', { width: 390, height: 844 }, true]]) {\n  const ctx = await browser.newContext({ viewport })\n  const page = await ctx.newPage()\n  await page.goto('http://localhost:5173/')\n  if (menu) await page.getByRole('button', { name: 'Open menu' }).click()\n  await page.waitForTimeout(1200)\n  await page.screenshot({ path: `${out}/${name}.png` })\n  await ctx.close()\n}\nawait browser.close()\nEOF\nnode ./.mk2-tmp.mjs $S; rm -f ./.mk2-tmp.mjs",
+  "description": "Reposition preview card, respect reduced motion; reshoot",
+  "timeout": 120000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-hero.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-hero.png"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Read</code> — /private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-mobile-menu.png</summary>
+
+````json
+{
+  "file_path": "/private/tmp/claude-501/-Users-prajot-Desktop-projects-developmentProjects-car-dealership-inventory/a70cfeda-1bf2-4ea1-ac9f-bc52055669dc/scratchpad/shots/mk-mobile-menu.png"
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:44:46.353Z</sub>
+
+Both look right now: the floating card sits over the empty sidebar corner without hiding any data, and the mobile menu is fully visible. Committing Phase 2.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Commit marketing pages</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory && git add frontend && git commit -q -m \"feat(web): landing, about and placeholder pricing pages (green)\n\n- Landing: hero with Get Started / Sign In, coded dashboard preview built\n  from real components with sample data (labelled), how-it-helps,\n  features (#features), how-it-works and a closing CTA band\n- About: mission, purpose, audience and principles; no invented history,\n  testimonials or business claims\n- Pricing: three plans, each and the page clearly marked placeholder;\n  buttons go to /signup; FAQ states no payment is taken and limits are\n  not enforced\n- CSS-only scroll reveal, float and fade animations, disabled under\n  prefers-reduced-motion\n- Visual review fixes: preview card no longer covers list data\n- Test fix: plan selector counted nested feature list items\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1",
+  "description": "Commit marketing pages"
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:44:53.731Z</sub>
+
+Next, the end-to-end suite: point it at the new routes, add a public-site journey (landing, then Get Started, sign-up, and landing in the app), and capture marketing screenshots.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Update e2e routes, add marketing journey, capture screenshots</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend && sed -i '' \"s|await page.goto('/register')|await page.goto('/signup')|g\" e2e/inventory.spec.ts e2e/screenshots.spec.ts && cat > e2e/marketing.spec.ts <<'EOF'\nimport { expect, test } from '@playwright/test'\n\ntest('visitor goes from the landing page to sign-up and lands in the app', async ({ page }) => {\n  await page.goto('/')\n  await expect(page.getByRole('heading', { level: 1 })).toContainText('Every car on your lot')\n  await expect(page.getByRole('figure', { name: 'Dashboard preview' })).toContainText('Sample data')\n\n  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Pricing' }).click()\n  await expect(page).toHaveURL(/\\/pricing$/)\n  await expect(page.getByRole('note')).toContainText('Placeholder pricing')\n\n  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Get Started' }).click()\n  await expect(page).toHaveURL(/\\/signup$/)\n  await page.getByLabel('Full name').fill('Landing Visitor')\n  await page.getByLabel('Email').fill(`visitor-${Date.now()}@example.com`)\n  await page.getByLabel('Password').fill('visitor-pass-1')\n  await page.getByRole('button', { name: 'Create account' }).click()\n\n  await expect(page).toHaveURL(/\\/app$/)\n  await expect(page.getByRole('heading', { name: 'Inventory' })).toBeVisible()\n\n  // Public pages stay reachable when signed in, with a way back to the app.\n  await page.goto('/about')\n  await expect(page.getByRole('heading', { level: 1, name: 'About DriveStock' })).toBeVisible()\n  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Open dashboard' }).click()\n  await expect(page).toHaveURL(/\\/app$/)\n})\n\ntest('Features link scrolls to the features section', async ({ page }) => {\n  await page.goto('/about')\n  await page.getByRole('navigation', { name: 'Primary' }).getByRole('link', { name: 'Features' }).click()\n  await expect(page).toHaveURL(/\\/#features$/)\n  await expect(page.getByRole('region', { name: 'Features' })).toBeInViewport()\n})\n\ntest('deep app links survive the sign-in detour', async ({ page }) => {\n  await page.goto('/app?category=suv')\n  await expect(page).toHaveURL(/\\/login$/)\n  await page.getByLabel('Email').fill('e2e-admin@drivestock.dev')\n  await page.getByLabel('Password').fill(process.env.E2E_ADMIN_PASSWORD ?? 'e2e-admin-pass')\n  await page.getByRole('button', { name: 'Sign in' }).click()\n  await expect(page).toHaveURL(/\\/app\\?category=suv$/)\n  await expect(page.getByRole('combobox', { name: 'Category' })).toHaveValue('suv')\n})\nEOF\npython3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"e2e/screenshots.spec.ts\");s=p.read_text()\ns=s.replace('''test('dark mode', async ({ page }) => {''','''test('marketing site', async ({ browser }) => {\n  for (const [name, path] of [\n    ['15-landing', '/'],\n    ['16-about', '/about'],\n    ['17-pricing', '/pricing'],\n  ] as const) {\n    const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' })\n    await page.goto(path)\n    await page.waitForTimeout(300)\n    await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true })\n    await page.close()\n  }\n  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })\n  await mobile.goto('/')\n  await mobile.getByRole('button', { name: 'Open menu' }).click()\n  await mobile.screenshot({ path: `${OUT}/18-landing-mobile-menu.png` })\n  await mobile.close()\n})\n\ntest('dark mode', async ({ page }) => {''')\np.write_text(s)\nEOF\nnpx playwright test 2>&1 | tail -4 && npm run screenshots 2>&1 | tail -1 && ls ../docs/screenshots | tail -5",
+  "description": "Update e2e routes, add marketing journey, capture screenshots",
+  "timeout": 400000
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:45:33.394Z</sub>
+
+All 7 end-to-end tests pass and the 18 screenshots are regenerated. Next, the multi-dealership plan goes into `docs/MULTI_TENANCY.md` (a plan only, nothing implemented), followed by README updates.
+
+<details><summary>🔧 Tool call: <code>Write</code> — /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/docs/MULTI_TENANCY.md</summary>
+
+````json
+{
+  "file_path": "/Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/docs/MULTI_TENANCY.md",
+  "content": "# Multi-dealership (multi-tenancy): assessment and plan\n\n**Status: proposed, not implemented.** DriveStock today serves a **single dealership**. This document records why the current design can't safely host several dealerships, and the recommended way to get there.\n\n## Current state\n\n| Area | Today | Problem for multiple dealerships |\n|---|---|---|\n| Data ownership | `users`, `vehicles`, `purchases` have no owner column | Every user sees and can buy from one shared inventory |\n| Admin role | `role = admin` is global | One dealership's admin could edit or delete another's vehicles |\n| Sign-in token | JWT holds only the user ID (`sub`) | No dealership context per request |\n| Registration | Open sign-up creates a customer in the single store | No way to create a dealership or join a specific one |\n| Uniqueness | Emails unique system-wide | Fine, but should be a deliberate choice (see below) |\n| Enforcement | Queries aren't scoped | Nothing limits a request to one dealership's rows |\n| Tests | No cross-dealership tests | Isolation is unverified |\n\n## Recommended approach: shared database, `dealership_id` on every row\n\nChosen over a schema per dealership or a database per dealership. Those isolate more strongly but cost far more in migrations, connection management and operations than this product needs at its stage.\n\n### Schema\n- New `dealerships` table: `id`, `name`, `slug` (unique), `created_at`.\n- Add `dealership_id` (NOT NULL, FK → dealerships) to `users`, `vehicles`, `purchases`.\n- Composite indexes led by `dealership_id`, e.g. `(dealership_id, make, model)`, `(dealership_id, price)`.\n- Roles per dealership: `owner`, `admin`, `customer`.\n- Email uniqueness: **system-wide** (simplest: one login maps to one dealership). Switch to `UNIQUE (dealership_id, email)` only if a person needs accounts at several dealerships.\n\n### Migration (Alembic, reversible)\n1. Create `dealerships` and insert a \"Default dealership\".\n2. Add nullable `dealership_id` columns and backfill every row to the default dealership.\n3. Make the columns `NOT NULL`; add FKs and indexes.\n\n### Enforcement (defence in depth)\n1. **Application layer:** a single `get_current_tenant` dependency derives the dealership from the **authenticated user's database record**, never from client input. Every service query filters by it. Another dealership's vehicle returns **404**, so its existence isn't revealed.\n2. **Database layer:** PostgreSQL **row-level security** on tenant tables. Each request's transaction runs `SET LOCAL app.dealership_id = …`, and policies restrict rows to that value. A missed filter then fails closed.\n3. The purchase and restock `UPDATE … WHERE` statements gain a `dealership_id` condition, so the atomic oversell protection holds per dealership.\n\n### Onboarding\n- **Get Started (dealership):** creates a dealership and its `owner` in one transaction.\n- **Customers** sign up through a dealership's public link, `/d/{slug}/signup`. The slug resolves the dealership server-side.\n- Owners and admins invite staff (out of scope until needed).\n\n### Tests required before shipping\n- For **every endpoint**: a user from dealership A can't list, read, update, delete, purchase from or restock dealership B's data (404 or 403 as appropriate).\n- Counts and search results never include other dealerships' rows.\n- RLS test: a deliberately unscoped query returns zero foreign rows.\n- Migration test: upgrade and downgrade with existing data in place.\n\n### Explicitly out of scope\nSubscription billing, plan limits, per-dealership custom domains and cross-dealership reporting.\n"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Locate README sections to update</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory && grep -n \"^## \\|^\\*\\*Everyone\\|^\\*\\*Admins\\|^- \\[\" README.md | head -40; grep -n \"src/layout/\\|src/features/\\|Register a customer\\|npm run dev  \\|5173\" README.md",
+  "description": "Locate README sections to update"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Read README sections to edit</summary>
+
+````json
+{
+  "command": "sed -n 25,36p README.md; sed -n 256,266p README.md; sed -n 276,290p README.md",
+  "description": "Read README sections to edit"
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Update README, commit e2e, screenshots and docs</summary>
+
+````json
+{
+  "command": "python3 - <<'EOF'\nimport pathlib\np=pathlib.Path(\"README.md\");s=p.read_text()\ndef r(a,b):\n    global s\n    assert a in s,a; s=s.replace(a,b,1)\nr(\"## Features\\n\\n**Everyone (signed in)**\",\"\"\"## Features\n\n**Public website** (no sign-in needed)\n- Landing page at `/` explaining the product, with a coded dashboard preview (clearly labelled sample data), features, how it works, and **Get Started** / **Sign In** calls to action\n- **About** (`/about`): mission, purpose and audience. **Pricing** (`/pricing`): three plans, all clearly marked as placeholders; no billing or payments exist\n- Responsive navbar (Home, Features, About, Pricing, Sign In, Get Started) with a mobile menu; signed-in visitors see **Open dashboard** instead\n- Separate **Sign In** (`/login`) and **Sign Up** (`/signup`) pages; after either, users land in the app at `/app`, or back on the app URL they originally asked for\n\n**Everyone (signed in, at `/app`)**\"\"\")\nr(\"  src/layout/          AppShell (navy sidebar + header)\\n\",\"  src/layout/          AppShell (navy sidebar + header)\\n  src/marketing/       public site: MarketingLayout (navbar/footer), Home, About, Pricing\\n\")\nr(\"Register a customer from the sign-up page, or sign in with the admin you created.\",\"The public site is at <http://localhost:5173/> and the app at <http://localhost:5173/app>. Create a customer account via **Get Started**, or sign in with the admin you created.\")\nr(\"- **No vehicle images.**\",\"\"\"- **Public site and app share one SPA.** Marketing pages (`/`, `/about`, `/pricing`) and the app (`/app`) live in the same React build with separate layouts; `/register` redirects to `/signup`. The pricing page is deliberately a labelled placeholder: there is no billing.\n- **Single dealership today.** The backend serves one dealership. [`docs/MULTI_TENANCY.md`](docs/MULTI_TENANCY.md) explains why it can't yet host several safely and the recommended `dealership_id` plus row-level-security design. It's a plan, not implemented.\n- **No vehicle images.**\"\"\")\nr(\"| ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | |\",\"\"\"| ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | ![Landing mobile menu](docs/screenshots/18-landing-mobile-menu.png) **Landing page, mobile menu** |\n| ![Landing](docs/screenshots/15-landing.png) **Landing page** | ![Pricing](docs/screenshots/17-pricing.png) **Pricing (placeholder)** |\n| ![About](docs/screenshots/16-about.png) **About** | |\"\"\")\nr(\"![Customer inventory](docs/screenshots/03-customer-inventory.png)\",\"![DriveStock landing page](docs/screenshots/15-landing.png)\")\np.write_text(s)\nEOF\ncd frontend && sed -i '' \"s|// Placeholder plans: names|// Placeholder plans: names|\" src/marketing/PricingPage.tsx; cd .. && git add -A frontend docs README.md && git commit -q -m \"test(e2e)+docs: marketing journey e2e, new screenshots, README and multi-tenancy plan\n\n- e2e: landing -> pricing -> Get Started -> sign-up -> /app; Features\n  anchor; deep /app link survives the sign-in detour\n- Screenshots 15-18 (landing, about, pricing, mobile menu); app shots\n  regenerated against /app\n- README: public site, routes, layout split, single-dealership note\n- docs/MULTI_TENANCY.md: assessment and recommended design (not built)\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1",
+  "description": "Update README, commit e2e, screenshots and docs"
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:46:08.234Z</sub>
+
+Final step: run every suite, refresh the saved output and update the counts in the report and README.
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Run all suites and save raw output</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/backend && { echo \"\\$ ruff check . && ruff format --check . && mypy app\"; .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy app; echo; echo \"\\$ pytest -o addopts='' -v --cov=app --cov-report=term-missing\"; .venv/bin/pytest -o addopts='' -v -p no:cacheprovider --cov=app --cov-report=term-missing 2>&1; } > ../docs/test-output/backend.txt 2>&1; cd ../frontend && { echo \"\\$ npm run lint\"; npm run lint 2>&1; echo; echo \"\\$ npm run typecheck\"; npm run typecheck 2>&1; echo; echo \"\\$ npx vitest run --coverage --reporter=verbose\"; NO_COLOR=1 npx vitest run --coverage --reporter=verbose 2>&1; echo; echo \"\\$ npm run build\"; npm run build 2>&1; } > ../docs/test-output/frontend.txt 2>&1; { echo \"\\$ npx playwright test --reporter=list\"; NO_COLOR=1 npx playwright test --reporter=list 2>&1; } > ../docs/test-output/e2e.txt; sed -i '' $'s/\\x1b\\\\[[0-9;]*m//g' ../docs/test-output/*.txt; cd ../docs/test-output && grep -E \"passed in|TOTAL\" backend.txt | tail -2; grep -E \"Tests |All files|built in|warning|error TS\" frontend.txt | head; grep -E \"passed|skipped|failed\" e2e.txt | tail -3; grep -E \"^ ✓\" frontend.txt | sed -E 's/^ . ([^ ]+) .*/\\1/' | sort | uniq -c",
+  "description": "Run all suites and save raw output",
+  "timeout": 600000
+}
+````
+
+</details>
+
+<details><summary>🔧 Tool call: <code>Bash</code> — Update report and README counts; commit</summary>
+
+````json
+{
+  "command": "cd /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory && python3 - <<'EOF'\nimport pathlib\ndef sub(path,pairs):\n    p=pathlib.Path(path);s=p.read_text()\n    for a,b in pairs:\n        assert a in s,(path,a); s=s.replace(a,b)\n    p.write_text(s)\nsub(\"docs/TEST_REPORT.md\",[\n (\"| Frontend (Vitest + React Testing Library + MSW) | **54 passed**, 0 failed | **93.3 %** stmts · 84.7 % branches · 90.5 % funcs · 94.0 % lines |\",\n  \"| Frontend (Vitest + React Testing Library + MSW) | **73 passed**, 0 failed | **93.0 %** stmts · 86.0 % branches · 91.6 % funcs · 93.7 % lines |\"),\n (\"| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **4 passed**, 5 skipped¹ | n/a |\",\"| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **7 passed**, 6 skipped¹ | n/a |\"),\n (\"¹ The 5 skipped tests are\",\"¹ The 6 skipped tests are\"),\n (\"| `theme/theme.test.tsx` | 5 |\",\"| `routing.test.tsx` | 9 | public `/`, app behind sign-in at `/app`, `/register` → `/signup`, redirects to `/app` after sign-in and sign-up, deep `/app?…` link preserved, signed-in users can browse public pages, 404 |\\n| `marketing/marketing.test.tsx` | 10 | navbar links and navigation, mobile menu, \\\"Open dashboard\\\" when signed in, hero calls to action, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |\\n| `theme/theme.test.tsx` | 5 |\"),\n (\"4. Direct API calls with a customer token to `restock` and `DELETE` return **403**, so permissions are enforced on the server, not just hidden in the UI.\",\n  \"4. Direct API calls with a customer token to `restock` and `DELETE` return **403**, so permissions are enforced on the server, not just hidden in the UI.\\n5. A visitor goes from the landing page to Pricing, then Get Started, signs up and lands on `/app`; public pages stay reachable while signed in, with **Open dashboard** leading back.\\n6. The navbar's **Features** link scrolls to the features section.\\n7. A deep link (`/app?category=suv`) survives the sign-in detour, query included.\"),\n])\nsub(\"README.md\",[\n (\"| 54 component and integration tests\",\"| 73 component and integration tests\"),\n (\"54 frontend tests (93 % statement coverage), 4 Playwright end-to-end tests\",\"73 frontend tests (93 % statement coverage), 7 Playwright end-to-end tests\"),\n (\"Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, and a server-side 403 check.\",\"Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, and the public-site journey (landing → pricing → sign-up → `/app`).\"),\n])\nEOF\ngrep -n \"Playwright e2e\" docs/TEST_REPORT.md | head -2; git add docs README.md && git commit -q -m \"docs: refresh test output and counts (73 frontend, 7 e2e) for the public site\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\" && git log --oneline -1 && git status -sb | head -1",
+  "description": "Update report and README counts; commit"
+}
+````
+
+</details>
+
+### 🤖 Claude  
+<sub>2026-10-24T05:47:03.609Z</sub>
+
+The public website is built on the `saas-site` branch, with the inventory app moved to `/app` and working as before. It's 8 local commits; nothing is pushed or merged, so `main` (your submission) is unchanged.
+
+**What's there** (open http://localhost:5173 to see it):
+- **Landing (`/`):** headline, Get Started / Sign In buttons, and a dashboard preview built from the app's real components, labelled "Sample data". It also has how-it-helps, eight features, a three-step how-it-works and a closing call to action.
+- **About (`/about`):** mission, purpose, who it's for and principles. No invented history, testimonials, customer logos or numbers.
+- **Pricing (`/pricing`):** three plans, each tagged "Placeholder", with a notice and FAQ stating prices aren't final, limits aren't enforced and no payment is taken. The buttons go to sign-up; there's no billing code.
+- **Navbar:** Home, Features, About, Pricing, Sign In and Get Started, plus the dark-mode toggle and a mobile menu. Signed-in visitors see "Open dashboard" instead of the sign-in links.
+- **Sign in and sign up:** `/login` and `/signup` (the old `/register` redirects). Both send you to `/app`, or back to the app link you originally followed, including its filters.
+- **Look and motion:** same navy and blue palette, works in dark mode. Fade-in, hover lift and floating-card effects are CSS-only and switch off if your device is set to reduce motion.
+
+**Multi-dealership:** written up as a plan only, in `docs/MULTI_TENANCY.md`. The current backend can't safely host several dealerships: there's no dealership concept, admins are global, and queries aren't limited to one dealership. The recommended design adds a dealership column to every row, enforced in one place on the server and backed by database row-level security, plus isolation tests for every endpoint.
+
+**Tests**
+- Backend: 97 passed.
+- Frontend: 73 passed (93% statement coverage). Type check, lint and production build are clean.
+- End-to-end: 7 passed, including the full visitor journey from the landing page through sign-up into `/app`.
+- The README, test report, raw test output and screenshots are updated.
+
+Bugs the new tests and visual review caught, all fixed:
+- After sign-in, a redirect dropped the `?category=suv` filter from the requested app link.
+- The floating card in the dashboard preview covered prices and stock badges.
+- The mobile menu's fade ignored the reduce-motion setting.
+
+**Your call next:**
+1. Push the `saas-site` branch to GitHub, and/or merge it into `main`? Merging changes what reviewers see: the app moves to `/app` behind a landing page.
+2. After merging or pushing, re-export PROMPTS.md so it covers this work too.
+
+## 🧑 User — turn 26  
+<sub>2026-10-24T05:48:09.705Z</sub>
+
+````text
+ok
 ````
