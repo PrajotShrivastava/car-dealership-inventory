@@ -1,27 +1,28 @@
 $ npx playwright test --reporter=list
 [WebServer] INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 [WebServer] INFO  [alembic.runtime.migration] Will assume transactional DDL.
-[WebServer] INFO:     Started server process [9841]
+[WebServer] INFO:     Started server process [11361]
 [WebServer] INFO:     Waiting for application startup.
 [WebServer] INFO:     Application startup complete.
 [WebServer] INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[WebServer] (node:9842) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (node:11363) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
-[WebServer] (node:9870) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (node:11391) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 [WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
 
-Running 8 tests using 1 worker
+Running 9 tests using 1 worker
 
-(node:9871) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(node:11392) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 (Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  1 [chromium] › e2e/inventory.spec.ts:17:1 › customer registers, finds a car, buys it and sees stock drop (1.9s)
-  ✓  2 [chromium] › e2e/inventory.spec.ts:43:1 › out-of-stock vehicles cannot be purchased (860ms)
-  ✓  3 [chromium] › e2e/inventory.spec.ts:50:1 › admin adds, edits, restocks and deletes a vehicle (1.0s)
-  ✓  4 [chromium] › e2e/inventory.spec.ts:83:1 › the API rejects customer attempts at admin actions (409ms)
+  ✓  1 [chromium] › e2e/inventory.spec.ts:17:1 › customer registers, finds a car, buys it and sees stock drop (2.1s)
+  ✓  2 [chromium] › e2e/inventory.spec.ts:43:1 › out-of-stock vehicles cannot be purchased (874ms)
+  ✓  3 [chromium] › e2e/inventory.spec.ts:50:1 › admin adds, edits, restocks and deletes a vehicle (1.2s)
+  ✓  4 [chromium] › e2e/inventory.spec.ts:83:1 › the API rejects customer attempts at admin actions (617ms)
   -  5 [chromium] › e2e/screenshots.spec.ts:30:1 › auth screens
   -  6 [chromium] › e2e/screenshots.spec.ts:38:1 › customer screens
   -  7 [chromium] › e2e/screenshots.spec.ts:58:1 › admin screens
-  -  8 [chromium] › e2e/screenshots.spec.ts:77:1 › responsive layouts
+  -  8 [chromium] › e2e/screenshots.spec.ts:77:1 › dark mode
+  -  9 [chromium] › e2e/screenshots.spec.ts:83:1 › responsive layouts
 
-  4 skipped
-  4 passed (5.8s)
+  5 skipped
+  4 passed (7.5s)

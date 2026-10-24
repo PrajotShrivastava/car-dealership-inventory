@@ -16,11 +16,11 @@ Every number below is copied from real runs. The full, unedited console output i
 | Suite | Result | Coverage |
 |---|---|---|
 | Backend (pytest, real PostgreSQL `drivestock_test`) | **97 passed**, 0 failed (≈9 s) | **98 %** statements (500 stmts, 10 missed) |
-| Frontend (Vitest + React Testing Library + MSW) | **49 passed**, 0 failed | **93.0 %** stmts · 84.3 % branches · 90.2 % funcs · 93.8 % lines |
-| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **4 passed**, 4 skipped¹ | n/a |
+| Frontend (Vitest + React Testing Library + MSW) | **54 passed**, 0 failed | **93.3 %** stmts · 84.7 % branches · 90.5 % funcs · 94.0 % lines |
+| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **4 passed**, 5 skipped¹ | n/a |
 | Static checks | ruff ✔ · ruff format ✔ · mypy `--strict` ✔ · oxlint 0 warnings · `tsc --noEmit` ✔ · production build ✔ | |
 
-¹ The 4 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
+¹ The 5 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
 
 ## Backend tests by file
 
@@ -51,6 +51,7 @@ Every number below is copied from real runs. The full, unedited console output i
 | `features/inventory/InventoryPage.test.tsx` | 15 | list, empty inventory, load error and retry, search, category, availability counts, price range, clear filters, sort, paging, details drawer (Escape), purchase updates stock, quantity capped at stock, out-of-stock disabled, server rejection shown |
 | `features/inventory/format.test.ts` | 9 | price formatting, stock thresholds, labels |
 | `features/admin/admin.test.tsx` | 9 | customers see no admin controls; admin add (with client-side and API field errors), edit, restock (valid and invalid amounts), delete with confirm and cancel |
+| `theme/theme.test.tsx` | 5 | light/dark toggle in the header and on sign-in, saved choice persisted and restored, system setting used when nothing is saved |
 
 Unit tests use an in-memory MSW fake of the API contract (`src/test/handlers.ts`). The Playwright suite then checks the same flows against the real API and database.
 
