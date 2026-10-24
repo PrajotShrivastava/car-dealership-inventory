@@ -44,7 +44,7 @@ describe('inventory list', () => {
     )
     const { user } = renderAsCustomer()
 
-    expect(await screen.findByText(/database unavailable/i, {}, { timeout: 4000 })).toBeInTheDocument()
+    expect(await screen.findByText(/database unavailable/i)).toBeInTheDocument()
     server.resetHandlers()
     seedVehicle({ make: 'Tesla', model: 'Model 3' })
     await user.click(screen.getByRole('button', { name: /retry/i }))
@@ -75,7 +75,7 @@ describe('filtering and sorting', () => {
     await user.selectOptions(screen.getByLabelText(/category/i), 'sedan')
 
     await waitFor(() => expect(screen.queryByText('Ford Kuga')).not.toBeInTheDocument())
-    expect(screen.getByText(/filters \(1\)/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /filters \(1\)/i })).toBeInTheDocument()
   })
 
   it('filters by availability and shows counts', async () => {
@@ -187,7 +187,7 @@ describe('vehicle details drawer and purchase', () => {
     const increase = within(dialog).getByRole('button', { name: /increase quantity/i })
     await user.click(increase)
 
-    expect(within(dialog).getByLabelText(/quantity/i)).toHaveTextContent('2')
+    expect(within(dialog).getByLabelText('Quantity')).toHaveTextContent('2')
     expect(increase).toBeDisabled()
   })
 

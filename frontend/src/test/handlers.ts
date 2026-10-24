@@ -88,6 +88,7 @@ function listVehicles(request: Request) {
   }
   if (p.availability === 'in_stock') items = items.filter((v) => v.quantity > 0)
   if (p.availability === 'out_of_stock') items = items.filter((v) => v.quantity === 0)
+  if (!p.sort || p.sort === 'newest') items = [...items].sort((a, b) => b.id - a.id)
   if (p.sort === 'price_asc') items = [...items].sort((a, b) => Number(a.price) - Number(b.price))
   if (p.sort === 'price_desc') items = [...items].sort((a, b) => Number(b.price) - Number(a.price))
   const offset = Number(p.offset ?? 0)

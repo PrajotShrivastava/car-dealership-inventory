@@ -1,7 +1,7 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router'
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { AppShell } from './layout/AppShell'
-import { InventoryPage } from './pages/InventoryPage'
+import { InventoryPage } from './features/inventory/InventoryPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'

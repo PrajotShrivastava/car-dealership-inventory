@@ -19,8 +19,14 @@ function makeQueryClient() {
   })
 }
 
-export function AppProviders({ router }: { router: AppRouter }) {
-  const [queryClient] = useState(makeQueryClient)
+interface Props {
+  router: AppRouter
+  /** Injected by tests; the app builds its own. */
+  queryClient?: QueryClient
+}
+
+export function AppProviders({ router, queryClient: injected }: Props) {
+  const [queryClient] = useState(() => injected ?? makeQueryClient())
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
