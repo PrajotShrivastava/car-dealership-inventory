@@ -181,7 +181,7 @@ DriveStock has two roles. The role is stored on the account and **checked by the
 1. A prospective dealer opens **Register as a Dealer** (`/dealer/register`, linked from Dealer Sign In, the sign-up page and the footer). They submit name, email, password, dealership name, and optionally a phone number and message.
 2. This creates a **customer** account and a **pending** application in one transaction. Public registration can never grant admin, even if a `role` field is sent. The applicant is signed in and sees a banner saying the application is pending, with customer access only.
 3. An admin opens **Dealer applications** (`/app/dealer-applications`, admin-only; customers are redirected away and the API returns 403) and clicks **Approve** or **Reject**, adding an optional note when rejecting.
-4. **Approve** changes the account's role to `admin` and records who approved it and when. It takes effect on the applicant's next page load, because the API reads the role from the database. **Reject** keeps customer access, and the applicant sees the note. An application can be reviewed only once: the decision is a single conditional update, so two admins acting at once can't both succeed.
+4. **Approve** changes the account's role to `admin` and records who approved it and when. The API grants the new rights straight away (it reads the role from the database on every request), and an applicant who is signed in sees the inventory tools within a minute, or as soon as they return to the tab, without signing out. **Reject** keeps customer access, and the applicant sees the note. An application can be reviewed only once: the decision is a single conditional update, so two admins acting at once can't both succeed.
 
 **Creating the first admin** (needed once, on any new database):
 ```sh
@@ -217,7 +217,7 @@ These passwords are public on purpose and for **local development only**. The co
 | Level | Tools | What it covers |
 |---|---|---|
 | **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 164 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
-| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 107 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
+| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 108 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
 | **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), dealer onboarding (apply → admin approves → dealer gets inventory tools), and photo upload (add with a new vehicle, add and remove in Edit, still there after a reload, non-images rejected). Also captures the README screenshots. |
 | **Static checks** | **ruff** (lint + formatting), **mypy `--strict`**, **oxlint**, **`tsc --noEmit`** | Lint and type checks for both apps. |
 | **CI** | **GitHub Actions** | Runs the backend (with a Postgres 17 service) and frontend jobs on every push. Playwright currently runs locally only. |
@@ -369,7 +369,7 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 
 ## Test report
 
-See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **164 backend tests (98 % coverage), 107 frontend tests (94 % statement coverage), 12 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
+See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **164 backend tests (98 % coverage), 108 frontend tests (94 % statement coverage), 12 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
 
 The git history follows red → green → refactor: `test(...): … (red)` commits hold failing tests, followed by `feat(...)/fix(...): … (green)` commits that make them pass. Where a test and its implementation landed in one commit, the commit message says so.
 
