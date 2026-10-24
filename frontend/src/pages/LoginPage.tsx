@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { postAuthTarget } from '../auth/redirects'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/Field'
@@ -30,8 +31,7 @@ export function LoginPage() {
     setFormError(null)
     try {
       await login(email.trim(), password)
-      const from = (location.state as { from?: string } | null)?.from
-      navigate(from && from !== '/login' ? from : '/', { replace: true })
+      navigate(postAuthTarget(location), { replace: true })
     } catch (error) {
       setFormError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
       setSubmitting(false)
@@ -64,7 +64,7 @@ export function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">
         New to DriveStock?{' '}
-        <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
+        <Link to="/signup" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
           Create an account
         </Link>
       </p>

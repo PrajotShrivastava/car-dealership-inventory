@@ -24,6 +24,15 @@
   --color-on-accent: #ffffff;
   --color-nav-text: #cbd5e1;
   --color-nav-muted: #94a3b8;
+
+  --animate-fade-in: fade-in 200ms ease-out both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
 }
 
 /* Dark mode: remap the neutral scale and surfaces so existing utilities
