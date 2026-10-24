@@ -15,12 +15,12 @@ Every number below is copied from real runs. The full, unedited console output i
 
 | Suite | Result | Coverage |
 |---|---|---|
-| Backend (pytest, real PostgreSQL `drivestock_test`) | **97 passed**, 0 failed (≈9 s) | **98 %** statements (500 stmts, 10 missed) |
-| Frontend (Vitest + React Testing Library + MSW) | **73 passed**, 0 failed | **93.0 %** stmts · 86.0 % branches · 91.6 % funcs · 93.7 % lines |
-| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **7 passed**, 6 skipped¹ | n/a |
+| Backend (pytest, real PostgreSQL `drivestock_test`) | **129 passed**, 0 failed (≈12 s) | **98 %** statements (660 stmts, 10 missed) |
+| Frontend (Vitest + React Testing Library + MSW) | **88 passed**, 0 failed | **93.6 %** stmts · 85.7 % branches · 93.0 % funcs · 94.3 % lines |
+| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **10 passed**, 7 skipped¹ | n/a |
 | Static checks | ruff ✔ · ruff format ✔ · mypy `--strict` ✔ · oxlint 0 warnings · `tsc --noEmit` ✔ · production build ✔ | |
 
-¹ The 6 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
+¹ The 7 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
 
 ## Backend tests by file
 
@@ -31,6 +31,8 @@ Every number below is copied from real runs. The full, unedited console output i
 | `test_vehicles_search.py` | 22 | free-text search over make/model/trim (multi-word, LIKE wildcards treated literally), make/model/category/price range/availability filters, combined filters, faceted counts, sorting, paging, 8 invalid-query cases |
 | `test_inventory_actions.py` | 20 | purchase (default 1, multiple units, price snapshot, totals), out-of-stock and insufficient-stock 409s with no side effects, 404, invalid quantities, **concurrency**, restock (admin-only, 401/403/404/422), deleting a sold vehicle keeps purchase history |
 | `test_hardening.py` | 8 | JSON 500 with no internals, out-of-range IDs → 422 on all 5 ID routes, offset cap, 100,000-unit stock ceiling |
+| `test_dealer_applications.py` | 25 | dealer sign-up creates a **customer** plus a pending application (sending `role` is ignored); a pending applicant gets 403 on inventory changes; validation and duplicate email; `/me`; admin-only list, approve and reject (401/403 for others); approval grants admin immediately with the same token and records the reviewer; rejection keeps customer access and stores the note; each application reviewed once (409); 404 and 422; **10 concurrent approvals → exactly 1 succeeds** |
+| `test_demo_users.py` | 7 | `APP_ENV` defaults to production; demo seeding refused outside development and for a non-localhost database; creates an admin, a customer and a pending applicant once (idempotent); CLI exit code and printed credentials |
 | `test_cli.py` | 6 | `create-admin` (hashing, duplicate, validation, environment password), `seed` (runs once only, includes out-of-stock cars) |
 | `test_health.py` | 1 | health check |
 
@@ -51,6 +53,7 @@ Every number below is copied from real runs. The full, unedited console output i
 | `features/inventory/InventoryPage.test.tsx` | 15 | list, empty inventory, load error and retry, search, category, availability counts, price range, clear filters, sort, paging, details drawer (Escape), purchase updates stock, quantity capped at stock, out-of-stock disabled, server rejection shown |
 | `features/inventory/format.test.ts` | 9 | price formatting, stock thresholds, labels |
 | `features/admin/admin.test.tsx` | 9 | customers see no admin controls; admin add (with client-side and API field errors), edit, restock (valid and invalid amounts), delete with confirm and cancel |
+| `features/dealers/dealers.test.tsx` | 15 | Dealer Sign In switch (and `?as=dealer`), customer sign-up kept separate, approved admin lands on the management view; dealer registration (submit, sign in, pending banner, validation, duplicate email); rejected banner shows the note; admin sidebar item with pending count; customers redirected away from the review page; approve and reject (with note) through the confirmation dialog; empty state |
 | `routing.test.tsx` | 9 | public `/`, app behind sign-in at `/app`, `/register` → `/signup`, redirects to `/app` after sign-in and sign-up, deep `/app?…` link preserved, signed-in users can browse public pages, 404 |
 | `marketing/marketing.test.tsx` | 10 | navbar links and navigation, mobile menu, "Open dashboard" when signed in, hero calls to action, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |
 | `theme/theme.test.tsx` | 5 | light/dark toggle in the header and on sign-in, saved choice persisted and restored, system setting used when nothing is saved |
@@ -68,6 +71,9 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 5. A visitor goes from the landing page to Pricing, then Get Started, signs up and lands on `/app`; public pages stay reachable while signed in, with **Open dashboard** leading back.
 6. The navbar's **Features** link scrolls to the features section.
 7. A deep link (`/app?category=suv`) survives the sign-in detour, query included.
+8. **Dealer onboarding:** register as a dealer, see the pending banner with no tools (API 403), admin approves, the dealer signs in again and has **Add vehicle** (API now allows it). The API check uses restock quantity 0, so it never changes data.
+9. A rejected applicant keeps customer access and sees the reviewer's note.
+10. A customer opening `/app/dealer-applications` is redirected to `/app`.
 
 ## Security review
 
@@ -89,6 +95,7 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 2. **Unbounded restock** could overflow the integer column. There's now a 100,000-unit ceiling enforced in the same atomic UPDATE (409 `STOCK_LIMIT_EXCEEDED`).
 3. **Filter radio briefly snapped back in the browser.** It read the URL, which React Router updates asynchronously. Filters are now React state mirrored to the URL. The Playwright suite caught it; the jsdom unit tests could not reproduce it.
 4. Found by reviewing screenshots: at tablet width vehicle names were cut off and badges overlapped prices. Fixed with an icon-rail sidebar and fixed column widths.
+5. **The confirmation dialog stole focus while typing.** It (and the side drawer) re-ran its focus effect on every re-render, moving focus to Cancel, so a space keypress in the rejection-note field cancelled the dialog. Found by the reject-with-note test. Focus now moves only when the dialog opens.
 
 ## Not verified / known gaps
 
