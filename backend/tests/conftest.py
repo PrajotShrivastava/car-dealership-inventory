@@ -93,7 +93,9 @@ VEHICLE = {
 @pytest.fixture
 def make_vehicle(client: TestClient, admin_headers: dict[str, str]):  # type: ignore[no-untyped-def]
     def _make(**overrides):  # type: ignore[no-untyped-def]
-        response = client.post("/api/vehicles", json={**VEHICLE, **overrides}, headers=admin_headers)
+        response = client.post(
+            "/api/vehicles", json={**VEHICLE, **overrides}, headers=admin_headers
+        )
         assert response.status_code == 201, response.text
         return response.json()
 

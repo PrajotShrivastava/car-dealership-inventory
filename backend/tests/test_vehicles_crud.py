@@ -130,7 +130,9 @@ class TestUpdate:
         vehicle = make_vehicle()
 
         response = client.put(
-            f"/api/vehicles/{vehicle['id']}", json={**VEHICLE, "quantity": 99}, headers=admin_headers
+            f"/api/vehicles/{vehicle['id']}",
+            json={**VEHICLE, "quantity": 99},
+            headers=admin_headers,
         )
 
         assert response.status_code == 422
@@ -152,7 +154,9 @@ class TestDelete:
         response = client.delete(f"/api/vehicles/{vehicle['id']}", headers=admin_headers)
 
         assert response.status_code == 204
-        assert client.get(f"/api/vehicles/{vehicle['id']}", headers=admin_headers).status_code == 404
+        assert (
+            client.get(f"/api/vehicles/{vehicle['id']}", headers=admin_headers).status_code == 404
+        )
 
     def test_deleting_missing_vehicle_is_404(self, client, admin_headers):
         response = client.delete("/api/vehicles/9999", headers=admin_headers)
