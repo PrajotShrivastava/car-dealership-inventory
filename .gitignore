@@ -1,0 +1,31 @@
+# Reference design screenshots (third-party copyrighted work; credited in README)
+refrences/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Env files (commit only *.example)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Node
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo

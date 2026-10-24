@@ -1,0 +1,22 @@
+# Optional: PostgreSQL 17 for reviewers who prefer Docker over a local install.
+# Usage: docker compose up -d   (creates the `drivestock` and `drivestock_test` databases)
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: drivestock
+      POSTGRES_PASSWORD: drivestock_dev
+      POSTGRES_DB: drivestock
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drivestock -d drivestock"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
