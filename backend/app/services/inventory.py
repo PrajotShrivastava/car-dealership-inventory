@@ -87,6 +87,9 @@ def search_vehicles(
     return items, total, counts
 
 
+MAX_STOCK = 100_000
+
+
 def vehicle_not_found(vehicle_id: int) -> AppError:
     return AppError(404, "VEHICLE_NOT_FOUND", f"Vehicle {vehicle_id} not found")
 
@@ -133,13 +136,21 @@ def purchase_vehicle(db: Session, vehicle_id: int, user_id: int, quantity: int) 
 def restock_vehicle(db: Session, vehicle_id: int, quantity: int) -> Vehicle:
     vehicle = db.scalars(
         update(Vehicle)
-        .where(Vehicle.id == vehicle_id)
+        .where(Vehicle.id == vehicle_id, Vehicle.quantity + quantity <= MAX_STOCK)
         .values(quantity=Vehicle.quantity + quantity)
         .returning(Vehicle)
         .execution_options(populate_existing=True)
     ).first()
     if vehicle is None:
         db.rollback()
-        raise vehicle_not_found(vehicle_id)
+        current = db.get(Vehicle, vehicle_id)
+        if current is None:
+            raise vehicle_not_found(vehicle_id)
+        raise AppError(
+            409,
+            "STOCK_LIMIT_EXCEEDED",
+            f"Restocking would exceed the {MAX_STOCK:,}-unit limit "
+            f"({current.quantity:,} currently in stock)",
+        )
     db.commit()
     return vehicle

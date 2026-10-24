@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Path, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -25,6 +25,9 @@ from app.services.inventory import (
 )
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
+
+# Bounded to Postgres INTEGER so oversized ids get a 422 instead of a DB error.
+VehicleId = Annotated[int, Path(ge=1, le=2_147_483_647)]
 
 
 def _get_or_404(db: Session, vehicle_id: int) -> Vehicle:
@@ -62,7 +65,7 @@ def search(
 
 @router.get("/{vehicle_id}", response_model=VehicleOut)
 def get_vehicle(
-    vehicle_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)
+    vehicle_id: VehicleId, db: Session = Depends(get_db), _: User = Depends(get_current_user)
 ) -> Vehicle:
     return _get_or_404(db, vehicle_id)
 
@@ -80,7 +83,7 @@ def create_vehicle(
 
 @router.put("/{vehicle_id}", response_model=VehicleOut)
 def update_vehicle(
-    vehicle_id: int,
+    vehicle_id: VehicleId,
     payload: VehicleUpdate,
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
@@ -95,7 +98,7 @@ def update_vehicle(
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_vehicle(
-    vehicle_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)
+    vehicle_id: VehicleId, db: Session = Depends(get_db), _: User = Depends(require_admin)
 ) -> Response:
     db.delete(_get_or_404(db, vehicle_id))
     db.commit()
@@ -104,7 +107,7 @@ def delete_vehicle(
 
 @router.post("/{vehicle_id}/purchase", response_model=PurchaseResult)
 def purchase(
-    vehicle_id: int,
+    vehicle_id: VehicleId,
     payload: PurchaseRequest | None = None,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -119,7 +122,7 @@ def purchase(
 
 @router.post("/{vehicle_id}/restock", response_model=VehicleOut)
 def restock(
-    vehicle_id: int,
+    vehicle_id: VehicleId,
     payload: RestockRequest,
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),

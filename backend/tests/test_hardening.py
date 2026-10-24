@@ -52,9 +52,18 @@ def test_huge_offset_is_rejected(client, customer_headers):
 
 
 def test_restock_cannot_push_stock_past_the_limit(client, admin_headers, make_vehicle):
+    from sqlalchemy import update
+
+    from app.db import get_sessionmaker
+    from app.models import Vehicle
     from app.services.inventory import MAX_STOCK
 
-    vehicle = make_vehicle(quantity=MAX_STOCK - 500)
+    vehicle = make_vehicle()
+    with get_sessionmaker()() as session:  # beyond what the create endpoint allows
+        session.execute(
+            update(Vehicle).where(Vehicle.id == vehicle["id"]).values(quantity=MAX_STOCK - 500)
+        )
+        session.commit()
 
     response = client.post(
         f"/api/vehicles/{vehicle['id']}/restock", json={"quantity": 501}, headers=admin_headers

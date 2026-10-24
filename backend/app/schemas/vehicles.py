@@ -92,7 +92,7 @@ class VehicleQuery(BaseModel):
     availability: Availability = Availability.ALL
     sort: SortOrder = SortOrder.NEWEST
     limit: int = Field(default=20, ge=1, le=100)
-    offset: int = Field(default=0, ge=0)
+    offset: int = Field(default=0, ge=0, le=1_000_000)
 
     @field_validator("max_price")
     @classmethod
