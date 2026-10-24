@@ -64,7 +64,7 @@ export function LoginPage() {
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">
         New to DriveStock?{' '}
-        <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
+        <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
           Create an account
         </Link>
       </p>

@@ -97,7 +97,7 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
               aria-label="Delete vehicle"
               title="Delete vehicle"
               onClick={() => setConfirmingDelete(true)}
-              className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+              className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
             >
               <Trash2 className="size-[18px]" />
             </button>
@@ -311,7 +311,7 @@ export function InventoryPage() {
 
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div aria-hidden className="absolute inset-0 bg-slate-900/40" onClick={() => setMobileFiltersOpen(false)} />
+          <div aria-hidden className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
           <div className="relative h-full w-full max-w-sm overflow-y-auto bg-canvas p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-semibold text-slate-900">Filters</p>

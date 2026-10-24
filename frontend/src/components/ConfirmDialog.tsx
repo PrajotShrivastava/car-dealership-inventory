@@ -30,7 +30,7 @@ export function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCanc
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div aria-hidden className="absolute inset-0 bg-slate-900/50" onClick={onCancel} />
+      <div aria-hidden className="absolute inset-0 bg-black/60" onClick={onCancel} />
       <div
         role="alertdialog"
         aria-modal="true"
@@ -38,7 +38,7 @@ export function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCanc
         className="relative w-full max-w-sm rounded-lg bg-white p-6 shadow-2xl"
       >
         <div className="flex gap-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400">
             <AlertTriangle aria-hidden className="size-5" />
           </span>
           <div>

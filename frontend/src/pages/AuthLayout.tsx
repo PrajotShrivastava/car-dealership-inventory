@@ -1,6 +1,7 @@
 import { BadgeCheck, Gauge, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Logo } from '../components/Logo'
+import { ThemeToggle } from '../theme/ThemeToggle'
 
 const YEAR = new Date().getFullYear()
 
@@ -13,7 +14,7 @@ const highlights = [
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <div className="flex min-h-full">
-      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-navy-900 p-12 text-white lg:flex">
+      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-navy-900 p-12 text-on-accent lg:flex">
         <Logo inverted />
         <div className="space-y-8">
           <h2 className="text-3xl leading-tight font-semibold">
@@ -23,7 +24,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           </h2>
           <ul className="space-y-4">
             {highlights.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-slate-300">
+              <li key={text} className="flex items-center gap-3 text-nav-text">
                 <span className="flex size-8 items-center justify-center rounded-md bg-navy-800">
                   <Icon aria-hidden className="size-4 text-brand-100" />
                 </span>
@@ -32,9 +33,10 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
             ))}
           </ul>
         </div>
-        <p className="text-xs text-slate-400">© {YEAR} DriveStock</p>
+        <p className="text-xs text-nav-muted">© {YEAR} DriveStock</p>
       </aside>
-      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+        <ThemeToggle className="absolute top-4 right-4" />
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <Logo />

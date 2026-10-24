@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
 import { cn } from '../components/cn'
 import { Logo } from '../components/Logo'
+import { ThemeToggle } from '../theme/ThemeToggle'
 
 const COLLAPSE_KEY = 'drivestock.sidebarCollapsed'
 
@@ -32,7 +33,7 @@ function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => vo
   return (
     <nav aria-label="Main" className="flex-1 px-3 py-4">
       {mode !== 'rail' && (
-        <p className={cn('px-3 pb-2 text-[11px] font-medium tracking-wide text-slate-400 uppercase', mode === 'responsive' && 'max-lg:hidden')}>
+        <p className={cn('px-3 pb-2 text-[11px] font-medium tracking-wide text-nav-muted uppercase', mode === 'responsive' && 'max-lg:hidden')}>
           Inventory
         </p>
       )}
@@ -45,8 +46,8 @@ function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => vo
           cn(
             'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
             isActive
-              ? 'bg-navy-800 text-white shadow-[inset_3px_0_0_var(--color-brand-500)]'
-              : 'text-slate-300 hover:bg-navy-800/60 hover:text-white',
+              ? 'bg-navy-800 text-on-accent shadow-[inset_3px_0_0_var(--color-brand-500)]'
+              : 'text-nav-text hover:bg-navy-800/60 hover:text-on-accent',
             mode === 'rail' && 'justify-center px-0',
             mode === 'responsive' && 'max-lg:justify-center max-lg:px-0',
           )
@@ -86,7 +87,7 @@ export function AppShell() {
       >
         <div
           className={cn(
-            'flex h-16 items-center border-b border-white/10',
+            'flex h-16 items-center border-b border-on-accent/10',
             collapsed ? 'justify-center' : 'justify-center lg:justify-start lg:px-5',
           )}
         >
@@ -104,7 +105,7 @@ export function AppShell() {
           type="button"
           onClick={toggleCollapsed}
           className={cn(
-            'hidden h-12 items-center gap-3 border-t border-white/10 bg-navy-950/40 text-sm text-slate-300 hover:text-white lg:flex',
+            'hidden h-12 items-center gap-3 border-t border-on-accent/10 bg-navy-950/40 text-sm text-nav-text hover:text-on-accent lg:flex',
             collapsed ? 'justify-center' : 'px-6',
           )}
         >
@@ -116,15 +117,15 @@ export function AppShell() {
       {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-slate-900/50" onClick={() => setMobileOpen(false)} aria-hidden />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden />
           <aside className="relative flex h-full w-64 flex-col bg-navy-900">
-            <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+            <div className="flex h-16 items-center justify-between border-b border-on-accent/10 px-5">
               <Logo inverted />
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileOpen(false)}
-                className="rounded p-1 text-slate-300 hover:text-white"
+                className="rounded p-1 text-nav-text hover:text-on-accent"
               >
                 <X className="size-5" />
               </button>
@@ -148,6 +149,7 @@ export function AppShell() {
             <Logo compact />
           </span>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             {user && (
               <div className="flex items-center gap-3">
                 <div className="hidden text-right sm:block">
@@ -157,7 +159,9 @@ export function AppShell() {
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize',
-                    user.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-brand-50 text-brand-700',
+                    user.role === 'admin'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300'
+                      : 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100',
                   )}
                 >
                   {user.role}

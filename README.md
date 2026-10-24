@@ -39,6 +39,7 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 - No overselling and no negative stock, even with concurrent buyers (atomic conditional `UPDATE` plus a database `CHECK`)
 - Consistent JSON error format with field-level validation details
 - Responsive layout: desktop, tablet (icon-rail sidebar), mobile (stacked cards, full-screen details sheet)
+- Light and dark mode toggle (in the header and on the sign-in pages); follows the system setting until you choose, then remembers your choice
 
 ## Tech stack
 
@@ -284,6 +285,7 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 | ![Add vehicle](docs/screenshots/07-admin-add-vehicle.png) **Add vehicle** | ![Restock](docs/screenshots/08-admin-restock.png) **Restock** |
 | ![Edit](docs/screenshots/09-admin-edit.png) **Edit** | ![Delete](docs/screenshots/10-admin-delete-confirm.png) **Delete confirmation** |
 | ![Tablet](docs/screenshots/11-tablet.png) **Tablet** | ![Mobile](docs/screenshots/12-mobile.png) **Mobile** |
+| ![Dark mode](docs/screenshots/14-dark-mode.png) **Dark mode** | |
 
 ## Test report
 

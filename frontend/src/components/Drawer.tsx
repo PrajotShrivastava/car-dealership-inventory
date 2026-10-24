@@ -31,7 +31,7 @@ export function Drawer({ title, subtitle, onClose, children, footer, actions, ta
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div aria-hidden className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
+      <div aria-hidden className="absolute inset-0 bg-black/50" onClick={onClose} />
       <section
         role="dialog"
         aria-modal="true"

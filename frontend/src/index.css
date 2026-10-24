@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Design tokens inspired by the reference: navy chrome, single blue accent,
    cool-grey canvas, white bordered cards, semantic stock colours. */
 @theme {
@@ -17,6 +19,30 @@
   --color-brand-700: #1a4bb3;
 
   --color-canvas: #f4f6f9;
+
+  /* Fixed colours for content on navy/brand/red surfaces (never inverted). */
+  --color-on-accent: #ffffff;
+  --color-nav-text: #cbd5e1;
+  --color-nav-muted: #94a3b8;
+}
+
+/* Dark mode: remap the neutral scale and surfaces so existing utilities
+   (bg-white, text-slate-900, border-slate-200, …) adapt automatically. */
+.dark {
+  --color-white: #111a2b;
+  --color-canvas: #0a1120;
+  --color-slate-50: #16213a;
+  --color-slate-100: #1b2740;
+  --color-slate-200: #26334d;
+  --color-slate-300: #34425e;
+  --color-slate-400: #6b7a93;
+  --color-slate-500: #93a0b5;
+  --color-slate-600: #aab5c7;
+  --color-slate-700: #c3ccda;
+  --color-slate-800: #d9e0ea;
+  --color-slate-900: #eef2f7;
+  --color-navy-900: #08172c;
+  --color-navy-950: #050f1f;
 }
 
 html,

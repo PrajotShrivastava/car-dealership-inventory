@@ -74,6 +74,12 @@ test('admin screens', async ({ page }) => {
   await page.screenshot({ path: `${OUT}/10-admin-delete-confirm.png` })
 })
 
+test('dark mode', async ({ page }) => {
+  await registerCustomer(page, 'alex.dark@example.com')
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click()
+  await page.screenshot({ path: `${OUT}/14-dark-mode.png` })
+})
+
 test('responsive layouts', async ({ browser }) => {
   for (const [name, viewport] of [
     ['11-tablet', { width: 900, height: 1100 }],
