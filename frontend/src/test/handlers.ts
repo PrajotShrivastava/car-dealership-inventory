@@ -4,7 +4,7 @@
  * exercise UI flows; the real API has its own pytest suite.
  */
 import { http, HttpResponse } from 'msw/http'
-import type { User, Vehicle, VehicleCreate } from '../api/types'
+import type { DealerApplication, User, Vehicle, VehicleCreate } from '../api/types'
 
 const API = 'http://localhost:8000/api'
 
@@ -14,6 +14,7 @@ interface StoredUser extends User {
 
 let users: StoredUser[] = []
 let vehicles: Vehicle[] = []
+let applications: DealerApplication[] = []
 let nextId = 1
 
 export const PASSWORD = 'password-123'
@@ -21,7 +22,32 @@ export const PASSWORD = 'password-123'
 export function resetDb() {
   users = []
   vehicles = []
+  applications = []
   nextId = 1
+}
+
+export function seedApplication(
+  applicant: User,
+  overrides: Partial<DealerApplication> = {},
+): DealerApplication {
+  const application: DealerApplication = {
+    id: nextId++,
+    status: 'pending',
+    business_name: 'Dana Motors',
+    phone: null,
+    message: null,
+    created_at: '2026-10-24T09:00:00Z',
+    reviewed_at: null,
+    review_note: null,
+    applicant,
+    ...overrides,
+  }
+  applications.push(application)
+  return application
+}
+
+export function getApplication(id: number) {
+  return applications.find((a) => a.id === id)
 }
 
 export function seedUser(role: User['role'] = 'customer', email = `${role}@example.com`): User {
@@ -96,7 +122,77 @@ function listVehicles(request: Request) {
   return HttpResponse.json({ items: items.slice(offset, offset + limit), total: items.length, counts })
 }
 
+function review(request: Request, id: number, status: 'approved' | 'rejected', note: string | null) {
+  const user = currentUser(request)
+  if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+  if (user.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+  const application = getApplication(id)
+  if (!application) return error(404, 'APPLICATION_NOT_FOUND', 'Dealer application not found')
+  if (application.status !== 'pending') {
+    return error(409, 'APPLICATION_NOT_PENDING', 'This application has already been reviewed')
+  }
+  application.status = status
+  application.reviewed_at = new Date().toISOString()
+  application.review_note = note
+  if (status === 'approved') {
+    const applicant = users.find((u) => u.id === application.applicant.id)
+    if (applicant) applicant.role = 'admin'
+    application.applicant = { ...application.applicant, role: 'admin' }
+  }
+  return HttpResponse.json(application)
+}
+
 export const handlers = [
+  http.post(`${API}/auth/register-dealer`, async ({ request }) => {
+    const body = (await request.json()) as {
+      email: string
+      password: string
+      full_name: string
+      business_name: string
+      phone?: string
+      message?: string
+    }
+    const email = body.email.toLowerCase()
+    if (users.some((u) => u.email === email)) {
+      return error(409, 'EMAIL_TAKEN', 'An account with this email already exists')
+    }
+    const user: StoredUser = { id: nextId++, email, full_name: body.full_name, role: 'customer', password: body.password }
+    users.push(user)
+    const application = seedApplication(publicUser(user), {
+      business_name: body.business_name,
+      phone: body.phone || null,
+      message: body.message || null,
+    })
+    return HttpResponse.json({ user: publicUser(user), application }, { status: 201 })
+  }),
+
+  http.get(`${API}/dealer-applications/me`, ({ request }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    const mine = applications.find((a) => a.applicant.id === user.id)
+    return mine
+      ? HttpResponse.json(mine)
+      : error(404, 'APPLICATION_NOT_FOUND', 'You have not applied to become a dealer')
+  }),
+
+  http.get(`${API}/dealer-applications`, ({ request }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    if (user.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    const status = new URL(request.url).searchParams.get('status')
+    return HttpResponse.json(applications.filter((a) => !status || a.status === status))
+  }),
+
+  http.post(`${API}/dealer-applications/:id/approve`, ({ request, params }) =>
+    review(request, Number(params.id), 'approved', null),
+  ),
+
+  http.post(`${API}/dealer-applications/:id/reject`, async ({ request, params }) => {
+    const text = await request.text()
+    const note = text ? ((JSON.parse(text) as { note?: string }).note ?? null) : null
+    return review(request, Number(params.id), 'rejected', note)
+  }),
+
   http.post(`${API}/auth/register`, async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string; full_name: string }
     const email = body.email.toLowerCase()

@@ -92,3 +92,26 @@ export interface PurchaseResult {
   purchase: Purchase
   vehicle: Vehicle
 }
+
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+export interface DealerApplication {
+  id: number
+  status: ApplicationStatus
+  business_name: string
+  phone: string | null
+  message: string | null
+  created_at: string
+  reviewed_at: string | null
+  review_note: string | null
+  applicant: User
+}
+
+export interface DealerRegisterRequest {
+  full_name: string
+  email: string
+  password: string
+  business_name: string
+  phone?: string
+  message?: string
+}
