@@ -12,6 +12,8 @@ export interface AuthContextValue {
   /** Customer account + pending dealer application, then sign in. */
   registerDealer: (body: DealerRegisterRequest) => Promise<void>
   logout: () => void
+  /** Re-reads the signed-in user from the API, e.g. after their role changed. */
+  refreshUser: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

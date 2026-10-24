@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError } from '../../api/client'
 import { dealersApi } from '../../api/dealers'
+import type { DealerApplication } from '../../api/types'
 
 export const dealerKeys = {
   all: ['dealer-applications'] as const,
@@ -8,11 +9,19 @@ export const dealerKeys = {
   mine: ['dealer-applications', 'mine'] as const,
 }
 
-/** The signed-in user's own application, or null if they never applied. */
+const isPending = (query: { state: { data?: DealerApplication | null } }) => query.state.data?.status === 'pending'
+
+/**
+ * The signed-in user's own application, or null if they never applied. While it is pending
+ * it is re-checked every minute and when the user returns to the tab, so an approval shows
+ * up without signing out.
+ */
 export function useMyApplication(enabled: boolean) {
   return useQuery({
     queryKey: dealerKeys.mine,
     enabled,
+    refetchInterval: (query) => (isPending(query) ? 60_000 : false),
+    refetchOnWindowFocus: isPending,
     queryFn: async () => {
       try {
         return await dealersApi.mine()

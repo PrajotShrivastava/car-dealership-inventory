@@ -54,6 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    setUser(await authApi.me())
+  }, [])
+
   const register = useCallback(
     async (fullName: string, email: string, password: string) => {
       await authApi.register({ full_name: fullName, email, password })
@@ -71,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, isAdmin: user?.role === 'admin', login, register, registerDealer, logout }),
-    [status, user, login, register, registerDealer, logout],
+    () => ({ status, user, isAdmin: user?.role === 'admin', login, register, registerDealer, logout, refreshUser }),
+    [status, user, login, register, registerDealer, logout, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,12 +1,20 @@
 import { Clock, XCircle } from 'lucide-react'
+import { useEffect } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import { useMyApplication } from './queries'
 
 /** Tells applicants where their dealer application stands. Admins never see it. */
 export function ApplicationBanner() {
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, refreshUser } = useAuth()
   const { data: application } = useMyApplication(Boolean(user) && !isAdmin)
-  if (!application || application.status === 'approved') return null
+  const approved = application?.status === 'approved'
+
+  // Approved while signed in: load the new (admin) role so the tools appear without signing out.
+  useEffect(() => {
+    if (approved && !isAdmin) refreshUser().catch(() => {}) // a 401 already signs the user out
+  }, [approved, isAdmin, refreshUser])
+
+  if (!application || approved) return null
 
   const pending = application.status === 'pending'
   const Icon = pending ? Clock : XCircle
