@@ -93,6 +93,28 @@ test('marketing site', async ({ browser }) => {
   await mobile.close()
 })
 
+test('dealer onboarding', async ({ page }) => {
+  await page.goto('/login?as=dealer')
+  await page.screenshot({ path: `${OUT}/19-dealer-sign-in.png` })
+
+  await page.goto('/dealer/register')
+  await page.getByLabel('Full name').fill('Dana Dealer')
+  await page.getByLabel('Email').fill('dana@motors.example')
+  await page.getByLabel('Password').fill('dealer-pass-1')
+  await page.getByLabel('Dealership name').fill('Dana Motors')
+  await page.getByLabel('Phone (optional)').fill('+44 20 7946 0000')
+  await page.screenshot({ path: `${OUT}/20-dealer-register.png`, fullPage: true })
+  await page.getByRole('button', { name: 'Submit application' }).click()
+  await page.getByRole('status', { name: 'Dealer application' }).waitFor()
+  await page.screenshot({ path: `${OUT}/21-dealer-pending.png` })
+  await page.getByRole('button', { name: 'Sign out' }).click()
+
+  await signIn(page, ADMIN.email, ADMIN.password)
+  await page.getByRole('link', { name: /Dealer applications/ }).click()
+  await page.getByText('Dana Motors').waitFor()
+  await page.screenshot({ path: `${OUT}/22-admin-dealer-applications.png` })
+})
+
 test('dark mode', async ({ page }) => {
   await registerCustomer(page, 'alex.dark@example.com')
   await page.getByRole('button', { name: 'Switch to dark mode' }).click()
