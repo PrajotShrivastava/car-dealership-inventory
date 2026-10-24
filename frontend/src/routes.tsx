@@ -2,8 +2,10 @@ import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } f
 import { GuestOnly, RequireAuth } from './auth/guards'
 import { InventoryPage } from './features/inventory/InventoryPage'
 import { AppShell } from './layout/AppShell'
+import { AboutPage } from './marketing/AboutPage'
 import { HomePage } from './marketing/HomePage'
 import { MarketingLayout } from './marketing/MarketingLayout'
+import { PricingPage } from './marketing/PricingPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -17,6 +19,8 @@ export const routes: RouteObject[] = [
     element: <MarketingLayout />,
     children: [
       { path: '/', element: <HomePage /> },
+      { path: '/about', element: <AboutPage /> },
+      { path: '/pricing', element: <PricingPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

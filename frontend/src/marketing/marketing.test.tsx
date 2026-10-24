@@ -95,13 +95,18 @@ describe('about page', () => {
   })
 })
 
+function planCards(list: HTMLElement) {
+  // Direct children only: each card also contains its own feature list.
+  return Array.from(list.children) as HTMLElement[]
+}
+
 describe('pricing page', () => {
   it('shows three plans clearly labelled as placeholders', async () => {
     renderApp({ path: '/pricing' })
 
     expect(await screen.findByRole('heading', { level: 1, name: /pricing/i })).toBeInTheDocument()
     expect(screen.getByRole('note')).toHaveTextContent(/placeholder/i)
-    const plans = within(screen.getByRole('list', { name: /plans/i })).getAllByRole('listitem')
+    const plans = planCards(screen.getByRole('list', { name: /plans/i }))
     expect(plans).toHaveLength(3)
     for (const plan of plans) {
       expect(within(plan).getByText(/placeholder/i)).toBeInTheDocument()
@@ -111,7 +116,7 @@ describe('pricing page', () => {
   it('sends plan buttons to sign-up, not to any checkout', async () => {
     renderApp({ path: '/pricing' })
 
-    const plans = within(await screen.findByRole('list', { name: /plans/i })).getAllByRole('listitem')
+    const plans = planCards(await screen.findByRole('list', { name: /plans/i }))
     for (const plan of plans) {
       expect(within(plan).getByRole('link')).toHaveAttribute('href', '/signup')
     }
