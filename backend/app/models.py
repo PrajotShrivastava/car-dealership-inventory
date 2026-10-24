@@ -21,6 +21,9 @@ from app.db import Base
 class Role(enum.StrEnum):
     CUSTOMER = "customer"
     ADMIN = "admin"
+    # Manages inventory (vehicles, stock, photos). Admins can do that too, plus review
+    # dealer applications. Listed last to match the order of the database enum.
+    DEALER = "dealer"
 
 
 def _enum_values(enum_cls: type[enum.Enum]) -> list[str]:
@@ -163,7 +166,10 @@ class ApplicationStatus(enum.StrEnum):
 
 
 class DealerApplication(Base):
-    """A request to become an admin (dealer). Grants nothing until an admin approves it."""
+    """A request to become a dealer, from before dealers could sign up directly.
+
+    New sign-ups no longer create these; existing ones are still reviewed by an admin.
+    """
 
     __tablename__ = "dealer_applications"
 

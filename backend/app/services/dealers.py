@@ -1,4 +1,7 @@
-"""Dealer onboarding: applications are approved or rejected by an existing admin."""
+"""Dealer applications made before dealers could sign up directly.
+
+An admin approves one (the applicant becomes a dealer) or rejects it (they stay a customer).
+"""
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -65,7 +68,7 @@ def _review(
         db.execute(
             update(User)
             .where(User.id == user_id)
-            .values(role=Role.ADMIN)
+            .values(role=Role.DEALER)
             .execution_options(synchronize_session=False)
         )
     db.commit()

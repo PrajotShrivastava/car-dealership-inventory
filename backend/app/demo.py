@@ -11,7 +11,7 @@ from sqlalchemy.engine import make_url
 
 from app.config import get_settings
 from app.db import get_sessionmaker
-from app.models import DealerApplication, Role, User
+from app.models import Role, User
 from app.security import hash_password
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
@@ -27,25 +27,16 @@ class DemoAccount:
     password: str
     full_name: str
     role: Role
-    business_name: str | None = None  # set => pending dealer application
 
     @property
     def label(self) -> str:
-        if self.business_name:
-            return "dealer applicant (pending)"
         return self.role.value
 
 
 DEMO_ACCOUNTS = (
     DemoAccount("demo-admin@example.com", "demo-admin-pass", "Demo Admin", Role.ADMIN),
     DemoAccount("demo-customer@example.com", "demo-customer-pass", "Demo Customer", Role.CUSTOMER),
-    DemoAccount(
-        "demo-dealer@example.com",
-        "demo-dealer-pass",
-        "Demo Dealer",
-        Role.CUSTOMER,
-        business_name="Demo Motors",
-    ),
+    DemoAccount("demo-dealer@example.com", "demo-dealer-pass", "Demo Dealer", Role.DEALER),
 )
 
 
@@ -77,9 +68,6 @@ def seed_demo_users() -> int:
                 role=account.role,
             )
             session.add(user)
-            if account.business_name:
-                session.flush()
-                session.add(DealerApplication(user_id=user.id, business_name=account.business_name))
             created += 1
         session.commit()
     return created

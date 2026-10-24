@@ -5,9 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.errors import AppError
-from app.models import DealerApplication, User
+from app.models import Role, User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
-from app.schemas.dealers import ApplicationOut, DealerRegisterRequest, DealerRegisterResponse
 from app.security import create_access_token, get_current_user, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -15,14 +14,15 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _EMAIL_TAKEN = AppError(409, "EMAIL_TAKEN", "An account with this email already exists")
 
 
-def _create_user(db: Session, payload: RegisterRequest) -> User:
-    """Add (not commit) a customer account; admin rights only ever come from approval."""
+def _create_user(db: Session, payload: RegisterRequest, role: Role = Role.CUSTOMER) -> User:
+    """Add (not commit) an account. The role is set by the endpoint, never by the request."""
     if db.scalar(select(User.id).where(User.email == payload.email)) is not None:
         raise _EMAIL_TAKEN
     user = User(
         email=payload.email,
         password_hash=hash_password(payload.password),
         full_name=payload.full_name,
+        role=role,
     )
     db.add(user)
     return user
@@ -43,27 +43,12 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
     return user
 
 
-@router.post(
-    "/register-dealer", response_model=DealerRegisterResponse, status_code=status.HTTP_201_CREATED
-)
-def register_dealer(
-    payload: DealerRegisterRequest, db: Session = Depends(get_db)
-) -> DealerRegisterResponse:
-    """Create a customer account plus a *pending* dealer application in one transaction."""
-    user = _create_user(db, payload)
-    db.flush()
-    application = DealerApplication(
-        user_id=user.id,
-        business_name=payload.business_name,
-        phone=payload.phone,
-        message=payload.message,
-    )
-    db.add(application)
+@router.post("/register-dealer", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def register_dealer(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
+    """Create a dealer account, usable straight away (no approval step)."""
+    user = _create_user(db, payload, role=Role.DEALER)
     _commit_registration(db)
-    db.refresh(application)
-    return DealerRegisterResponse(
-        user=UserOut.model_validate(user), application=ApplicationOut.model_validate(application)
-    )
+    return user
 
 
 @router.post("/login", response_model=TokenResponse)

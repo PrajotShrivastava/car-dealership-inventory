@@ -17,7 +17,7 @@ from app.schemas.vehicles import (
     VehicleQuery,
     VehicleUpdate,
 )
-from app.security import get_current_user, require_admin
+from app.security import get_current_user, require_inventory_manager
 from app.services.inventory import (
     purchase_vehicle,
     restock_vehicle,
@@ -75,7 +75,9 @@ def get_vehicle(
 
 @router.post("", response_model=VehicleOut, status_code=status.HTTP_201_CREATED)
 def create_vehicle(
-    payload: VehicleCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)
+    payload: VehicleCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     vehicle = Vehicle(**payload.model_dump())
     db.add(vehicle)
@@ -89,7 +91,7 @@ def update_vehicle(
     vehicle_id: VehicleId,
     payload: VehicleUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     vehicle = _get_or_404(db, vehicle_id)
     for field, value in payload.model_dump().items():
@@ -101,7 +103,9 @@ def update_vehicle(
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_vehicle(
-    vehicle_id: VehicleId, db: Session = Depends(get_db), _: User = Depends(require_admin)
+    vehicle_id: VehicleId,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
 ) -> Response:
     vehicle = _get_or_404(db, vehicle_id)
     photo_keys = [photo.file_key for photo in vehicle.photos]
@@ -116,7 +120,7 @@ def upload_photos(
     vehicle_id: VehicleId,
     files: Annotated[list[UploadFile], File(description="JPEG, PNG or WebP, up to 5 MB each")],
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     # Reading one byte past the limit is enough to tell an oversized file apart.
     return add_photos(db, vehicle_id, [upload.file.read(MAX_PHOTO_BYTES + 1) for upload in files])
@@ -127,7 +131,7 @@ def delete_photo(
     vehicle_id: VehicleId,
     photo_id: PhotoId,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Response:
     remove_photo(db, vehicle_id, photo_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -153,6 +157,6 @@ def restock(
     vehicle_id: VehicleId,
     payload: RestockRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     return restock_vehicle(db, vehicle_id, payload.quantity)

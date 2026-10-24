@@ -1,31 +1,10 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 from app.models import ApplicationStatus
-from app.schemas.auth import RegisterRequest, UserOut
-
-
-class DealerRegisterRequest(RegisterRequest):
-    business_name: Annotated[
-        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)
-    ]
-    phone: (
-        Annotated[
-            str,
-            StringConstraints(
-                strip_whitespace=True, max_length=30, pattern=r"^[0-9+()\-.\s]{5,30}$"
-            ),
-        ]
-        | None
-    ) = None
-    message: Annotated[str, StringConstraints(strip_whitespace=True, max_length=1000)] | None = None
-
-    @field_validator("phone", "message")
-    @classmethod
-    def _blank_is_none(cls, value: str | None) -> str | None:
-        return value or None
+from app.schemas.auth import UserOut
 
 
 class RejectRequest(BaseModel):
@@ -44,8 +23,3 @@ class ApplicationOut(BaseModel):
     reviewed_at: datetime | None
     review_note: str | None
     applicant: UserOut
-
-
-class DealerRegisterResponse(BaseModel):
-    user: UserOut
-    application: ApplicationOut

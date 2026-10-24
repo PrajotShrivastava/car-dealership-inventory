@@ -32,6 +32,18 @@ from app.main import create_app  # noqa: E402
 
 @pytest.fixture(scope="session", autouse=True)
 def _migrated_database() -> Iterator[None]:
+    # The Playwright run shares this throwaway database and leaves rows behind (e.g. dealer
+    # accounts, which migration 0007 refuses to drop), so clear the data before migrating down.
+    with get_engine().begin() as conn:
+        leftover = conn.scalars(
+            text(
+                "SELECT tablename FROM pg_tables "
+                "WHERE schemaname = 'public' AND tablename <> 'alembic_version'"
+            )
+        ).all()
+        if leftover:
+            names = ", ".join(f'"{name}"' for name in leftover)
+            conn.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
     cfg = Config("alembic.ini")
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
