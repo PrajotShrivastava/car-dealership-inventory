@@ -54,7 +54,7 @@ export function ConfirmDialog({ title, children, confirmLabel, onConfirm, onCanc
             className={
               tone === 'danger'
                 ? 'flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-                : 'flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-blue-300'
+                : 'flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600'
             }
           >
             {tone === 'danger' ? <AlertTriangle aria-hidden className="size-5" /> : <ShieldCheck aria-hidden className="size-5" />}

@@ -18,7 +18,7 @@ const linkClass = 'text-sm font-medium text-slate-600 transition-colors hover:te
 function AuthActions({ stacked = false, onNavigate }: { stacked?: boolean; onNavigate?: () => void }) {
   const { status } = useAuth()
   const primary =
-    'inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-on-accent shadow-sm transition hover:bg-brand-700'
+    'inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-on-brand shadow-sm transition hover:bg-brand-700'
   if (status === 'authenticated') {
     return (
       <Link to="/app" onClick={onNavigate} className={primary}>

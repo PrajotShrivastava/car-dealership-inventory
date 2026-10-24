@@ -50,7 +50,7 @@ export function FilterPanel({ filters, drafts, onDraftChange, counts, activeCoun
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700"
           >
             <X aria-hidden className="size-4" />
             Clear all

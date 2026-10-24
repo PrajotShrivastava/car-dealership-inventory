@@ -16,7 +16,7 @@ export function DashboardPreview() {
   const featured = SAMPLE[0]!
   return (
     <figure aria-label="Dashboard preview" className="relative">
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-navy-900/20 ring-1 ring-slate-900/5">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-ink-900/20 ring-1 ring-slate-900/5">
         {/* window chrome */}
         <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
           <span className="size-2.5 rounded-full bg-red-400" />
@@ -25,19 +25,19 @@ export function DashboardPreview() {
           <span className="ml-3 truncate rounded bg-white px-3 py-0.5 text-[11px] text-slate-400 ring-1 ring-slate-200">
             drivestock / app
           </span>
-          <span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand-700 uppercase dark:bg-brand-500/15 dark:text-brand-100">
+          <span className="ml-auto rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-brand-700 uppercase">
             Sample data
           </span>
         </div>
         <div className="flex">
-          <div aria-hidden className="hidden w-40 shrink-0 bg-navy-900 p-3 sm:block">
+          <div aria-hidden className="hidden w-40 shrink-0 bg-ink-900 p-3 sm:block">
             <div className="flex items-center gap-2 px-1 py-1.5">
-              <span className="flex size-6 items-center justify-center rounded bg-brand-500 text-on-accent">
+              <span className="flex size-6 items-center justify-center rounded bg-brand-500 text-on-brand">
                 <CarFront className="size-3.5" />
               </span>
               <span className="text-xs font-bold text-on-accent">DriveStock</span>
             </div>
-            <div className="mt-4 rounded bg-navy-800 px-2 py-1.5 text-[11px] font-medium text-on-accent shadow-[inset_2px_0_0_var(--color-brand-500)]">
+            <div className="mt-4 rounded bg-ink-800 px-2 py-1.5 text-[11px] font-medium text-on-accent shadow-[inset_2px_0_0_var(--color-brand-500)]">
               Vehicles
             </div>
           </div>
@@ -80,7 +80,7 @@ export function DashboardPreview() {
           <p className="text-lg font-semibold text-slate-900">{formatPrice(featured.price)}</p>
           <StockBadge quantity={featured.quantity} />
         </div>
-        <div className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-brand-600 text-xs font-medium text-on-accent">
+        <div className="mt-3 flex h-8 items-center justify-center gap-1.5 rounded-md bg-brand-600 text-xs font-medium text-on-brand">
           <ShoppingCart className="size-3.5" /> Purchase
         </div>
       </div>

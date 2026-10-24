@@ -56,8 +56,8 @@ function SidebarLink({
         cn(
           'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
           isActive
-            ? 'bg-navy-800 text-on-accent shadow-[inset_3px_0_0_var(--color-brand-500)]'
-            : 'text-nav-text hover:bg-navy-800/60 hover:text-on-accent',
+            ? 'bg-ink-800 text-on-accent shadow-[inset_3px_0_0_var(--color-brand-500)]'
+            : 'text-nav-text hover:bg-ink-800/60 hover:text-on-accent',
           mode === 'rail' && 'justify-center px-0',
           mode === 'responsive' && 'max-lg:justify-center max-lg:px-0',
         )
@@ -68,7 +68,7 @@ function SidebarLink({
       {badge ? (
         <span
           className={cn(
-            'ml-auto rounded-full bg-amber-400 px-1.5 text-[11px] font-semibold text-navy-900 tabular-nums',
+            'ml-auto rounded-full bg-amber-400 px-1.5 text-[11px] font-semibold text-ink-900 tabular-nums',
             mode !== 'full' && 'absolute top-0.5 right-1 ml-0',
             mode === 'responsive' && 'lg:static lg:ml-auto',
           )}
@@ -136,7 +136,7 @@ export function AppShell() {
       {/* Desktop / tablet sidebar */}
       <aside
         className={cn(
-          'hidden shrink-0 flex-col bg-navy-900 transition-[width] md:flex',
+          'hidden shrink-0 flex-col bg-ink-900 transition-[width] md:flex',
           collapsed ? 'w-[72px]' : 'w-[72px] lg:w-60',
         )}
       >
@@ -160,7 +160,7 @@ export function AppShell() {
           type="button"
           onClick={toggleCollapsed}
           className={cn(
-            'hidden h-12 items-center gap-3 border-t border-on-accent/10 bg-navy-950/40 text-sm text-nav-text hover:text-on-accent lg:flex',
+            'hidden h-12 items-center gap-3 border-t border-on-accent/10 bg-ink-950/40 text-sm text-nav-text hover:text-on-accent lg:flex',
             collapsed ? 'justify-center' : 'px-6',
           )}
         >
@@ -173,7 +173,7 @@ export function AppShell() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} aria-hidden />
-          <aside className="relative flex h-full w-64 flex-col bg-navy-900">
+          <aside className="relative flex h-full w-64 flex-col bg-ink-900">
             <div className="flex h-16 items-center justify-between border-b border-on-accent/10 px-5">
               <Logo inverted />
               <button
@@ -216,14 +216,14 @@ export function AppShell() {
                     'rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize',
                     user.role === 'admin'
                       ? 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300'
-                      : 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100',
+                      : 'bg-brand-50 text-brand-700',
                   )}
                 >
                   {user.role}
                 </span>
                 <span
                   aria-hidden
-                  className="flex size-8 items-center justify-center rounded-full bg-amber-300 text-xs font-semibold text-navy-900"
+                  className="flex size-8 items-center justify-center rounded-full bg-amber-300 text-xs font-semibold text-ink-900"
                 >
                   {initials(user.full_name)}
                 </span>

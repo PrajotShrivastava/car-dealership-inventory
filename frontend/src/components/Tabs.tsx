@@ -23,7 +23,7 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: TabsPro
           className={cn(
             '-mb-px border-b-2 py-3 text-sm font-medium',
             value === tab.value
-              ? 'border-brand-600 text-brand-700 dark:border-blue-400 dark:text-blue-400'
+              ? 'border-brand-600 text-brand-700'
               : 'border-transparent text-slate-500 hover:text-slate-800',
           )}
         >

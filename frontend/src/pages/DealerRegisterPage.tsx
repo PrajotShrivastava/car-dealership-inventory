@@ -85,7 +85,7 @@ export function DealerRegisterPage() {
       <ol className="mb-6 space-y-2 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
         {STEPS.map((step, index) => (
           <li key={step} className="flex gap-3">
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-blue-300">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">
               {index + 1}
             </span>
             {step}
@@ -133,7 +133,7 @@ export function DealerRegisterPage() {
       </form>
       <p className="mt-6 text-center text-sm text-slate-500">
         Already have a dealer account?{' '}
-        <Link to="/login?as=dealer" className="font-medium text-brand-600 hover:text-brand-700 dark:text-blue-400 dark:hover:text-blue-300">
+        <Link to="/login?as=dealer" className="font-medium text-brand-600 hover:text-brand-700">
           Dealer Sign In
         </Link>
       </p>

@@ -26,7 +26,7 @@ export function AuthLayout({
 }) {
   return (
     <div className="flex min-h-full">
-      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-navy-900 p-12 text-on-accent lg:flex">
+      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-ink-900 p-12 text-on-accent lg:flex">
         <Link to="/" aria-label="DriveStock home" className="self-start">
           <Logo inverted />
         </Link>
@@ -39,8 +39,8 @@ export function AuthLayout({
           <ul className="space-y-4">
             {highlights.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3 text-nav-text">
-                <span className="flex size-8 items-center justify-center rounded-md bg-navy-800">
-                  <Icon aria-hidden className="size-4 text-brand-100" />
+                <span className="flex size-8 items-center justify-center rounded-md bg-ink-800">
+                  <Icon aria-hidden className="size-4 text-brand-300" />
                 </span>
                 {text}
               </li>
