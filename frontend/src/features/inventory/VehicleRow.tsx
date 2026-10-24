@@ -6,12 +6,15 @@ import { formatPrice, specLine, vehicleTitle } from './format'
 import { StockBadge } from './StockBadge'
 import { VehicleThumb } from './VehicleThumb'
 
-export const ROW_GRID = 'md:grid md:grid-cols-[minmax(0,1fr)_56px_128px_96px_auto] md:items-center md:gap-4'
+// Rows follow the width of the list (an @container), not the window, because the sidebar and
+// filter column change how much room it has: stacked card when narrow, one-line card from @2xl,
+// table columns (matching the header row) from @3xl.
+export const ROW_GRID = '@3xl:grid @3xl:grid-cols-[minmax(0,1fr)_56px_128px_104px_auto] @3xl:items-center @3xl:gap-5'
 
 export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onView: () => void; actions?: ReactNode }) {
   return (
-    <li className={`flex flex-col gap-3 px-4 py-4 sm:px-5 ${ROW_GRID}`}>
-      <div className="flex min-w-0 items-center gap-4">
+    <li className={`flex flex-col gap-4 px-4 py-5 sm:px-6 @2xl:flex-row @2xl:items-center @2xl:gap-6 ${ROW_GRID}`}>
+      <div className="flex min-w-0 items-center gap-5 @2xl:flex-1">
         <VehicleThumb
           category={vehicle.category}
           photo={vehicle.photos[0]}
@@ -19,22 +22,22 @@ export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onV
         />
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-slate-900">{vehicleTitle(vehicle)}</h3>
-          {vehicle.trim && <p className="truncate text-[13px] text-slate-500">{vehicle.trim}</p>}
-          <p className="mt-1 truncate text-xs text-slate-500">
-            <span className="md:hidden">{vehicle.year} • </span>
+          {vehicle.trim && <p className="mt-0.5 truncate text-[13px] text-slate-500">{vehicle.trim}</p>}
+          <p className="mt-1.5 truncate text-xs text-slate-500">
+            <span className="@3xl:hidden">{vehicle.year} • </span>
             {specLine(vehicle).join(' • ')}
           </p>
         </div>
       </div>
-      <p className="hidden text-sm text-slate-700 tabular-nums md:block">{vehicle.year}</p>
-      {/* One flex row on mobile; md:contents lets both children become grid cells on desktop. */}
-      <div className="flex items-center justify-between gap-3 md:contents">
+      <p className="hidden text-sm text-slate-700 tabular-nums @3xl:block">{vehicle.year}</p>
+      {/* Badge and price share a row in card layouts; @3xl:contents makes them two table cells. */}
+      <div className="flex items-center justify-between gap-3 @2xl:shrink-0 @2xl:gap-6 @3xl:contents">
         <div>
           <StockBadge quantity={vehicle.quantity} />
         </div>
-        <p className="text-sm font-semibold text-slate-900 tabular-nums md:text-right">{formatPrice(vehicle.price)}</p>
+        <p className="text-sm font-semibold text-slate-900 tabular-nums @2xl:min-w-24 @2xl:text-right">{formatPrice(vehicle.price)}</p>
       </div>
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-2 @2xl:shrink-0">
         {actions}
         <Button size="sm" icon={<Info aria-hidden className="size-3.5" />} onClick={onView}>
           View details

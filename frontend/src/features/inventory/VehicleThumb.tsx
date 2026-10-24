@@ -6,8 +6,8 @@ import { cn } from '../../components/cn'
 
 const frame = 'shrink-0 overflow-hidden rounded-md border border-slate-200'
 // Photos get more room in the drawer than the drawing does.
-const photoSizes = { md: 'h-14 w-20', lg: 'h-56 w-full' }
-const drawingSizes = { md: 'h-14 w-20', lg: 'h-40 w-full' }
+const photoSizes = { md: 'h-16 w-24', lg: 'h-56 w-full' }
+const drawingSizes = { md: 'h-16 w-24', lg: 'h-40 w-full' }
 
 /**
  * A vehicle's photo, or a neutral drawing of its body style when it has none (or the

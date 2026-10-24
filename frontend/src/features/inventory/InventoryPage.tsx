@@ -230,7 +230,7 @@ export function InventoryPage() {
   )
 
   return (
-    <div className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-[1760px] p-4 sm:p-6 lg:py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
@@ -247,11 +247,11 @@ export function InventoryPage() {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">{panel}</aside>
+      <div className="grid gap-6 xl:grid-cols-[256px_minmax(0,1fr)]">
+        <aside className="hidden xl:block">{panel}</aside>
 
-        <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+        <section className="@container min-w-0 rounded-lg border border-slate-200 bg-white">
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
             <h2 className="text-base font-semibold text-slate-900">
               Vehicles <span className="font-normal text-slate-500 tabular-nums">({total})</span>
             </h2>
@@ -260,7 +260,7 @@ export function InventoryPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="lg:hidden"
+                className="xl:hidden"
                 icon={<SlidersHorizontal aria-hidden className="size-3.5" />}
                 onClick={() => setMobileFiltersOpen(true)}
               >
@@ -287,7 +287,7 @@ export function InventoryPage() {
 
           <div
             aria-hidden
-            className={`hidden border-b border-slate-200 bg-slate-50/60 px-5 py-2.5 text-xs font-medium text-slate-500 ${ROW_GRID}`}
+            className={`hidden border-b border-slate-200 bg-slate-50/60 px-6 py-3 text-xs font-medium text-slate-500 ${ROW_GRID}`}
           >
             <span>Vehicle</span>
             <span>Year</span>
@@ -318,7 +318,7 @@ export function InventoryPage() {
           )}
 
           {total > 0 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:px-5">
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:px-6">
               <span className="tabular-nums">
                 Showing {firstShown}–{lastShown} of {total}
               </span>
@@ -351,7 +351,7 @@ export function InventoryPage() {
       </div>
 
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 xl:hidden">
           <div aria-hidden className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
           <div className="relative h-full w-full max-w-sm overflow-y-auto bg-canvas p-4">
             <div className="mb-3 flex items-center justify-between">
