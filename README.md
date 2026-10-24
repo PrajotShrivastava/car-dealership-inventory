@@ -33,13 +33,14 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 
 **Everyone (signed in, at `/app`)**
 - Register and sign in (JWT bearer tokens); the session survives a reload
-- Inventory list showing make, model, trim, year, spec line, price and a live stock badge (in stock / low stock / out of stock)
+- Inventory list showing each vehicle's cover photo, make, model, trim, year, spec line, price and a live stock badge (in stock / low stock / out of stock). Vehicles without photos show a drawing of their body style
 - Search (make, model, trim) and filters for category, price range and availability, with counts per availability state; filters live in the URL so a view can be shared
 - Sorting (newest, price, year, make) and pagination
-- Details drawer with full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
+- Details drawer with a photo gallery, full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
 
 **Admins** (server-enforced)
 - Add vehicles (with initial stock), edit details and price, **restock**, delete (with confirmation)
+- **Upload vehicle photos** from their device: several at once when adding a vehicle, then add or remove photos in the Edit tab (up to 10 per vehicle, JPEG/PNG/WebP, 5 MB each). The first photo is the cover
 - Prospective dealers **register as a dealer**; they get admin rights only after an existing admin **approves** the application. The first admin is created with a CLI command. See [Accounts & Roles](#accounts--roles)
 
 **Guarantees**
@@ -158,6 +159,7 @@ The public site is at <http://localhost:5173/> and the app at <http://localhost:
 | `JWT_SECRET` | backend | *(required, ≥ 32 chars)* | Token signing key |
 | `JWT_EXPIRE_MINUTES` | backend | `60` | Access token lifetime |
 | `CORS_ORIGINS` | backend | `http://localhost:5173` | Comma-separated allowed origins |
+| `MEDIA_DIR` | backend | `backend/media` | Where uploaded photos are stored (git-ignored; **back it up with the database**). Tests and e2e use temporary folders |
 | `APP_ENV` | backend | `production` (`.env.example` sets `development`) | Only `development` allows `seed-demo-users`. Anything else, or unset, is treated as production |
 | `VITE_API_URL` | frontend | `http://localhost:8000/api` | API base URL |
 
@@ -214,9 +216,9 @@ These passwords are public on purpose and for **local development only**. The co
 
 | Level | Tools | What it covers |
 |---|---|---|
-| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 133 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
-| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 91 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
-| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), and dealer onboarding (apply → admin approves → dealer gets inventory tools). Also captures the README screenshots. |
+| **Backend** | **pytest**, FastAPI **TestClient** (`httpx2`), **pytest-cov** | 164 tests against a **real PostgreSQL 17** test database (`drivestock_test`), not mocks. Each run migrates it down and back up, and tables are emptied after every test. Includes a 20-thread concurrency test showing stock can't be oversold. |
+| **Frontend** | **Vitest**, **React Testing Library** + **user-event**, **jsdom**, **MSW** (Mock Service Worker), **@vitest/coverage-v8** | 107 component and integration tests that act as a user would (by role and label), against an in-memory fake of the API that mirrors its status codes and error format. |
+| **End-to-end** | **Playwright** (Chromium) | Real browser against the real API and Postgres: customer purchase, admin add/edit/restock/delete, out-of-stock handling, a server-side 403 check, the public-site journey (landing → pricing → sign-up → `/app`), dealer onboarding (apply → admin approves → dealer gets inventory tools), and photo upload (add with a new vehicle, add and remove in Edit, still there after a reload, non-images rejected). Also captures the README screenshots. |
 | **Static checks** | **ruff** (lint + formatting), **mypy `--strict`**, **oxlint**, **`tsc --noEmit`** | Lint and type checks for both apps. |
 | **CI** | **GitHub Actions** | Runs the backend (with a Postgres 17 service) and frontend jobs on every push. Playwright currently runs locally only. |
 
@@ -259,6 +261,9 @@ Base URL `/api`. Every endpoint except register, login and health requires `Auth
 | DELETE | `/vehicles/{id}` | **admin** | → `204` (purchase history is kept) |
 | POST | `/vehicles/{id}/purchase` | user | `{quantity?: 1–10}` → `{purchase, vehicle}` |
 | POST | `/vehicles/{id}/restock` | **admin** | `{quantity: 1–1000}` → `Vehicle` |
+| POST | `/vehicles/{id}/photos` | **admin** | `multipart/form-data` with one or more `files` (JPEG, PNG or WebP, ≤ 5 MB each, ≤ 10 per vehicle) → `201 Vehicle`. All or nothing: one bad file rejects the upload |
+| DELETE | `/vehicles/{id}/photos/{photo_id}` | **admin** | → `204`; the files are deleted too |
+| GET | `/media/vehicles/{key}.webp` | none | Photo files (full size and `-thumb`), served as static files |
 | POST | `/auth/register-dealer` | none | `{full_name, email, password, business_name, phone?, message?}` → `201 {user, application}`. The account is a **customer**; the application is `pending` |
 | GET | `/dealer-applications/me` | user | Your own application, or `404 APPLICATION_NOT_FOUND` |
 | GET | `/dealer-applications` | **admin** | `?status=pending\|approved\|rejected` → `[Application]` |
@@ -272,10 +277,11 @@ Base URL `/api`. Every endpoint except register, login and health requires `Auth
 {
   "id": 1, "make": "Ford", "model": "Kuga", "trim": "ST-Line", "year": 2024,
   "category": "suv", "fuel_type": "hybrid", "transmission": "automatic",
-  "price": "35990.00", "quantity": 6
+  "price": "35990.00", "quantity": 6,
+  "photos": [{ "id": 3, "url": "/api/media/vehicles/9f…c1.webp", "thumb_url": "/api/media/vehicles/9f…c1-thumb.webp" }]
 }
 ```
-`category` ∈ sedan, suv, hatchback, coupe, convertible, truck, van, wagon · `fuel_type` ∈ petrol, diesel, hybrid, electric · `transmission` ∈ manual, automatic. Prices are **fixed-point strings** so they never pass through floats.
+`category` ∈ sedan, suv, hatchback, coupe, convertible, truck, van, wagon · `fuel_type` ∈ petrol, diesel, hybrid, electric · `transmission` ∈ manual, automatic. Prices are **fixed-point strings** so they never pass through floats. `photos` is read-only and in display order (the first is the cover); photo URLs are paths on the API host.
 
 **VehicleList:** `{"items": [Vehicle], "total": 3, "counts": {"all": 5, "in_stock": 3, "out_of_stock": 2}}`. `counts` ignore the `availability` filter, so each option in the filter panel can show its own count.
 
@@ -289,8 +295,10 @@ Base URL `/api`. Every endpoint except register, login and health requires `Auth
 |---|---|
 | 401 | `NOT_AUTHENTICATED`, `INVALID_TOKEN`, `INVALID_CREDENTIALS` |
 | 403 | `FORBIDDEN` (customer calling an admin endpoint) |
-| 404 | `VEHICLE_NOT_FOUND`, `NOT_FOUND` |
-| 409 | `EMAIL_TAKEN`, `OUT_OF_STOCK`, `INSUFFICIENT_STOCK`, `STOCK_LIMIT_EXCEEDED` |
+| 404 | `VEHICLE_NOT_FOUND`, `PHOTO_NOT_FOUND`, `NOT_FOUND` |
+| 409 | `EMAIL_TAKEN`, `OUT_OF_STOCK`, `INSUFFICIENT_STOCK`, `STOCK_LIMIT_EXCEEDED`, `PHOTO_LIMIT_EXCEEDED` |
+| 413 | `PHOTO_TOO_LARGE` (over 5 MB, or over 40 megapixels) |
+| 415 | `UNSUPPORTED_PHOTO_TYPE` (judged by the file's contents, not its name or declared type) |
 | 422 | `VALIDATION_ERROR` (body, query or path) |
 | 500 | `INTERNAL_ERROR` (no internals exposed) |
 
@@ -310,6 +318,7 @@ curl -s -X POST localhost:8000/api/vehicles/1/purchase -H "Authorization: Bearer
 |---|---|---|
 | `users` | id, email, password_hash, full_name, role (`customer`\|`admin`), created_at | unique lowercase email |
 | `vehicles` | id, make, model, trim?, year, category, fuel_type, transmission, price `NUMERIC(12,2)`, quantity, catalog_image_id? *(unused, see below)*, created_at, updated_at | `price > 0`, `quantity >= 0`, `year 1900–2100`; indexes on (make, model), category, price |
+| `vehicle_photos` | id, vehicle_id → vehicles **ON DELETE CASCADE**, file_key, position, created_at | `file_key` unique, 32 hex characters; `position >= 0`; index on vehicle_id |
 | `purchases` | id, user_id → users, vehicle_id → vehicles **ON DELETE SET NULL**, vehicle_label, quantity, unit_price, created_at | `quantity > 0`, `unit_price > 0` |
 | `dealer_applications` | id, user_id → users (unique), business_name, phone?, message?, status (`pending`\|`approved`\|`rejected`), created_at, reviewed_at?, reviewed_by_id → users, review_note? | one application per account; index on status |
 
@@ -327,7 +336,7 @@ Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade 
 - **Filters in the URL.** Shareable, reload-safe views. They're React state mirrored to the URL so form controls update immediately (see defect #3 in the test report).
 - **Public site and app share one SPA.** Marketing pages (`/`, `/about`, `/pricing`) and the app (`/app`) live in the same React build with separate layouts; `/register` redirects to `/signup`. The pricing page is deliberately a labelled placeholder: there is no billing.
 - **Single dealership today.** The backend serves one dealership. [`docs/MULTI_TENANCY.md`](docs/MULTI_TENANCY.md) explains why it can't yet host several safely and the recommended `dealership_id` plus row-level-security design. It's a plan, not implemented.
-- **No vehicle images.** Out of scope by decision. Category icons serve as neutral placeholders.
+- **Photos on local disk.** Admins upload their own photos. Each upload is decoded with Pillow (so the file's contents decide whether it's accepted), rotated upright from the phone's orientation tag, then re-encoded as WebP at most 1600 px plus a 400 px thumbnail. Re-encoding drops all metadata, including GPS location. Files are named by random keys, and only `app/media.py` knows the folder layout, so moving to object storage (S3 and similar) means changing that one module. Photos are matched to the vehicle, not the model, because they show the dealer's actual car.
 - **Simplicity over extras.** No Redux, no UI kit, no ORM repositories, no global state beyond the auth context and the query cache.
 
 ## Security notes
@@ -337,6 +346,7 @@ Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade 
 - JWT secret required and at least 32 characters; tokens expire after 60 minutes.
 - **Token storage:** the SPA keeps the token in `localStorage` so sessions survive reloads. Any script on the page can read it if XSS were possible. Mitigations: React escaping, no `dangerouslySetInnerHTML`, no third-party scripts, short expiry. An httpOnly cookie with CSRF protection would be the next step for production.
 - Out-of-range IDs and offsets → 422; unexpected errors → generic 500 (details only in server logs).
+- **Uploaded photos:** admin-only; checked by decoding, not by file name or declared type; size, pixel-count and per-vehicle limits; metadata (including GPS) stripped; stored under random 128-bit names. Photo files are served without sign-in because `<img>` tags can't send a bearer token, so anyone with a photo's URL can view it. URLs are only listed by the signed-in API. There's no overall request-size limit in the app itself; set one at the reverse proxy (e.g. nginx `client_max_body_size 60m`).
 - Not implemented: login rate limiting, token revocation or refresh, security headers (expected from a reverse proxy).
 
 ## Screenshots
@@ -359,7 +369,7 @@ All captured by `npm run screenshots` (Playwright) from the running app with the
 
 ## Test report
 
-See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **133 backend tests (98 % coverage), 91 frontend tests (94 % statement coverage), 10 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
+See **[docs/TEST_REPORT.md](docs/TEST_REPORT.md)**. In short: **164 backend tests (98 % coverage), 107 frontend tests (94 % statement coverage), 12 Playwright end-to-end tests**, all passing, plus lint and type checks. Raw console output is in `docs/test-output/`. CI (GitHub Actions) passes on `main`. The report also lists what has **not** been verified (docker-compose untested, Python 3.14 and Chromium only, e2e run locally only).
 
 The git history follows red → green → refactor: `test(...): … (red)` commits hold failing tests, followed by `feat(...)/fix(...): … (green)` commits that make them pass. Where a test and its implementation landed in one commit, the commit message says so.
 

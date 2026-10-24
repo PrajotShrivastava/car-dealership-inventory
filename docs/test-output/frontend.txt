@@ -15,131 +15,147 @@ $ npx vitest run --coverage --reporter=verbose
  RUN  v5.0.5 /Users/prajot/Desktop/projects/developmentProjects/car-dealership-inventory/frontend
       Coverage enabled with v8
 
+ ✓ src/api/client.test.ts > apiFetch > sends JSON and the bearer token when one is set 61ms
+ ✓ src/api/client.test.ts > apiFetch > turns structured API errors into ApiError 8ms
+ ✓ src/api/client.test.ts > apiFetch > returns undefined for 204 responses 2ms
+ ✓ src/api/client.test.ts > apiFetch > notifies the unauthorized handler on 401 for authenticated requests 2ms
+ ✓ src/api/client.test.ts > apiFetch > reports network failures as ApiError with status 0 3ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/auth/auth.test.tsx > authentication flow > redirects anonymous visitors to the sign-in page 143ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > offers a clearly visible Dealer Sign In option on the login page 189ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > opens in dealer mode from /login?as=dealer and in customer mode by default 26ms
+ ✓ src/routing.test.tsx > routing > serves the public home page at / without signing in 211ms
+ ✓ src/routing.test.tsx > routing > keeps the inventory app behind sign-in at /app 51ms
+ ✓ src/routing.test.tsx > routing > redirects the old /register path to /signup 11ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
+ ✓ src/theme/theme.test.tsx > theme toggle > switches to dark mode and back from the app header 329ms
+ ✓ src/theme/theme.test.tsx > theme toggle > is available on the sign-in page 17ms
+ ✓ src/theme/theme.test.tsx > theme toggle > starts from the saved preference 10ms
+ ✓ src/theme/theme.test.tsx > theme toggle > follows the system setting when nothing is saved 1ms
+ ✓ src/theme/theme.test.tsx > theme toggle > a saved choice beats the system setting 0ms
+ ✓ src/marketing/marketing.test.tsx > navbar > links to every public section and the auth entry points 330ms
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > shows the first photo as the list thumbnail 330ms
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > keeps the body-style drawing for vehicles without photos 69ms
+Not implemented: Window's scrollTo() method
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows each vehicle with price and stock status 357ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > explains an empty inventory 68ms
+ ✓ src/features/admin/admin.test.tsx > customer experience > hides every admin control 412ms
+Not implemented: Window's scrollTo() method
+Not implemented: Window's scrollTo() method
  ✓ src/features/inventory/format.test.ts > formatPrice > formats decimal strings as whole-dollar currency 2ms
  ✓ src/features/inventory/format.test.ts > formatPrice > keeps cents when present 0ms
- ✓ src/features/inventory/format.test.ts > stockLevel > quantity 0 is out 0ms
+ ✓ src/features/inventory/format.test.ts > stockLevel > quantity 0 is out 1ms
  ✓ src/features/inventory/format.test.ts > stockLevel > quantity 1 is low 0ms
  ✓ src/features/inventory/format.test.ts > stockLevel > quantity 2 is low 0ms
  ✓ src/features/inventory/format.test.ts > stockLevel > quantity 3 is in 0ms
  ✓ src/features/inventory/format.test.ts > stockLevel > quantity 40 is in 0ms
  ✓ src/features/inventory/format.test.ts > labels > title-cases enum values 0ms
  ✓ src/features/inventory/format.test.ts > labels > builds a vehicle title without a trailing trim 0ms
- ✓ src/api/client.test.ts > apiFetch > sends JSON and the bearer token when one is set 55ms
- ✓ src/api/client.test.ts > apiFetch > turns structured API errors into ApiError 6ms
- ✓ src/api/client.test.ts > apiFetch > returns undefined for 204 responses 5ms
- ✓ src/api/client.test.ts > apiFetch > notifies the unauthorized handler on 401 for authenticated requests 4ms
- ✓ src/api/client.test.ts > apiFetch > reports network failures as ApiError with status 0 4ms
-Not implemented: Window's scrollTo() method
-Not implemented: Window's scrollTo() method
-Not implemented: Window's scrollTo() method
- ✓ src/auth/auth.test.tsx > authentication flow > redirects anonymous visitors to the sign-in page 107ms
-Not implemented: Window's scrollTo() method
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows each vehicle with price and stock status 201ms
- ✓ src/marketing/marketing.test.tsx > navbar > links to every public section and the auth entry points 136ms
-Not implemented: Window's scrollTo() method
- ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > offers a clearly visible Dealer Sign In option on the login page 249ms
- ✓ src/theme/theme.test.tsx > theme toggle > switches to dark mode and back from the app header 238ms
- ✓ src/theme/theme.test.tsx > theme toggle > is available on the sign-in page 20ms
- ✓ src/theme/theme.test.tsx > theme toggle > starts from the saved preference 11ms
- ✓ src/theme/theme.test.tsx > theme toggle > follows the system setting when nothing is saved 1ms
- ✓ src/theme/theme.test.tsx > theme toggle > a saved choice beats the system setting 0ms
-Not implemented: Window's scrollTo() method
-Not implemented: Window's scrollTo() method
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > explains an empty inventory 37ms
- ✓ src/features/admin/admin.test.tsx > customer experience > hides every admin control 254ms
- ✓ src/marketing/marketing.test.tsx > navbar > navigates between public pages 107ms
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > falls back to the drawing when a photo fails to load 78ms
+ ✓ src/marketing/marketing.test.tsx > navbar > navigates between public pages 113ms
  ✓ src/marketing/marketing.test.tsx > navbar > has a mobile menu that opens and closes 77ms
- ✓ src/routing.test.tsx > routing > serves the public home page at / without signing in 277ms
- ✓ src/routing.test.tsx > routing > keeps the inventory app behind sign-in at /app 21ms
- ✓ src/routing.test.tsx > routing > redirects the old /register path to /signup 11ms
- ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > opens in dealer mode from /login?as=dealer and in customer mode by default 25ms
- ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > keeps customer sign-up separate in customer mode 17ms
+Not implemented: Window's scrollTo() method
+ ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > keeps customer sign-up separate in customer mode 36ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows an error with a retry when loading fails 89ms
 Not implemented: Window's scrollTo() method
 Not implemented: Window's scrollTo() method
- ✓ src/features/inventory/InventoryPage.test.tsx > inventory list > shows an error with a retry when loading fails 105ms
+ ✓ src/marketing/marketing.test.tsx > navbar > offers the dashboard instead of sign-in to signed-in users 65ms
+ ✓ src/marketing/marketing.test.tsx > home page > explains the product with clear calls to action 41ms
+ ✓ src/marketing/marketing.test.tsx > home page > announces the marquee headline once, with the animated copies hidden from assistive tech 34ms
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > shows every photo in the details drawer and lets visitors switch between them 115ms
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > shows a single photo without thumbnail buttons 75ms
+ ✓ src/routing.test.tsx > routing > sends users to /app after signing in 330ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > signs an approved dealer (admin) in to the management view 364ms
 Not implemented: Window's scrollTo() method
- ✓ src/marketing/marketing.test.tsx > navbar > offers the dashboard instead of sign-in to signed-in users 53ms
- ✓ src/marketing/marketing.test.tsx > home page > explains the product with clear calls to action 35ms
- ✓ src/marketing/marketing.test.tsx > home page > announces the marquee headline once, with the animated copies hidden from assistive tech 28ms
+ ✓ src/auth/auth.test.tsx > authentication flow > signs in with valid credentials and lands on the inventory 424ms
 Not implemented: Window's scrollTo() method
 Not implemented: Window's scrollTo() method
- ✓ src/auth/auth.test.tsx > authentication flow > signs in with valid credentials and lands on the inventory 324ms
+ ✓ src/marketing/marketing.test.tsx > home page > lets visitors pause and resume the headline animation 40ms
+ ✓ src/marketing/marketing.test.tsx > home page > shows a dashboard preview clearly marked as sample data 32ms
+ ✓ src/marketing/marketing.test.tsx > home page > has a features section that the Features link targets 36ms
 Not implemented: Window's scrollTo() method
+ ✓ src/features/inventory/photos.test.tsx > vehicle photos in the inventory > does not offer photo management to customers 54ms
 Not implemented: Window's scrollTo() method
- ✓ src/marketing/marketing.test.tsx > home page > lets visitors pause and resume the headline animation 42ms
- ✓ src/marketing/marketing.test.tsx > home page > shows a dashboard preview clearly marked as sample data 29ms
- ✓ src/marketing/marketing.test.tsx > home page > has a features section that the Features link targets 32ms
- ✓ src/marketing/marketing.test.tsx > about page > covers mission, purpose and audience 25ms
+ ✓ src/marketing/marketing.test.tsx > about page > covers mission, purpose and audience 28ms
+ ✓ src/marketing/marketing.test.tsx > pricing page > shows three plans clearly labelled as placeholders 20ms
+ ✓ src/marketing/marketing.test.tsx > pricing page > sends plan buttons to sign-up, not to any checkout 21ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > creates a vehicle that then appears in the list 417ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > validates input before sending 92ms
+ ✓ src/auth/auth.test.tsx > authentication flow > shows a generic error for wrong credentials 187ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates required fields before calling the API 25ms
+ ✓ src/routing.test.tsx > routing > sends users to /app after signing up 252ms
 Not implemented: Window's scrollTo() method
- ✓ src/features/dealers/dealers.test.tsx > dealer sign-in entry point > signs an approved dealer (admin) in to the management view 222ms
- ✓ src/routing.test.tsx > routing > sends users to /app after signing in 217ms
- ✓ src/marketing/marketing.test.tsx > pricing page > shows three plans clearly labelled as placeholders 21ms
- ✓ src/marketing/marketing.test.tsx > pricing page > sends plan buttons to sign-up, not to any checkout 16ms
- ✓ src/auth/auth.test.tsx > authentication flow > shows a generic error for wrong credentials 164ms
- ✓ src/auth/auth.test.tsx > authentication flow > validates required fields before calling the API 23ms
- ✓ src/features/admin/admin.test.tsx > admin: add vehicle > creates a vehicle that then appears in the list 329ms
- ✓ src/features/admin/admin.test.tsx > admin: add vehicle > validates input before sending 81ms
- ✓ src/routing.test.tsx > routing > sends users to /app after signing up 210ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by free-text search 412ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by category and shows the active filter count 74ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer registration > submits an application, signs the applicant in and shows it as pending 341ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by free-text search 458ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by category and shows the active filter count 76ms
+ ✓ src/features/inventory/photos.test.tsx > admin: photos when adding a vehicle > uploads the chosen photos with the new vehicle 255ms
+ ✓ src/features/inventory/photos.test.tsx > admin: photos when adding a vehicle > lets the admin drop a chosen photo before saving 75ms
+ ✓ src/auth/auth.test.tsx > authentication flow > registers a new customer and signs them in 220ms
 Not implemented: Window's scrollTo() method
- ✓ src/features/admin/admin.test.tsx > admin: add vehicle > shows field errors returned by the API 135ms
- ✓ src/features/dealers/dealers.test.tsx > dealer registration > submits an application, signs the applicant in and shows it as pending 303ms
- ✓ src/auth/auth.test.tsx > authentication flow > registers a new customer and signs them in 200ms
- ✓ src/auth/auth.test.tsx > authentication flow > validates registration input 86ms
-Not implemented: Window's scrollTo() method
- ✓ src/routing.test.tsx > routing > returns to the originally requested app URL, query included, after signing in 139ms
- ✓ src/routing.test.tsx > routing > sends signed-in users away from sign-in and sign-up to /app 11ms
- ✓ src/routing.test.tsx > routing > lets signed-in users browse public pages 48ms
- ✓ src/routing.test.tsx > routing > shows a 404 page for unknown URLs 10ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by availability and shows counts 80ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > edits vehicle details 129ms
- ✓ src/features/dealers/dealers.test.tsx > dealer registration > requires the dealership name and validates the rest 153ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > restocks a vehicle 90ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > rejects an invalid restock amount 82ms
- ✓ src/auth/auth.test.tsx > authentication flow > reports an email that is already registered 154ms
- ✓ src/auth/auth.test.tsx > authentication flow > restores a stored session and shows the user and role 20ms
+ ✓ src/routing.test.tsx > routing > returns to the originally requested app URL, query included, after signing in 164ms
+ ✓ src/routing.test.tsx > routing > sends signed-in users away from sign-in and sign-up to /app 19ms
+ ✓ src/routing.test.tsx > routing > lets signed-in users browse public pages 56ms
+ ✓ src/routing.test.tsx > routing > shows a 404 page for unknown URLs 9ms
+ ✓ src/features/admin/admin.test.tsx > admin: add vehicle > shows field errors returned by the API 160ms
+ ✓ src/auth/auth.test.tsx > authentication flow > validates registration input 121ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by availability and shows counts 85ms
+ ✓ src/features/inventory/photos.test.tsx > admin: photos when adding a vehicle > rejects unsupported, oversized and too many photos before uploading 96ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > edits vehicle details 134ms
+ ✓ src/auth/auth.test.tsx > authentication flow > reports an email that is already registered 161ms
+ ✓ src/auth/auth.test.tsx > authentication flow > restores a stored session and shows the user and role 21ms
  ✓ src/auth/auth.test.tsx > authentication flow > drops an invalid stored token and asks to sign in 12ms
- ✓ src/auth/auth.test.tsx > authentication flow > redirects signed-in users away from the sign-in page 14ms
- ✓ src/auth/auth.test.tsx > authentication flow > signs out 39ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > deletes a vehicle after confirmation 101ms
- ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > keeps the vehicle when deletion is cancelled 76ms
- ✓ src/features/dealers/dealers.test.tsx > dealer registration > reports an email that is already registered 215ms
- ✓ src/features/dealers/dealers.test.tsx > dealer registration > is linked from customer sign-up and kept separate from it 10ms
- ✓ src/features/dealers/dealers.test.tsx > application status banner > shows a rejected application with the reviewer note 25ms
- ✓ src/features/dealers/dealers.test.tsx > application status banner > is absent for ordinary customers 18ms
- ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > shows admins a navigation item with the pending count 24ms
- ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > hides the page and navigation item from customers 13ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by price range 397ms
- ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > approves a pending application after confirmation 48ms
- ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > rejects an application with an optional note 94ms
- ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > explains when there is nothing to review 13ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > clears all filters and offers that when nothing matches 457ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > sorts by price 60ms
- ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > paginates long result sets 137ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > opens details and closes with Escape 46ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > purchases a vehicle and updates stock everywhere 64ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > limits the quantity to what is in stock 44ms
+ ✓ src/auth/auth.test.tsx > authentication flow > redirects signed-in users away from the sign-in page 16ms
+ ✓ src/auth/auth.test.tsx > authentication flow > signs out 40ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > restocks a vehicle 95ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > rejects an invalid restock amount 87ms
+ ✓ src/features/inventory/photos.test.tsx > admin: photos when adding a vehicle > keeps the new vehicle and opens it for editing if the photo upload fails 186ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer registration > requires the dealership name and validates the rest 209ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer registration > reports an email that is already registered 245ms
+ ✓ src/features/dealers/dealers.test.tsx > dealer registration > is linked from customer sign-up and kept separate from it 11ms
+ ✓ src/features/dealers/dealers.test.tsx > application status banner > shows a rejected application with the reviewer note 31ms
+ ✓ src/features/dealers/dealers.test.tsx > application status banner > is absent for ordinary customers 22ms
+ ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > shows admins a navigation item with the pending count 16ms
+ ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > hides the page and navigation item from customers 14ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > lists the current photos in the Edit tab 75ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > adds more photos straight away 97ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > deletes a vehicle after confirmation 127ms
+ ✓ src/features/admin/admin.test.tsx > admin: manage an existing vehicle > keeps the vehicle when deletion is cancelled 84ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > filters by price range 408ms
+ ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > approves a pending application after confirmation 56ms
+ ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > rejects an application with an optional note 93ms
+ ✓ src/features/dealers/dealers.test.tsx > admin review of dealer applications > explains when there is nothing to review 15ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > removes a photo after confirmation 109ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > keeps the photo when removal is cancelled 84ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > shows the API error when an upload is rejected 60ms
+ ✓ src/features/inventory/photos.test.tsx > admin: managing photos of an existing vehicle > stops offering uploads once a vehicle has 10 photos 49ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > clears all filters and offers that when nothing matches 448ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > sorts by price 49ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > filtering and sorting > paginates long result sets 160ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > opens details and closes with Escape 59ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > purchases a vehicle and updates stock everywhere 74ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > limits the quantity to what is in stock 43ms
  ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > disables purchasing when out of stock 36ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > shows the server reason when a purchase is rejected 48ms
- ✓ src/features/inventory/InventoryPage.test.tsx > vehicle image placeholder > shows a body-style drawing in the list and "No photo available" in the details 33ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle details drawer and purchase > shows the server reason when a purchase is rejected 49ms
+ ✓ src/features/inventory/InventoryPage.test.tsx > vehicle image placeholder > shows a body-style drawing in the list and "No photo available" in the details 36ms
 
- Test Files  9 passed (9)
-      Tests  91 passed (91)
-   Start at  23:00:51
-   Duration  3.63s (tests 45%, environment 30%, setup 8%, import 8%, transform 7%, worker 2%)
+ Test Files  10 passed (10)
+      Tests  107 passed (107)
+   Start at  23:36:59
+   Duration  4.06s (tests 49%, environment 28%, import 8%, setup 8%, transform 6%, worker 2%)
 
  % Coverage report from v8
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   93.75 |    85.94 |   93.33 |   94.46 |                   
+All files          |   94.28 |    86.89 |   93.75 |   94.85 |                   
  src               |      60 |       30 |      50 |   55.55 |                   
   App.tsx          |       0 |      100 |       0 |       0 | 4-7               
   AppProviders.tsx |      60 |    14.28 |      50 |      50 | 9-16              
   routes.tsx       |     100 |    66.66 |     100 |     100 | 59                
- src/api           |   96.61 |       85 |   95.65 |     100 |                   
-  client.ts        |   94.73 |    86.48 |    87.5 |     100 | 1,56-57,76        
+ src/api           |   96.96 |    86.36 |   96.15 |     100 |                   
+  client.ts        |      95 |     87.8 |   88.88 |     100 | 1,61-62,83        
   dealers.ts       |     100 |       50 |     100 |     100 | 14                
  src/auth          |   96.05 |    86.36 |     100 |    98.5 |                   
   AuthContext.ts   |      80 |       50 |     100 |     100 | 21                
@@ -149,18 +165,19 @@ All files          |   93.75 |    85.94 |   93.33 |   94.46 |
   ...ustration.tsx |     100 |    85.71 |     100 |     100 | 83                
   ...irmDialog.tsx |    87.5 |    85.71 |     100 |   86.66 | 34-35             
   Field.tsx        |     100 |    93.75 |     100 |     100 | 73                
- ...features/admin |   97.18 |     87.3 |     100 |   96.87 |                   
+ ...features/admin |   96.87 |    88.67 |   97.67 |   96.36 |                   
+  PhotoManager.tsx |    91.3 |    88.46 |      90 |   90.47 | 101-102           
+  PhotoPicker.tsx  |     100 |     87.5 |     100 |     100 | 13                
   RestockForm.tsx  |     100 |    72.72 |     100 |     100 | 45-46             
-  VehicleForm.tsx  |   97.29 |       75 |     100 |   96.87 | 47                
+  VehicleForm.tsx  |   97.36 |    78.94 |     100 |   96.96 | 58                
   ...eFormModel.ts |   94.44 |    97.22 |     100 |   93.75 | 42                
  ...atures/dealers |     100 |    89.36 |     100 |     100 |                   
   ...tionsPage.tsx |     100 |    80.76 |     100 |     100 | 24,75,129-131     
- ...ures/inventory |   95.26 |    94.77 |    90.9 |    95.9 |                   
+ ...ures/inventory |   96.06 |    95.59 |   92.07 |   96.65 |                   
   FilterPanel.tsx  |   76.92 |     87.5 |   72.72 |   83.33 | 26,93             
-  ...ntoryPage.tsx |   92.59 |    96.22 |   83.33 |    92.3 | 224,289,314-321   
+  ...ntoryPage.tsx |   93.93 |    95.23 |      84 |   93.84 | 265,330,355-362   
   ...hasePanel.tsx |   93.33 |       90 |      80 |   93.33 | 52                
-  ...leDetails.tsx |     100 |    83.33 |     100 |     100 | 10                
-  queries.ts       |     100 |       50 |     100 |     100 | 21                
+  queries.ts       |     100 |       75 |     100 |     100 | 21                
   ...oryFilters.ts |   98.21 |    97.05 |     100 |     100 | 120               
  src/layout        |   66.66 |       72 |   57.14 |   66.66 |                   
   AppShell.tsx     |   66.66 |       72 |   57.14 |   66.66 | ...24-130,175-198 
@@ -176,10 +193,10 @@ All files          |   93.75 |    85.94 |   93.33 |   94.46 |
 -------------------|---------|----------|---------|---------|-------------------
 
 =============================== Coverage summary ===============================
-Statements   : 93.75% ( 691/737 )
-Branches     : 85.94% ( 489/569 )
-Functions    : 93.33% ( 280/300 )
-Lines        : 94.46% ( 631/668 )
+Statements   : 94.28% ( 792/840 )
+Branches     : 86.89% ( 557/641 )
+Functions    : 93.75% ( 315/336 )
+Lines        : 94.85% ( 719/758 )
 ================================================================================
 
 $ npm run build
@@ -189,11 +206,11 @@ $ npm run build
 
 vite v8.3.5 building client environment for production...
 transforming...
-✓ 2110 modules transformed.
+✓ 2114 modules transformed.
 rendering chunks...
 computing gzip size...
 dist/index.html                   1.20 kB │ gzip:   0.62 kB
-dist/assets/index-Bgi5JzwL.css   55.10 kB │ gzip:  10.28 kB
-dist/assets/index-N1PYDPs4.js   457.08 kB │ gzip: 137.85 kB
+dist/assets/index-BettpjX5.css   56.84 kB │ gzip:  10.57 kB
+dist/assets/index-C6O-zkZO.js   464.77 kB │ gzip: 140.07 kB
 
-✓ built in 157ms
+✓ built in 200ms

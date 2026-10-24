@@ -15,9 +15,9 @@ Every number below is copied from real runs. The full, unedited console output i
 
 | Suite | Result | Coverage |
 |---|---|---|
-| Backend (pytest, real PostgreSQL `drivestock_test`) | **133 passed**, 0 failed (≈12 s) | **98 %** statements (661 stmts, 10 missed) |
-| Frontend (Vitest + React Testing Library + MSW) | **91 passed**, 0 failed | **93.8 %** stmts · 85.9 % branches · 93.3 % funcs · 94.5 % lines |
-| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **10 passed**, 7 skipped¹ | n/a |
+| Backend (pytest, real PostgreSQL `drivestock_test`) | **164 passed**, 0 failed (≈17 s) | **98 %** statements (812 stmts, 17 missed) |
+| Frontend (Vitest + React Testing Library + MSW) | **107 passed**, 0 failed | **94.3 %** stmts · 86.9 % branches · 93.8 % funcs · 94.9 % lines |
+| End-to-end (Playwright, Chromium, real API + PostgreSQL) | **12 passed**, 7 skipped¹ | n/a |
 | Static checks | ruff ✔ · ruff format ✔ · mypy `--strict` ✔ · oxlint 0 warnings · `tsc --noEmit` ✔ · production build ✔ | |
 
 ¹ The 7 skipped tests are `e2e/screenshots.spec.ts`. They only run with `SCREENSHOTS=1` (`npm run screenshots`) and capture the README images.
@@ -35,6 +35,7 @@ Every number below is copied from real runs. The full, unedited console output i
 | `test_demo_users.py` | 7 | `APP_ENV` defaults to production; demo seeding refused outside development and for a non-localhost database; creates an admin, a customer and a pending applicant once (idempotent); CLI exit code and printed credentials |
 | `test_cli.py` | 6 | `create-admin` (hashing, duplicate, validation, environment password), `seed` (runs once only, includes out-of-stock cars) |
 | `test_health.py` | 1 | health check |
+| `test_vehicle_photos.py` | 31 | admin uploads several photos at once; photos appear on detail, search, edit, restock and purchase responses in upload order; JPEG/PNG/WebP accepted and served as WebP; resized to ≤ 1600 px plus a 400 px thumbnail, never enlarged; **EXIF and GPS removed**; phone rotation applied; transparency kept; 401/403/404/422; non-images, GIFs and a GIF renamed `.jpg` → 415; > 5 MB and a 144-megapixel "decompression bomb" → 413; one bad file rejects the whole upload with no files left behind; 10-photo limit (409); delete one photo (files removed), admin-only, must belong to the vehicle; deleting a vehicle deletes its photo files |
 | `test_unused_columns.py` | 4 | the unused `catalog_image_id` column is not in API responses, stays null for new vehicles, is left untouched by edits, and can't be set through the API (422) |
 
 **Migrations:** each pytest session runs `alembic downgrade base` then `alembic upgrade head` on the test database, so every migration's upgrade *and* downgrade runs on every test run. `alembic check` against the dev database reports *"No new upgrade operations detected"*, meaning the models and migrations match.
@@ -57,6 +58,7 @@ Every number below is copied from real runs. The full, unedited console output i
 | `features/dealers/dealers.test.tsx` | 15 | Dealer Sign In switch (and `?as=dealer`), customer sign-up kept separate, approved admin lands on the management view; dealer registration (submit, sign in, pending banner, validation, duplicate email); rejected banner shows the note; admin sidebar item with pending count; customers redirected away from the review page; approve and reject (with note) through the confirmation dialog; empty state |
 | `routing.test.tsx` | 9 | public `/`, app behind sign-in at `/app`, `/register` → `/signup`, redirects to `/app` after sign-in and sign-up, deep `/app?…` link preserved, signed-in users can browse public pages, 404 |
 | `marketing/marketing.test.tsx` | 12 | navbar links and navigation, mobile menu, "Open dashboard" when signed in, hero calls to action, marquee headline announced once (animated copies hidden from assistive tech), pause and resume of the headline animation, dashboard preview labelled sample data, features section, about content, pricing plans marked placeholder with buttons going to sign-up |
+| `features/inventory/photos.test.tsx` | 16 | cover thumbnail in the list (lazy, absolute API URL); body-style drawing when there are no photos or one fails to load; drawer gallery with thumbnail buttons; no photo controls for customers; choosing photos when adding a vehicle (previews, remove before saving, type/size/count checks); a failed upload after creating the vehicle opens it in Edit with a message instead of creating a duplicate; Edit tab lists, adds and removes photos (with confirmation and cancel), shows API errors, disables uploads at 10 |
 | `theme/theme.test.tsx` | 5 | light/dark toggle in the header and on sign-in, saved choice persisted and restored, system setting used when nothing is saved |
 
 Unit tests use an in-memory MSW fake of the API contract (`src/test/handlers.ts`). The Playwright suite then checks the same flows against the real API and database.
@@ -75,6 +77,8 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 8. **Dealer onboarding:** register as a dealer, see the pending banner with no tools (API 403), admin approves, the dealer signs in again and has **Add vehicle** (API now allows it). The API check uses restock quantity 0, so it never changes data.
 9. A rejected applicant keeps customer access and sees the reviewer's note.
 10. A customer opening `/app/dealer-applications` is redirected to `/app`.
+11. **Photos:** an admin adds a vehicle with two photos, sees the cover in the list and the gallery in the drawer (the browser actually decodes the images), adds a third and removes one in the Edit tab, and the photos are still there after a reload. The vehicle is then deleted. Uploads go to a temporary folder, not `backend/media`.
+12. A file that isn't an image, sent as `car.jpg` with type `image/jpeg`, is rejected by the API with 415.
 
 ## Security review
 
@@ -100,6 +104,8 @@ Playwright starts the API on :8001 against the `drivestock_test` database, reset
 
 ## Not verified / known gaps
 
+- **Photo uploads in unit tests.** jsdom's `FormData`/`File` can't be sent through Node's `fetch`, so `src/test/setup.ts` rebuilds upload bodies with Node's classes, and the MSW fake reads the multipart body as text. Real multipart parsing is covered by the backend tests and the Playwright run. Not covered by any test: cleaning up already-written files if the database write fails mid-upload (`services/photos.py` lines 100–103).
+- **Request size.** The app limits each photo to 5 MB but has no overall request-size limit. That's expected from a reverse proxy, which isn't part of this project.
 - **CI workflow** (`.github/workflows/ci.yml`): first GitHub Actions run after pushing, [run 40064767293](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40064767293), **passed**: backend job (ruff, mypy, pytest with coverage on a Postgres 17 service) in 1m10s, frontend job (lint, typecheck, tests, build) in 28s. The latest run, on PR #2 ([run 40116182780](https://github.com/PrajotShrivastava/car-dealership-inventory/actions/runs/40116182780)), also **passed** (backend 1m2s, frontend 30s). Playwright e2e is not part of CI; it was run locally only.
 - **`docker-compose.yml`** has **not been tested**: Docker isn't installed on this machine. Local development uses Homebrew Postgres 17.
 - Only tested on **Python 3.14** and **Chromium**. `requires-python >=3.12` is declared but 3.12 and 3.13 weren't run.
