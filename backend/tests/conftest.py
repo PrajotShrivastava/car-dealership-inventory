@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from collections.abc import Iterator
 
 import pytest
@@ -15,6 +17,9 @@ if not _test_url.rsplit("/", 1)[-1].endswith("_test"):
     raise RuntimeError("TEST_DATABASE_URL must point at a database whose name ends in '_test'")
 # Must happen before app modules read settings.
 os.environ["DATABASE_URL"] = _test_url
+# Uploaded photos go to a throwaway folder, never the real media directory.
+_media_dir = tempfile.mkdtemp(prefix="drivestock-media-")
+os.environ["MEDIA_DIR"] = _media_dir
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
@@ -31,6 +36,7 @@ def _migrated_database() -> Iterator[None]:
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
     yield
+    shutil.rmtree(_media_dir, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)
