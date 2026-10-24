@@ -55,8 +55,8 @@ export function approveElsewhere(id: number) {
   const application = getApplication(id)!
   application.status = 'approved'
   application.reviewed_at = new Date().toISOString()
-  application.applicant = { ...application.applicant, role: 'admin' }
-  users.find((u) => u.id === application.applicant.id)!.role = 'admin'
+  application.applicant = { ...application.applicant, role: 'dealer' }
+  users.find((u) => u.id === application.applicant.id)!.role = 'dealer'
 }
 
 export function seedUser(role: User['role'] = 'customer', email = `${role}@example.com`): User {
@@ -177,34 +177,23 @@ function review(request: Request, id: number, status: 'approved' | 'rejected', n
   application.review_note = note
   if (status === 'approved') {
     const applicant = users.find((u) => u.id === application.applicant.id)
-    if (applicant) applicant.role = 'admin'
-    application.applicant = { ...application.applicant, role: 'admin' }
+    if (applicant) applicant.role = 'dealer'
+    application.applicant = { ...application.applicant, role: 'dealer' }
   }
   return HttpResponse.json(application)
 }
 
 export const handlers = [
   http.post(`${API}/auth/register-dealer`, async ({ request }) => {
-    const body = (await request.json()) as {
-      email: string
-      password: string
-      full_name: string
-      business_name: string
-      phone?: string
-      message?: string
-    }
+    const body = (await request.json()) as { email: string; password: string; full_name: string }
     const email = body.email.toLowerCase()
     if (users.some((u) => u.email === email)) {
       return error(409, 'EMAIL_TAKEN', 'An account with this email already exists')
     }
-    const user: StoredUser = { id: nextId++, email, full_name: body.full_name, role: 'customer', password: body.password }
+    // A dealer straight away; no application is created.
+    const user: StoredUser = { id: nextId++, email, full_name: body.full_name, role: 'dealer', password: body.password }
     users.push(user)
-    const application = seedApplication(publicUser(user), {
-      business_name: body.business_name,
-      phone: body.phone || null,
-      message: body.message || null,
-    })
-    return HttpResponse.json({ user: publicUser(user), application }, { status: 201 })
+    return HttpResponse.json(publicUser(user), { status: 201 })
   }),
 
   http.get(`${API}/dealer-applications/me`, ({ request }) => {
