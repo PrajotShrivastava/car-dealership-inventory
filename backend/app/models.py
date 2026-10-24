@@ -102,9 +102,35 @@ class Vehicle(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # Loaded with every vehicle (one extra query per batch) so responses always include them.
+    photos: Mapped[list["VehiclePhoto"]] = relationship(
+        order_by="VehiclePhoto.position",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+    )
+
     @property
     def label(self) -> str:
         return " ".join(str(part) for part in (self.year, self.make, self.model, self.trim) if part)
+
+
+class VehiclePhoto(Base):
+    """A photo uploaded by an admin. The image files live in the media folder under file_key."""
+
+    __tablename__ = "vehicle_photos"
+    __table_args__ = (
+        CheckConstraint("file_key ~ '^[0-9a-f]{32}$'", name="ck_vehicle_photos_file_key_format"),
+        CheckConstraint("position >= 0", name="ck_vehicle_photos_position_non_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vehicle_id: Mapped[int] = mapped_column(
+        ForeignKey("vehicles.id", ondelete="CASCADE"), index=True
+    )
+    file_key: Mapped[str] = mapped_column(String(32), unique=True)
+    position: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Purchase(Base):

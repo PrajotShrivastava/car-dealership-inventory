@@ -11,6 +11,9 @@ refrences/
 .env.*
 !.env.example
 
+# Uploaded vehicle photos (runtime data, back up with the database)
+backend/media/
+
 # Python
 __pycache__/
 *.py[cod]
