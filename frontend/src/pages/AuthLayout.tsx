@@ -49,7 +49,7 @@ export function AuthLayout({
         </div>
         <p className="text-xs text-nav-muted">© {YEAR} DriveStock</p>
       </aside>
-      <main className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+      <main className="relative flex flex-1 items-center justify-center bg-paper px-4 py-12 sm:px-6">
         <ThemeToggle className="absolute top-4 right-4" />
         <div className="w-full max-w-sm">
           <Link to="/" aria-label="DriveStock home" className="mb-8 inline-block lg:hidden">

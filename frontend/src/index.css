@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Design tokens: neutral ink chrome, a single green accent,
-   cool-grey canvas, white bordered cards, semantic stock colours. */
+   warm stone canvas (light), white bordered cards, semantic stock colours. */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
@@ -25,8 +25,16 @@
   --color-brand-700: #14532d;
 
   /* Surfaces and text */
-  --color-canvas: #f8fafc;
+  --color-canvas: #e8e8d8; /* page background (warm stone) */
+  --color-canvas-raised: #f3f3e9; /* full-width bands and top bars that sit on the canvas */
+  --color-paper: #ffffff; /* content areas without a card, e.g. the sign-in form */
   --color-slate-900: #111827;
+
+  /* Text placed directly on canvas / canvas-raised (slate-500 3.8:1 and brand-600 4.1:1
+     are too light on the stone background for small text). canvas-muted 5.8:1,
+     canvas-accent 5.3:1 on #e8e8d8; both higher on canvas-raised. Cards stay white. */
+  --color-canvas-muted: #525a45;
+  --color-canvas-accent: #1f6b2a;
 
   /* Text on brand-filled elements (buttons, logo tile). */
   --color-on-brand: #ffffff;
@@ -61,6 +69,11 @@
 .dark {
   --color-canvas: #000000; /* main background */
   --color-white: #111111; /* cards and panels */
+  /* Light-theme canvas roles mapped to the existing dark values (dark theme unchanged). */
+  --color-canvas-raised: #111111;
+  --color-paper: #000000;
+  --color-canvas-muted: #a3a3a3;
+  --color-canvas-accent: #22c55e;
   --color-slate-50: #181818; /* elevated / hover */
   --color-slate-100: #1d1d1d;
   --color-slate-200: #292929; /* borders */

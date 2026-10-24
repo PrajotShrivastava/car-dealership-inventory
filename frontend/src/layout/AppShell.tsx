@@ -191,7 +191,7 @@ export function AppShell() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 sm:px-6">
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-canvas-raised px-4 sm:px-6">
           <button
             type="button"
             aria-label="Open menu"
@@ -209,7 +209,7 @@ export function AppShell() {
               <div className="flex items-center gap-3">
                 <div className="hidden text-right sm:block">
                   <p className="text-[13px] leading-tight font-medium text-slate-900">{user.full_name}</p>
-                  <p className="text-xs leading-tight text-slate-500">{user.email}</p>
+                  <p className="text-xs leading-tight text-canvas-muted">{user.email}</p>
                 </div>
                 <span
                   className={cn(

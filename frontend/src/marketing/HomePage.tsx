@@ -99,7 +99,7 @@ export function HomePage() {
       </section>
 
       {/* How it helps */}
-      <section aria-labelledby="helps-title" className="border-y border-slate-200 bg-white py-20">
+      <section aria-labelledby="helps-title" className="border-y border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading id="helps-title" eyebrow="Why DriveStock" title="Built around how a dealership works">
@@ -146,7 +146,7 @@ export function HomePage() {
       </section>
 
       {/* How it works */}
-      <section aria-labelledby="steps-title" className="border-t border-slate-200 bg-white py-20">
+      <section aria-labelledby="steps-title" className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading id="steps-title" eyebrow="How it works" title="From listing to sale in three steps" />
@@ -156,7 +156,7 @@ export function HomePage() {
               <li key={step.title}>
                 <Reveal delay={index * 90}>
                   <div className="relative h-full rounded-xl border border-slate-200 p-6">
-                    <span className="text-sm font-semibold text-brand-600 tabular-nums">
+                    <span className="text-sm font-semibold text-canvas-accent tabular-nums">
                       0{index + 1}
                     </span>
                     <h3 className="mt-3 font-semibold text-slate-900">{step.title}</h3>

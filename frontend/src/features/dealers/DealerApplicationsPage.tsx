@@ -59,7 +59,7 @@ export function DealerApplicationsPage() {
     <div className="mx-auto max-w-5xl p-4 sm:p-6 lg:p-8">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-900">Dealer applications</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-canvas-muted">
           Approving an application gives that account admin access: adding, editing, restocking and deleting
           vehicles.
         </p>

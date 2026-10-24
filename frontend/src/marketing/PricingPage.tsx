@@ -131,7 +131,7 @@ export function PricingPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="faq-title" className="border-t border-slate-200 bg-white py-20">
+      <section aria-labelledby="faq-title" className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 id="faq-title" className="text-2xl font-semibold text-slate-900">
             Questions

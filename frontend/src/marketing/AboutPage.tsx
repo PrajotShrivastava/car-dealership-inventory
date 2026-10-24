@@ -43,7 +43,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white py-20">
+      <section className="border-y border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
           <Reveal>
             <SectionHeading eyebrow="Our mission" title="Our mission">
@@ -80,7 +80,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-200 bg-white py-20">
+      <section className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading eyebrow="Principles" title="What guides the product" />

@@ -8,7 +8,7 @@ export function Eyebrow({ children, inverted = false }: { children: ReactNode; i
     <p
       className={cn(
         'text-xs font-semibold tracking-[0.18em] uppercase',
-        inverted ? 'text-brand-300' : 'text-brand-600',
+        inverted ? 'text-brand-300' : 'text-canvas-accent',
       )}
     >
       {children}

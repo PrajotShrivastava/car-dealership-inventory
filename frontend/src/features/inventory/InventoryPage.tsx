@@ -193,7 +193,7 @@ export function InventoryPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-canvas-muted">
             {isAdmin
               ? 'Manage listings, pricing and stock levels.'
               : 'Browse vehicles on the lot and check live availability.'}
