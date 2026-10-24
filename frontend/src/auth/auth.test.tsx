@@ -19,7 +19,7 @@ describe('authentication flow', () => {
     await user.type(screen.getByLabelText(/password/i), PASSWORD)
     await user.click(screen.getByRole('button', { name: /sign in/i }))
 
-    expect(await screen.findByRole('heading', { name: /inventory/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Inventory', level: 1 })).toBeInTheDocument()
     expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBeTruthy()
   })
 
@@ -51,7 +51,7 @@ describe('authentication flow', () => {
     await user.type(screen.getByLabelText(/password/i), 'long-enough-1')
     await user.click(screen.getByRole('button', { name: /create account/i }))
 
-    expect(await screen.findByRole('heading', { name: /inventory/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Inventory', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('New Buyer')).toBeInTheDocument()
   })
 
@@ -83,7 +83,7 @@ describe('authentication flow', () => {
     const admin = seedUser('admin')
     renderApp({ path: '/app', user: admin })
 
-    expect(await screen.findByRole('heading', { name: /inventory/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Inventory', level: 1 })).toBeInTheDocument()
     expect(screen.getByText(admin.full_name)).toBeInTheDocument()
     expect(screen.getByText(/^admin$/i)).toBeInTheDocument()
   })
@@ -99,7 +99,7 @@ describe('authentication flow', () => {
     const customer = seedUser('customer')
     renderApp({ path: '/login', user: customer })
 
-    expect(await screen.findByRole('heading', { name: /inventory/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Inventory', level: 1 })).toBeInTheDocument()
   })
 
   it('signs out', async () => {
