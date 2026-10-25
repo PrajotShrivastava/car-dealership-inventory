@@ -86,9 +86,9 @@ backend/
     services/          inventory.py: search, purchase, restock (business rules)
     security.py        hashing, JWT, get_current_user, require_admin
     errors.py          AppError + JSON error handlers
-    cli.py             create-admin, seed
+    cli.py             create-admin, seed-demo-users
   alembic/versions/    0001 users · 0002 vehicles · 0003 purchases
-  scripts/             prepare_e2e_db.py (resets *_test DB only)
+  scripts/             prepare_e2e_db.py (resets *_test DB only), e2e_vehicles.py (its test inventory)
   tests/               pytest suites (real Postgres)
 frontend/
   src/api/             fetch client, typed endpoints, shared types
@@ -136,7 +136,6 @@ cp .env.example .env
 python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 .venv/bin/alembic upgrade head                 # run migrations
-.venv/bin/python -m app.cli seed               # optional: 12 demo vehicles
 .venv/bin/python -m app.cli create-admin --email admin@example.com --name "Store Admin"
                                                # prompts for a password (or set ADMIN_PASSWORD)
 .venv/bin/uvicorn app.main:app --reload --port 8000
@@ -152,6 +151,8 @@ npm run dev                 # http://localhost:5173
 ```
 
 The public site is at <http://localhost:5173/> and the app at <http://localhost:5173/app>. Create a customer account via **Get Started**, or sign in with the admin you created.
+
+The inventory starts empty: migrations create no vehicles and there is no command that loads sample ones. A dealer or admin adds vehicles from **Add vehicle** (or **Add your first vehicle** on the empty inventory). Sample vehicles exist only for the end-to-end tests and are loaded into `drivestock_test`, never the development database.
 
 ### Configuration
 
@@ -196,7 +197,6 @@ cd backend && .venv/bin/python -m app.cli create-admin --email you@example.com -
 The quickest way is the **demo accounts** command. It creates a demo admin, a demo customer and a demo dealer.
 ```sh
 cd backend
-.venv/bin/python -m app.cli seed               # demo vehicles, if not already loaded
 .venv/bin/python -m app.cli seed-demo-users    # prints the accounts below
 ```
 
@@ -208,8 +208,8 @@ cd backend
 
 These passwords are public on purpose and for **local development only**. The command refuses to run unless `APP_ENV=development` **and** the database host is `localhost`. `APP_ENV` defaults to `production`, so a server without that setting can't create them. It's idempotent: running it again doesn't create duplicates, and it never changes accounts that already exist (on a database seeded before dealers could sign up directly, `demo-dealer` stays a customer with a pending application until an admin approves it).
 
-1. **Customer:** go to <http://localhost:5173/login>, sign in as the demo customer, then browse and purchase. You'll see no admin controls.
-2. **Dealer:** sign out and choose **Dealer Sign In** as the demo dealer (or create one at **Register as a Dealer**). Try **Add vehicle** with photos, or **View details** then **Edit / Restock** and the trash icon. There is no Dealer applications page.
+1. **Dealer:** choose **Dealer Sign In** as the demo dealer (or create one at **Register as a Dealer**). On an empty inventory, click **Add your first vehicle** (later, **Add vehicle**) and add one with photos. Then try **View details**, **Edit / Restock** and the trash icon. There is no Dealer applications page.
+2. **Customer:** sign out and sign in as the demo customer at <http://localhost:5173/login>, then browse and purchase what the dealer added. You'll see no admin controls.
 3. **Admin:** sign out and sign in as the demo admin. You have the same inventory tools plus **Dealer applications** in the sidebar.
 
 ## Running the tests

@@ -30,10 +30,35 @@ describe('inventory list', () => {
     expect(within(first).getByText(/out of stock/i)).toBeInTheDocument()
   })
 
-  it('explains an empty inventory', async () => {
+  it('explains an empty inventory to customers, with nothing to add', async () => {
     renderAsCustomer()
 
     expect(await screen.findByText(/no vehicles in inventory yet/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add your first vehicle' })).not.toBeInTheDocument()
+  })
+
+  it.each(['dealer', 'admin'] as const)('invites a %s to add the first vehicle to an empty inventory', async (role) => {
+    const { user } = renderApp({ path: '/app', user: seedUser(role) })
+
+    expect(await screen.findByText('Your inventory is empty')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add your first vehicle' }))
+    const dialog = await screen.findByRole('dialog', { name: /add vehicle/i })
+    await user.type(within(dialog).getByLabelText(/^make/i), 'Hyundai')
+    await user.type(within(dialog).getByLabelText(/^model/i), 'Creta')
+    await user.type(within(dialog).getByLabelText(/^price/i), '18990')
+    await user.click(within(dialog).getByRole('button', { name: /create vehicle/i }))
+
+    const list = await screen.findByRole('list', { name: /vehicles/i })
+    expect(await within(list).findByText('Hyundai Creta')).toBeInTheDocument()
+    expect(screen.queryByText('Your inventory is empty')).not.toBeInTheDocument()
+  })
+
+  it('keeps the filtered message, not the add prompt, when filters hide every vehicle', async () => {
+    seedVehicle({ make: 'Ford', model: 'Kuga', category: 'suv' })
+    renderApp({ path: '/app?category=van', user: seedUser('dealer') })
+
+    expect(await screen.findByText(/no vehicles match your filters/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add your first vehicle' })).not.toBeInTheDocument()
   })
 
   it('shows an error with a retry when loading fails', async () => {

@@ -38,20 +38,8 @@ def test_cli_entrypoint_reads_password_from_environment(monkeypatch, capsys):
     assert "boss@drivestock.dev" in capsys.readouterr().out
 
 
-def test_seed_loads_demo_inventory_once():
-    from app.cli import seed_vehicles
-    from app.models import Vehicle
-
-    first = seed_vehicles()
-    second = seed_vehicles()
-
-    with get_sessionmaker()() as session:
-        vehicles = session.scalars(select(Vehicle)).all()
-    assert first == len(vehicles) >= 10
-    assert second == 0
-    assert any(v.quantity == 0 for v in vehicles), "demo data should include out-of-stock cars"
-
-
-def test_cli_seed_command(capsys):
-    assert main(["seed"]) == 0
-    assert "Seeded" in capsys.readouterr().out
+def test_there_is_no_command_that_loads_demo_vehicles(capsys):
+    # Inventory starts empty; dealers add their own vehicles.
+    with pytest.raises(SystemExit):
+        main(["seed"])
+    assert "invalid choice" in capsys.readouterr().err

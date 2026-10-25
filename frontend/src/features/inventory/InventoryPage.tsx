@@ -37,22 +37,30 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'make_asc', label: 'Make: A–Z' },
 ]
 
-function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => void }) {
+/** `onAdd` is given to dealers and admins: an empty inventory then invites them to add the first vehicle. */
+function EmptyState({ filtered, onClear, onAdd }: { filtered: boolean; onClear: () => void; onAdd?: () => void }) {
+  const [title, hint] = filtered
+    ? ['No vehicles match your filters', 'Try widening the price range or removing a filter.']
+    : onAdd
+      ? ['Your inventory is empty', 'Vehicles appear here once you add them.']
+      : ['No vehicles in inventory yet', 'Vehicles added by staff will appear here.']
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
       <span className="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
         <PackageSearch aria-hidden className="size-6" />
       </span>
-      <p className="text-sm font-semibold text-slate-900">
-        {filtered ? 'No vehicles match your filters' : 'No vehicles in inventory yet'}
-      </p>
-      <p className="max-w-xs text-sm text-slate-500">
-        {filtered ? 'Try widening the price range or removing a filter.' : 'Vehicles added by staff will appear here.'}
-      </p>
-      {filtered && (
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="max-w-xs text-sm text-slate-500">{hint}</p>
+      {filtered ? (
         <Button variant="secondary" size="sm" onClick={onClear}>
           Clear filters
         </Button>
+      ) : (
+        onAdd && (
+          <Button size="sm" icon={<Plus aria-hidden className="size-3.5" />} onClick={onAdd}>
+            Add your first vehicle
+          </Button>
+        )
       )}
     </div>
   )
@@ -311,7 +319,11 @@ export function InventoryPage() {
               </Button>
             </div>
           ) : data.items.length === 0 ? (
-            <EmptyState filtered={activeCount > 0} onClear={clearAll} />
+            <EmptyState
+              filtered={activeCount > 0}
+              onClear={clearAll}
+              onAdd={canManageInventory ? () => setAdding(true) : undefined}
+            />
           ) : (
             <div className={TABLE_GRID}>
               <div

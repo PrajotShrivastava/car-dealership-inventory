@@ -172,7 +172,7 @@ describe('admin review of dealer applications', () => {
 
     await waitFor(() => expect(getVehicle(vehicle.id)).toBeUndefined())
     await waitFor(() => expect(screen.queryByRole('dialog', { name: /ford kuga/i })).not.toBeInTheDocument())
-    expect(await screen.findByText(/no vehicles in inventory yet/i)).toBeInTheDocument()
+    expect(await screen.findByText('Your inventory is empty')).toBeInTheDocument()
   })
 
   it('hides the page and navigation item from customers', async () => {

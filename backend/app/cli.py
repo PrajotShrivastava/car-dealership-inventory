@@ -7,13 +7,12 @@ import sys
 from collections.abc import Sequence
 
 from pydantic import ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.db import get_sessionmaker
-from app.models import Role, User, Vehicle
+from app.models import Role, User
 from app.schemas.auth import RegisterRequest
 from app.security import hash_password
-from app.seed_data import DEMO_VEHICLES
 
 
 def create_admin(email: str, password: str, full_name: str) -> User:
@@ -35,16 +34,6 @@ def create_admin(email: str, password: str, full_name: str) -> User:
         return admin
 
 
-def seed_vehicles() -> int:
-    """Insert demo vehicles into an empty inventory. Returns how many were added."""
-    with get_sessionmaker()() as session:
-        if session.scalar(select(func.count()).select_from(Vehicle)):
-            return 0
-        session.add_all(Vehicle(**data) for data in DEMO_VEHICLES)
-        session.commit()
-        return len(DEMO_VEHICLES)
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -53,7 +42,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     admin_cmd.add_argument("--email", required=True)
     admin_cmd.add_argument("--name", required=True)
-    commands.add_parser("seed", help="Load demo vehicles into an empty inventory")
     commands.add_parser(
         "seed-demo-users",
         help="Local development only: demo admin, customer and pending dealer applicant",
@@ -65,11 +53,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             password = os.environ.get("ADMIN_PASSWORD") or getpass.getpass("Admin password: ")
             admin = create_admin(args.email, password, args.name)
             print(f"Created admin {admin.email}")
-        elif args.command == "seed":
-            added = seed_vehicles()
-            print(
-                f"Seeded {added} vehicles" if added else "Seeded 0 vehicles (inventory not empty)"
-            )
         elif args.command == "seed-demo-users":
             from app.demo import DEMO_ACCOUNTS, DemoSeedRefusedError, seed_demo_users
 
