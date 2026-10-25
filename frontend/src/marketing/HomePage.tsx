@@ -11,7 +11,9 @@ import {
   ShoppingCart,
   type LucideIcon,
 } from 'lucide-react'
+import { CarLineArt } from '../components/CarIllustration'
 import { DashboardPreview } from './DashboardPreview'
+import { HeroMarquee } from './HeroMarquee'
 import { Reveal } from './Reveal'
 import { CtaBand, PrimaryCta, SecondaryCta, SectionHeading } from './ui'
 
@@ -56,46 +58,48 @@ export function HomePage() {
       {/* Hero */}
       <section aria-label="Introduction" className="relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-0">
-          <div className="absolute -top-40 left-1/2 h-[32rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand-500/15 blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-slate-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-slate-200)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_70%)] bg-[size:48px_48px] opacity-60" />
+          <div className="absolute -top-40 left-1/2 h-[32rem] w-[60rem] -translate-x-1/2 rounded-full bg-brand-500/10 blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-slate-200)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-slate-200)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_70%)] bg-[size:48px_48px] opacity-50" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-4 pt-16 pb-24 sm:px-6 sm:pt-24 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
+        <div className="relative pt-16 pb-24 sm:pt-24">
+          <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
             <Reveal>
               <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium text-slate-600 backdrop-blur">
                 <span className="size-1.5 rounded-full bg-emerald-500" />
                 Inventory management for car dealerships
               </span>
             </Reveal>
-            <Reveal delay={80}>
-              <h1 className="mt-6 text-4xl font-semibold tracking-tight text-balance text-slate-900 sm:text-6xl">
-                Every car on your lot,{' '}
-                <span className="bg-gradient-to-r from-brand-600 to-sky-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-sky-300">
-                  accounted for.
-                </span>
-              </h1>
-            </Reveal>
-            <Reveal delay={160}>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-                DriveStock keeps your vehicle inventory accurate in real time. Track stock, manage listings and let
-                customers buy with confidence, from one clean dashboard.
-              </p>
-            </Reveal>
-            <Reveal delay={240}>
-              <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-                <PrimaryCta />
-                <SecondaryCta />
-              </div>
-            </Reveal>
           </div>
-          <Reveal delay={320} className="mx-auto mt-16 max-w-5xl">
-            <DashboardPreview />
+          <Reveal delay={80} className="mt-8">
+            <HeroMarquee />
           </Reveal>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl text-center">
+              <Reveal delay={160}>
+                <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
+                  DriveStock keeps your vehicle inventory accurate in real time. Track stock, manage listings and let
+                  customers buy with confidence, from one clean dashboard.
+                </p>
+              </Reveal>
+              <Reveal delay={240}>
+                <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+                  <PrimaryCta />
+                  <SecondaryCta />
+                </div>
+              </Reveal>
+            </div>
+            <div className="relative mx-auto mt-16 max-w-5xl">
+              <CarLineArt className="pointer-events-none absolute -right-60 bottom-16 hidden w-[30rem] text-brand-500/45 xl:block" />
+              <Reveal delay={320} className="relative">
+                <DashboardPreview />
+              </Reveal>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* How it helps */}
-      <section aria-labelledby="helps-title" className="border-y border-slate-200 bg-white py-20">
+      <section aria-labelledby="helps-title" className="border-y border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading id="helps-title" eyebrow="Why DriveStock" title="Built around how a dealership works">
@@ -107,7 +111,7 @@ export function HomePage() {
             {OUTCOMES.map(({ icon: Icon, title, body }, index) => (
               <Reveal key={title} delay={index * 90}>
                 <div className="space-y-3">
-                  <span className="flex size-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-blue-300">
+                  <span className="flex size-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                     <Icon aria-hidden className="size-5" />
                   </span>
                   <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
@@ -131,7 +135,7 @@ export function HomePage() {
             {FEATURES.map(({ icon: Icon, title, body }, index) => (
               <Reveal key={title} delay={(index % 4) * 70}>
                 <div className="group h-full rounded-xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-lg hover:shadow-brand-600/5">
-                  <Icon aria-hidden className="size-6 text-brand-600 transition-transform group-hover:scale-110 dark:text-blue-400" />
+                  <Icon aria-hidden className="size-6 text-brand-600 transition-transform group-hover:scale-110" />
                   <h3 className="mt-4 font-semibold text-slate-900">{title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
                 </div>
@@ -142,7 +146,7 @@ export function HomePage() {
       </section>
 
       {/* How it works */}
-      <section aria-labelledby="steps-title" className="border-t border-slate-200 bg-white py-20">
+      <section aria-labelledby="steps-title" className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading id="steps-title" eyebrow="How it works" title="From listing to sale in three steps" />
@@ -152,7 +156,7 @@ export function HomePage() {
               <li key={step.title}>
                 <Reveal delay={index * 90}>
                   <div className="relative h-full rounded-xl border border-slate-200 p-6">
-                    <span className="text-sm font-semibold text-brand-600 tabular-nums dark:text-blue-400">
+                    <span className="text-sm font-semibold text-canvas-accent tabular-nums">
                       0{index + 1}
                     </span>
                     <h3 className="mt-3 font-semibold text-slate-900">{step.title}</h3>

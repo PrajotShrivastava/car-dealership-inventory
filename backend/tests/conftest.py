@@ -1,4 +1,6 @@
 import os
+import shutil
+import tempfile
 from collections.abc import Iterator
 
 import pytest
@@ -15,6 +17,9 @@ if not _test_url.rsplit("/", 1)[-1].endswith("_test"):
     raise RuntimeError("TEST_DATABASE_URL must point at a database whose name ends in '_test'")
 # Must happen before app modules read settings.
 os.environ["DATABASE_URL"] = _test_url
+# Uploaded photos go to a throwaway folder, never the real media directory.
+_media_dir = tempfile.mkdtemp(prefix="drivestock-media-")
+os.environ["MEDIA_DIR"] = _media_dir
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
@@ -27,10 +32,23 @@ from app.main import create_app  # noqa: E402
 
 @pytest.fixture(scope="session", autouse=True)
 def _migrated_database() -> Iterator[None]:
+    # The Playwright run shares this throwaway database and leaves rows behind (e.g. dealer
+    # accounts, which migration 0007 refuses to drop), so clear the data before migrating down.
+    with get_engine().begin() as conn:
+        leftover = conn.scalars(
+            text(
+                "SELECT tablename FROM pg_tables "
+                "WHERE schemaname = 'public' AND tablename <> 'alembic_version'"
+            )
+        ).all()
+        if leftover:
+            names = ", ".join(f'"{name}"' for name in leftover)
+            conn.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
     cfg = Config("alembic.ini")
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
     yield
+    shutil.rmtree(_media_dir, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

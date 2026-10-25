@@ -74,3 +74,10 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != Role.ADMIN:
         raise AppError(403, "FORBIDDEN", "Admin privileges required")
     return user
+
+
+def require_inventory_manager(user: User = Depends(get_current_user)) -> User:
+    """Dealers and admins may change the inventory; customers may not."""
+    if user.role not in (Role.DEALER, Role.ADMIN):
+        raise AppError(403, "FORBIDDEN", "Dealer or admin privileges required")
+    return user

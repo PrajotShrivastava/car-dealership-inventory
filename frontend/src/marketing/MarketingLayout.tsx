@@ -18,7 +18,7 @@ const linkClass = 'text-sm font-medium text-slate-600 transition-colors hover:te
 function AuthActions({ stacked = false, onNavigate }: { stacked?: boolean; onNavigate?: () => void }) {
   const { status } = useAuth()
   const primary =
-    'inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-on-accent shadow-sm transition hover:bg-brand-700'
+    'inline-flex h-10 items-center justify-center rounded-md bg-brand-600 px-4 text-sm font-medium text-on-brand shadow-sm transition hover:bg-brand-700'
   if (status === 'authenticated') {
     return (
       <Link to="/app" onClick={onNavigate} className={primary}>
@@ -55,7 +55,7 @@ function Navbar() {
       className={cn(
         'sticky top-0 z-40 border-b transition-colors duration-300',
         scrolled || open
-          ? 'border-slate-200 bg-white/80 backdrop-blur-lg'
+          ? 'border-slate-200 bg-canvas-raised/80 backdrop-blur-lg'
           : 'border-transparent bg-transparent',
       )}
     >
@@ -126,13 +126,19 @@ function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="space-y-2">
           <Logo />
-          <p className="text-sm text-slate-500">Inventory management for car dealerships.</p>
+          <p className="text-sm text-canvas-muted">Inventory management for car dealerships.</p>
         </div>
         <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {[...LINKS.slice(1), { to: '/login', label: 'Sign In' }, { to: '/signup', label: 'Get Started' }].map(
+          {[
+            ...LINKS.slice(1),
+            { to: '/login', label: 'Sign In' },
+            { to: '/signup', label: 'Get Started' },
+            { to: '/login?as=dealer', label: 'Dealer Sign In' },
+            { to: '/dealer/register', label: 'Register as a Dealer' },
+          ].map(
             (link) => (
               <li key={link.to}>
-                <Link to={link.to} className="text-slate-500 hover:text-slate-900">
+                <Link to={link.to} className="text-canvas-muted hover:text-slate-900">
                   {link.label}
                 </Link>
               </li>

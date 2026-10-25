@@ -1,6 +1,6 @@
 """Reset the *test* database for Playwright end-to-end runs.
 
-Migrates to head, empties every table, loads the demo inventory and creates
+Migrates to head, empties every table, loads the e2e vehicles and creates
 an e2e admin. Refuses to touch a database whose name does not end in `_test`.
 Usage (from backend/): DATABASE_URL=$TEST_DATABASE_URL python scripts/prepare_e2e_db.py
 """
@@ -13,11 +13,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
+from e2e_vehicles import E2E_VEHICLES  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
-from app.cli import create_admin, seed_vehicles  # noqa: E402
+from app.cli import create_admin  # noqa: E402
 from app.config import get_settings  # noqa: E402
-from app.db import Base, get_engine  # noqa: E402
+from app.db import Base, get_engine, get_sessionmaker  # noqa: E402
+from app.models import Vehicle  # noqa: E402
 
 E2E_ADMIN_EMAIL = "e2e-admin@drivestock.dev"
 E2E_ADMIN_PASSWORD = os.environ.get("E2E_ADMIN_PASSWORD", "e2e-admin-pass")
@@ -31,7 +33,9 @@ def main() -> None:
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
     with get_engine().begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
-    seed_vehicles()
+    with get_sessionmaker()() as session:
+        session.add_all(Vehicle(**data) for data in E2E_VEHICLES)
+        session.commit()
     create_admin(E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, "E2E Admin")
     print(f"e2e database '{db_name}' ready")
 

@@ -1,10 +1,13 @@
-"""Demo inventory for local development and screenshots. Not real listings."""
+"""Vehicles loaded into the *test* database for Playwright runs and README screenshots.
+
+Not real listings, and never loaded into the development database: dealers add their own.
+"""
 
 from decimal import Decimal
 
 from app.models import Category, FuelType, Transmission
 
-DEMO_VEHICLES: list[dict[str, object]] = [
+E2E_VEHICLES: list[dict[str, object]] = [
     {
         "make": "Ford",
         "model": "Kuga",

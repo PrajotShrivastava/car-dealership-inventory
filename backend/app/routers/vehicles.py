@@ -1,9 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, Depends, File, Path, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.media import delete_photos
 from app.models import User, Vehicle
 from app.schemas.vehicles import (
     PurchaseOut,
@@ -16,18 +17,20 @@ from app.schemas.vehicles import (
     VehicleQuery,
     VehicleUpdate,
 )
-from app.security import get_current_user, require_admin
+from app.security import get_current_user, require_inventory_manager
 from app.services.inventory import (
     purchase_vehicle,
     restock_vehicle,
     search_vehicles,
     vehicle_not_found,
 )
+from app.services.photos import MAX_PHOTO_BYTES, add_photos, remove_photo
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 
 # Bounded to Postgres INTEGER so oversized ids get a 422 instead of a DB error.
 VehicleId = Annotated[int, Path(ge=1, le=2_147_483_647)]
+PhotoId = Annotated[int, Path(ge=1, le=2_147_483_647)]
 
 
 def _get_or_404(db: Session, vehicle_id: int) -> Vehicle:
@@ -72,7 +75,9 @@ def get_vehicle(
 
 @router.post("", response_model=VehicleOut, status_code=status.HTTP_201_CREATED)
 def create_vehicle(
-    payload: VehicleCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)
+    payload: VehicleCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     vehicle = Vehicle(**payload.model_dump())
     db.add(vehicle)
@@ -86,7 +91,7 @@ def update_vehicle(
     vehicle_id: VehicleId,
     payload: VehicleUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     vehicle = _get_or_404(db, vehicle_id)
     for field, value in payload.model_dump().items():
@@ -98,10 +103,37 @@ def update_vehicle(
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_vehicle(
-    vehicle_id: VehicleId, db: Session = Depends(get_db), _: User = Depends(require_admin)
+    vehicle_id: VehicleId,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
 ) -> Response:
-    db.delete(_get_or_404(db, vehicle_id))
+    vehicle = _get_or_404(db, vehicle_id)
+    photo_keys = [photo.file_key for photo in vehicle.photos]
+    db.delete(vehicle)
     db.commit()
+    delete_photos(photo_keys)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{vehicle_id}/photos", response_model=VehicleOut, status_code=status.HTTP_201_CREATED)
+def upload_photos(
+    vehicle_id: VehicleId,
+    files: Annotated[list[UploadFile], File(description="JPEG, PNG or WebP, up to 5 MB each")],
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
+) -> Vehicle:
+    # Reading one byte past the limit is enough to tell an oversized file apart.
+    return add_photos(db, vehicle_id, [upload.file.read(MAX_PHOTO_BYTES + 1) for upload in files])
+
+
+@router.delete("/{vehicle_id}/photos/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_photo(
+    vehicle_id: VehicleId,
+    photo_id: PhotoId,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_inventory_manager),
+) -> Response:
+    remove_photo(db, vehicle_id, photo_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -125,6 +157,6 @@ def restock(
     vehicle_id: VehicleId,
     payload: RestockRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_inventory_manager),
 ) -> Vehicle:
     return restock_vehicle(db, vehicle_id, payload.quantity)

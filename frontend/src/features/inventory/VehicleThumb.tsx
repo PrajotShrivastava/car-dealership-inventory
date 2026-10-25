@@ -1,30 +1,54 @@
-import { Bus, Car, CarFront, Truck, type LucideIcon } from 'lucide-react'
-import type { Category } from '../../api/types'
+import { useState } from 'react'
+import { mediaUrl } from '../../api/client'
+import type { Category, VehiclePhoto } from '../../api/types'
+import { CarIllustration } from '../../components/CarIllustration'
 import { cn } from '../../components/cn'
 
-const ICONS: Record<Category, LucideIcon> = {
-  sedan: Car,
-  suv: CarFront,
-  hatchback: Car,
-  coupe: Car,
-  convertible: Car,
-  truck: Truck,
-  van: Bus,
-  wagon: Car,
-}
+const frame = 'shrink-0 overflow-hidden rounded-md border border-slate-200'
+// Photos get more room in the drawer than the drawing does.
+const photoSizes = { md: 'h-16 w-24', lg: 'h-56 w-full' }
+const drawingSizes = { md: 'h-16 w-24', lg: 'h-40 w-full' }
 
-/** Neutral placeholder: vehicle images are out of scope, so show a category icon. */
-export function VehicleThumb({ category, size = 'md' }: { category: Category; size?: 'md' | 'lg' }) {
-  const Icon = ICONS[category]
+/**
+ * A vehicle's photo, or a neutral drawing of its body style when it has none (or the
+ * photo fails to load). The large size uses the full image, the list uses the thumbnail.
+ */
+export function VehicleThumb({
+  category,
+  photo,
+  alt = '',
+  size = 'md',
+}: {
+  category: Category
+  photo?: VehiclePhoto
+  alt?: string
+  size?: 'md' | 'lg'
+}) {
+  const [failed, setFailed] = useState<string | null>(null)
+  const src = photo && mediaUrl(size === 'md' ? photo.thumb_url : photo.url)
+
+  if (src && failed !== src) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onError={() => setFailed(src)}
+        className={cn(frame, photoSizes[size], 'bg-slate-100 object-cover')}
+      />
+    )
+  }
   return (
     <div
-      aria-hidden
+      data-testid="vehicle-photo-fallback"
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-md border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400',
-        size === 'md' ? 'h-14 w-20' : 'h-40 w-full',
+        frame,
+        drawingSizes[size],
+        'flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 px-2',
       )}
     >
-      <Icon className={size === 'md' ? 'size-7' : 'size-16'} strokeWidth={1.5} />
+      <CarIllustration category={category} className={size === 'md' ? 'w-full' : 'w-48'} />
+      {size === 'lg' && <p className="mt-1 text-xs text-slate-500">No photo available</p>}
     </div>
   )
 }

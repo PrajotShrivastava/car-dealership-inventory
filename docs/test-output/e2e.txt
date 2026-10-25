@@ -1,32 +1,32 @@
 $ npx playwright test --reporter=list
 [WebServer] INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 [WebServer] INFO  [alembic.runtime.migration] Will assume transactional DDL.
-[WebServer] INFO:     Started server process [13032]
+[WebServer] INFO:     Started server process [34860]
 [WebServer] INFO:     Waiting for application startup.
 [WebServer] INFO:     Application startup complete.
 [WebServer] INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
-[WebServer] (node:13033) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
-[WebServer] (node:13061) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
 
-Running 13 tests using 1 worker
+Running 19 tests using 1 worker
 
-(node:13062) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓   1 [chromium] › e2e/inventory.spec.ts:17:1 › customer registers, finds a car, buys it and sees stock drop (2.2s)
-  ✓   2 [chromium] › e2e/inventory.spec.ts:43:1 › out-of-stock vehicles cannot be purchased (787ms)
-  ✓   3 [chromium] › e2e/inventory.spec.ts:50:1 › admin adds, edits, restocks and deletes a vehicle (1.4s)
-  ✓   4 [chromium] › e2e/inventory.spec.ts:83:1 › the API rejects customer attempts at admin actions (605ms)
-  ✓   5 [chromium] › e2e/marketing.spec.ts:3:1 › visitor goes from the landing page to sign-up and lands in the app (1.1s)
-  ✓   6 [chromium] › e2e/marketing.spec.ts:29:1 › Features link scrolls to the features section (804ms)
-  ✓   7 [chromium] › e2e/marketing.spec.ts:36:1 › deep app links survive the sign-in detour (742ms)
-  -   8 [chromium] › e2e/screenshots.spec.ts:30:1 › auth screens
-  -   9 [chromium] › e2e/screenshots.spec.ts:38:1 › customer screens
-  -  10 [chromium] › e2e/screenshots.spec.ts:58:1 › admin screens
-  -  11 [chromium] › e2e/screenshots.spec.ts:77:1 › marketing site
-  -  12 [chromium] › e2e/screenshots.spec.ts:96:1 › dark mode
-  -  13 [chromium] › e2e/screenshots.spec.ts:102:1 › responsive layouts
+  ✓   1 [chromium] › e2e/dealers.spec.ts:3:1 › dealer signs up and manages inventory straight away, without admin approval (2.2s)
+  ✓   2 [chromium] › e2e/dealers.spec.ts:57:1 › customer sign-up still creates a customer without inventory tools (736ms)
+  ✓   3 [chromium] › e2e/dealers.spec.ts:72:1 › customers cannot open the admin review page (917ms)
+  ✓   4 [chromium] › e2e/inventory.spec.ts:17:1 › customer registers, finds a car, buys it and sees stock drop (2.0s)
+  ✓   5 [chromium] › e2e/inventory.spec.ts:43:1 › out-of-stock vehicles cannot be purchased (1.1s)
+  ✓   6 [chromium] › e2e/inventory.spec.ts:50:1 › admin adds, edits, restocks and deletes a vehicle (1.2s)
+  ✓   7 [chromium] › e2e/inventory.spec.ts:83:1 › the API rejects customer attempts at admin actions (643ms)
+  ✓   8 [chromium] › e2e/marketing.spec.ts:3:1 › visitor goes from the landing page to sign-up and lands in the app (1.1s)
+  ✓   9 [chromium] › e2e/marketing.spec.ts:29:1 › Features link scrolls to the features section (770ms)
+  ✓  10 [chromium] › e2e/marketing.spec.ts:36:1 › deep app links survive the sign-in detour (628ms)
+  ✓  11 [chromium] › e2e/photos.spec.ts:24:1 › admin uploads photos with a new vehicle, adds and removes more, and they persist (1.7s)
+  ✓  12 [chromium] › e2e/photos.spec.ts:66:1 › the API rejects a file that is not an image, whatever its name and type say (38ms)
+  -  13 [chromium] › e2e/screenshots.spec.ts:30:1 › auth screens
+  -  14 [chromium] › e2e/screenshots.spec.ts:38:1 › customer screens
+  -  15 [chromium] › e2e/screenshots.spec.ts:58:1 › admin screens
+  -  16 [chromium] › e2e/screenshots.spec.ts:77:1 › marketing site
+  -  17 [chromium] › e2e/screenshots.spec.ts:96:1 › dealer onboarding
+  -  18 [chromium] › e2e/screenshots.spec.ts:116:1 › dark mode
+  -  19 [chromium] › e2e/screenshots.spec.ts:122:1 › responsive layouts
 
-  6 skipped
-  7 passed (9.2s)
+  7 skipped
+  12 passed (14.8s)

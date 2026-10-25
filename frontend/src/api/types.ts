@@ -1,4 +1,4 @@
-export type Role = 'customer' | 'admin'
+export type Role = 'customer' | 'dealer' | 'admin'
 
 export interface User {
   id: number
@@ -43,9 +43,18 @@ export interface VehicleFields {
   price: string
 }
 
+/** Paths on the API host, e.g. "/api/media/vehicles/<key>.webp"; resolve with mediaUrl(). */
+export interface VehiclePhoto {
+  id: number
+  url: string
+  thumb_url: string
+}
+
 export interface Vehicle extends VehicleFields {
   id: number
   quantity: number
+  /** In display order; the first is the cover photo. */
+  photos: VehiclePhoto[]
 }
 
 export type VehicleCreate = VehicleFields & { quantity: number }
@@ -91,4 +100,25 @@ export interface Purchase {
 export interface PurchaseResult {
   purchase: Purchase
   vehicle: Vehicle
+}
+
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+export interface DealerApplication {
+  id: number
+  status: ApplicationStatus
+  business_name: string
+  phone: string | null
+  message: string | null
+  created_at: string
+  reviewed_at: string | null
+  review_note: string | null
+  applicant: User
+}
+
+/** Same fields as customer sign-up; the account is created as a dealer. */
+export interface DealerRegisterRequest {
+  full_name: string
+  email: string
+  password: string
 }

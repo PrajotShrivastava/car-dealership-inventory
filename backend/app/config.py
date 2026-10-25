@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,6 +13,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
     cors_origins: str = "http://localhost:5173"
+    # Safe default: anything not explicitly "development" is treated as production.
+    app_env: str = "production"
+    # Uploaded vehicle photos are stored here and served at /api/media.
+    media_dir: Path = Path(__file__).resolve().parents[1] / "media"
 
     @property
     def cors_origin_list(self) -> list[str]:

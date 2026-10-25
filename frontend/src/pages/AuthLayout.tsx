@@ -12,10 +12,21 @@ const highlights = [
   { icon: ShieldCheck, text: 'Role-based access for customers and staff' },
 ]
 
-export function AuthLayout({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+export function AuthLayout({
+  title,
+  subtitle,
+  children,
+  above,
+}: {
+  title: string
+  subtitle: string
+  children: ReactNode
+  /** Rendered above the heading (e.g. an account-type switch). */
+  above?: ReactNode
+}) {
   return (
     <div className="flex min-h-full">
-      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-navy-900 p-12 text-on-accent lg:flex">
+      <aside className="hidden w-[42%] max-w-xl flex-col justify-between bg-ink-900 p-12 text-on-accent lg:flex">
         <Link to="/" aria-label="DriveStock home" className="self-start">
           <Logo inverted />
         </Link>
@@ -28,8 +39,8 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
           <ul className="space-y-4">
             {highlights.map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3 text-nav-text">
-                <span className="flex size-8 items-center justify-center rounded-md bg-navy-800">
-                  <Icon aria-hidden className="size-4 text-brand-100" />
+                <span className="flex size-8 items-center justify-center rounded-md bg-ink-800">
+                  <Icon aria-hidden className="size-4 text-brand-300" />
                 </span>
                 {text}
               </li>
@@ -38,12 +49,13 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
         </div>
         <p className="text-xs text-nav-muted">© {YEAR} DriveStock</p>
       </aside>
-      <main className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+      <main className="relative flex flex-1 items-center justify-center bg-paper px-4 py-12 sm:px-6">
         <ThemeToggle className="absolute top-4 right-4" />
         <div className="w-full max-w-sm">
           <Link to="/" aria-label="DriveStock home" className="mb-8 inline-block lg:hidden">
             <Logo />
           </Link>
+          {above}
           <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
           <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           <div className="mt-8">{children}</div>

@@ -108,7 +108,7 @@ export function PricingPage() {
                   <ul className="mt-6 flex-1 space-y-3 text-sm text-slate-700">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex gap-2.5">
-                        <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-600 dark:text-blue-400" />
+                        <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-brand-600" />
                         {feature}
                       </li>
                     ))}
@@ -118,7 +118,7 @@ export function PricingPage() {
                     className={cn(
                       'mt-8 inline-flex h-11 items-center justify-center rounded-lg text-sm font-semibold transition',
                       plan.highlighted
-                        ? 'bg-brand-600 text-on-accent hover:bg-brand-700'
+                        ? 'bg-brand-600 text-on-brand hover:bg-brand-700'
                         : 'border border-slate-300 text-slate-800 hover:border-slate-400 hover:bg-slate-50',
                     )}
                   >
@@ -131,7 +131,7 @@ export function PricingPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="faq-title" className="border-t border-slate-200 bg-white py-20">
+      <section aria-labelledby="faq-title" className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <h2 id="faq-title" className="text-2xl font-semibold text-slate-900">
             Questions

@@ -9,10 +9,12 @@ from pydantic import (
     Field,
     StringConstraints,
     ValidationInfo,
+    computed_field,
     field_serializer,
     field_validator,
 )
 
+from app.media import photo_url, thumb_url
 from app.models import Category, FuelType, Transmission
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
@@ -52,11 +54,30 @@ class VehicleUpdate(VehicleFields):
     model_config = ConfigDict(extra="forbid")
 
 
+class PhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    file_key: str = Field(exclude=True)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def url(self) -> str:
+        return photo_url(self.file_key)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def thumb_url(self) -> str:
+        return thumb_url(self.file_key)
+
+
 class VehicleOut(VehicleFields):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     quantity: int
+    # Read-only here; photos change only through the photo endpoints.
+    photos: list[PhotoOut] = []
 
     @field_serializer("price")
     def _price_as_fixed_point(self, value: Decimal) -> str:

@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight, PackageSearch, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { ApiError } from '../../api/client'
+import type { Vehicle } from '../../api/types'
 import type { SortOrder } from '../../api/types'
 import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
@@ -8,15 +10,23 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Drawer } from '../../components/Drawer'
 import { Spinner } from '../../components/Spinner'
 import { Tabs } from '../../components/Tabs'
+import { PhotoManager } from '../admin/PhotoManager'
 import { RestockForm } from '../admin/RestockForm'
 import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
 import { vehicleTitle } from './format'
 import { PurchasePanel } from './PurchasePanel'
-import { useCreateVehicle, useDeleteVehicle, useUpdateVehicle, useVehicle, useVehicleSearch } from './queries'
+import {
+  useCreateVehicle,
+  useDeleteVehicle,
+  useUpdateVehicle,
+  useUploadPhotos,
+  useVehicle,
+  useVehicleSearch,
+} from './queries'
 import { PAGE_SIZE, useInventoryFilters, useTextDrafts } from './useInventoryFilters'
 import { VehicleDetails } from './VehicleDetails'
-import { ROW_GRID, VehicleRow } from './VehicleRow'
+import { ROW_GRID, TABLE_GRID, VehicleRow } from './VehicleRow'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'newest', label: 'Newest first' },
@@ -27,22 +37,30 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'make_asc', label: 'Make: A–Z' },
 ]
 
-function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => void }) {
+/** `onAdd` is given to dealers and admins: an empty inventory then invites them to add the first vehicle. */
+function EmptyState({ filtered, onClear, onAdd }: { filtered: boolean; onClear: () => void; onAdd?: () => void }) {
+  const [title, hint] = filtered
+    ? ['No vehicles match your filters', 'Try widening the price range or removing a filter.']
+    : onAdd
+      ? ['Your inventory is empty', 'Vehicles appear here once you add them.']
+      : ['No vehicles in inventory yet', 'Vehicles added by staff will appear here.']
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
       <span className="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
         <PackageSearch aria-hidden className="size-6" />
       </span>
-      <p className="text-sm font-semibold text-slate-900">
-        {filtered ? 'No vehicles match your filters' : 'No vehicles in inventory yet'}
-      </p>
-      <p className="max-w-xs text-sm text-slate-500">
-        {filtered ? 'Try widening the price range or removing a filter.' : 'Vehicles added by staff will appear here.'}
-      </p>
-      {filtered && (
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="max-w-xs text-sm text-slate-500">{hint}</p>
+      {filtered ? (
         <Button variant="secondary" size="sm" onClick={onClear}>
           Clear filters
         </Button>
+      ) : (
+        onAdd && (
+          <Button size="sm" icon={<Plus aria-hidden className="size-3.5" />} onClick={onAdd}>
+            Add your first vehicle
+          </Button>
+        )
       )}
     </div>
   )
@@ -50,18 +68,19 @@ function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => v
 
 type DrawerTab = 'details' | 'edit' | 'restock'
 
-const ADMIN_TABS: { value: DrawerTab; label: string }[] = [
+const MANAGER_TABS: { value: DrawerTab; label: string }[] = [
   { value: 'details', label: 'Details' },
   { value: 'edit', label: 'Edit' },
   { value: 'restock', label: 'Restock' },
 ]
 
-function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
-  const { isAdmin } = useAuth()
+/** `notice` (e.g. a failed photo upload after creating the vehicle) opens the Edit tab with it shown. */
+function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; onClose: () => void }) {
+  const { canManageInventory } = useAuth()
   const { data: vehicle, isError, error } = useVehicle(id)
   const update = useUpdateVehicle(id)
   const remove = useDeleteVehicle()
-  const [tab, setTab] = useState<DrawerTab>('details')
+  const [tab, setTab] = useState<DrawerTab>(notice ? 'edit' : 'details')
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   if (isError) {
@@ -91,7 +110,7 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
         subtitle={[vehicle.trim, vehicle.year].filter(Boolean).join(' · ')}
         onClose={onClose}
         actions={
-          isAdmin && (
+          canManageInventory && (
             <button
               type="button"
               aria-label="Delete vehicle"
@@ -103,18 +122,40 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
             </button>
           )
         }
-        tabs={isAdmin && <Tabs label="Vehicle sections" tabs={ADMIN_TABS} value={tab} onChange={setTab} />}
+        tabs={canManageInventory && <Tabs label="Vehicle sections" tabs={MANAGER_TABS} value={tab} onChange={setTab} />}
         footer={tab === 'details' ? <PurchasePanel key={vehicle.id} vehicle={vehicle} /> : undefined}
       >
         {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
         {tab === 'edit' && (
-          <VehicleForm
-            key={vehicle.id}
-            vehicle={vehicle}
-            submitLabel="Save changes"
-            successMessage="Changes saved."
-            onSubmit={(fields) => update.mutateAsync(fields)}
-          />
+          <>
+            {notice && (
+              <div className="px-6 pt-5">
+                <Alert>{notice}</Alert>
+              </div>
+            )}
+            <VehicleForm
+              key={vehicle.id}
+              vehicle={vehicle}
+              submitLabel="Save changes"
+              successMessage="Changes saved."
+              onSubmit={(fields) => update.mutateAsync(fields)}
+            />
+            <PhotoManager vehicle={vehicle} />
+            <section className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-5">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Delete vehicle</h3>
+                <p className="mt-1 text-sm text-slate-500">Removes it from inventory. Past purchase records are kept.</p>
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 aria-hidden className="size-3.5" />}
+                onClick={() => setConfirmingDelete(true)}
+              >
+                Delete this vehicle
+              </Button>
+            </section>
+          </>
         )}
         {tab === 'restock' && <RestockForm key={vehicle.id} vehicle={vehicle} />}
       </Drawer>
@@ -141,15 +182,33 @@ function VehicleDrawer({ id, onClose }: { id: number; onClose: () => void }) {
   )
 }
 
-function AddVehicleDrawer({ onClose }: { onClose: () => void }) {
+function AddVehicleDrawer({
+  onClose,
+  onPhotoUploadFailed,
+}: {
+  onClose: () => void
+  onPhotoUploadFailed: (vehicle: Vehicle, notice: string) => void
+}) {
   const create = useCreateVehicle()
+  const upload = useUploadPhotos()
   return (
     <Drawer title="Add vehicle" subtitle="New listings appear at the top of the inventory." onClose={onClose}>
       <VehicleForm
         withQuantity
+        withPhotos
         submitLabel="Create vehicle"
-        onSubmit={async (fields, quantity) => {
-          await create.mutateAsync({ ...fields, quantity })
+        onSubmit={async (fields, quantity, photos) => {
+          const vehicle = await create.mutateAsync({ ...fields, quantity })
+          if (photos.length) {
+            try {
+              await upload.mutateAsync({ id: vehicle.id, files: photos })
+            } catch (error) {
+              // The vehicle exists now, so resubmitting this form would duplicate it.
+              const reason = error instanceof ApiError ? error.message : 'Please try again.'
+              onPhotoUploadFailed(vehicle, `Vehicle saved, but the photos could not be uploaded: ${reason} Add them below.`)
+              return
+            }
+          }
           onClose()
         }}
       />
@@ -163,13 +222,17 @@ export function InventoryPage() {
   const { drafts, change: changeDrafts, reset: resetDrafts } = useTextDrafts(filters, update)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [adding, setAdding] = useState(false)
-  const { isAdmin } = useAuth()
+  const [drawerNotice, setDrawerNotice] = useState<{ id: number; text: string } | null>(null)
+  const { canManageInventory } = useAuth()
 
   const clearAll = useCallback(() => {
     resetDrafts()
     clear()
   }, [clear, resetDrafts])
-  const closeDrawer = useCallback(() => select(null), [select])
+  const closeDrawer = useCallback(() => {
+    setDrawerNotice(null)
+    select(null)
+  }, [select])
 
   const total = data?.total ?? 0
   const firstShown = total === 0 ? 0 : query.offset! + 1
@@ -189,28 +252,28 @@ export function InventoryPage() {
   )
 
   return (
-    <div className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto max-w-[1760px] p-4 sm:p-6 lg:py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Inventory</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {isAdmin
+          <p className="mt-1 text-sm text-canvas-muted">
+            {canManageInventory
               ? 'Manage listings, pricing and stock levels.'
               : 'Browse vehicles on the lot and check live availability.'}
           </p>
         </div>
-        {isAdmin && (
+        {canManageInventory && (
           <Button icon={<Plus aria-hidden className="size-4" />} onClick={() => setAdding(true)}>
             Add vehicle
           </Button>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">{panel}</aside>
+      <div className="grid gap-6 xl:grid-cols-[256px_minmax(0,1fr)]">
+        <aside className="hidden xl:block">{panel}</aside>
 
-        <section className="min-w-0 rounded-lg border border-slate-200 bg-white">
-          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 sm:px-5">
+        <section className="@container min-w-0 rounded-lg border border-slate-200 bg-white">
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 sm:px-6">
             <h2 className="text-base font-semibold text-slate-900">
               Vehicles <span className="font-normal text-slate-500 tabular-nums">({total})</span>
             </h2>
@@ -219,7 +282,7 @@ export function InventoryPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="lg:hidden"
+                className="xl:hidden"
                 icon={<SlidersHorizontal aria-hidden className="size-3.5" />}
                 onClick={() => setMobileFiltersOpen(true)}
               >
@@ -244,17 +307,6 @@ export function InventoryPage() {
             </div>
           </div>
 
-          <div
-            aria-hidden
-            className={`hidden border-b border-slate-200 bg-slate-50/60 px-5 py-2.5 text-xs font-medium text-slate-500 ${ROW_GRID}`}
-          >
-            <span>Vehicle</span>
-            <span>Year</span>
-            <span>Availability</span>
-            <span className="text-right">Price</span>
-            <span className="w-[118px]" />
-          </div>
-
           {isPending ? (
             <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
               <Spinner /> Loading vehicles…
@@ -267,17 +319,33 @@ export function InventoryPage() {
               </Button>
             </div>
           ) : data.items.length === 0 ? (
-            <EmptyState filtered={activeCount > 0} onClear={clearAll} />
+            <EmptyState
+              filtered={activeCount > 0}
+              onClear={clearAll}
+              onAdd={canManageInventory ? () => setAdding(true) : undefined}
+            />
           ) : (
-            <ul aria-label="Vehicles" className="divide-y divide-slate-200">
-              {data.items.map((vehicle) => (
-                <VehicleRow key={vehicle.id} vehicle={vehicle} onView={() => select(vehicle.id)} />
-              ))}
-            </ul>
+            <div className={TABLE_GRID}>
+              <div
+                aria-hidden
+                className={`hidden border-b border-slate-200 bg-slate-50/60 px-6 py-3 text-xs font-medium text-slate-500 ${ROW_GRID}`}
+              >
+                <span>Vehicle</span>
+                <span>Year</span>
+                <span>Availability</span>
+                <span className="text-right">Price</span>
+                <span />
+              </div>
+              <ul aria-label="Vehicles" className={`divide-y divide-slate-200 ${ROW_GRID}`}>
+                {data.items.map((vehicle) => (
+                  <VehicleRow key={vehicle.id} vehicle={vehicle} onView={() => select(vehicle.id)} />
+                ))}
+              </ul>
+            </div>
           )}
 
           {total > 0 && (
-            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:px-5">
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:px-6">
               <span className="tabular-nums">
                 Showing {firstShown}–{lastShown} of {total}
               </span>
@@ -310,7 +378,7 @@ export function InventoryPage() {
       </div>
 
       {mobileFiltersOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-40 xl:hidden">
           <div aria-hidden className="absolute inset-0 bg-black/50" onClick={() => setMobileFiltersOpen(false)} />
           <div className="relative h-full w-full max-w-sm overflow-y-auto bg-canvas p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -329,8 +397,24 @@ export function InventoryPage() {
         </div>
       )}
 
-      {selectedId !== null && <VehicleDrawer key={selectedId} id={selectedId} onClose={closeDrawer} />}
-      {adding && <AddVehicleDrawer onClose={() => setAdding(false)} />}
+      {selectedId !== null && (
+        <VehicleDrawer
+          key={selectedId}
+          id={selectedId}
+          notice={drawerNotice?.id === selectedId ? drawerNotice.text : undefined}
+          onClose={closeDrawer}
+        />
+      )}
+      {adding && (
+        <AddVehicleDrawer
+          onClose={() => setAdding(false)}
+          onPhotoUploadFailed={(vehicle, text) => {
+            setAdding(false)
+            setDrawerNotice({ id: vehicle.id, text })
+            select(vehicle.id)
+          }}
+        />
+      )}
     </div>
   )
 }

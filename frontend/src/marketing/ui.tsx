@@ -8,7 +8,7 @@ export function Eyebrow({ children, inverted = false }: { children: ReactNode; i
     <p
       className={cn(
         'text-xs font-semibold tracking-[0.18em] uppercase',
-        inverted ? 'text-blue-300' : 'text-brand-600 dark:text-blue-400',
+        inverted ? 'text-brand-300' : 'text-canvas-accent',
       )}
     >
       {children}
@@ -45,7 +45,7 @@ export function PrimaryCta({ to = '/signup', children = 'Get Started', className
     <Link
       to={to}
       className={cn(
-        'group inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-sm font-semibold text-on-accent shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-brand-600/35',
+        'group inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-600 px-6 text-sm font-semibold text-on-brand shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-brand-600/35',
         className,
       )}
     >
@@ -75,8 +75,8 @@ export function SecondaryCta({ to = '/login', children = 'Sign In', inverted = f
 export function CtaBand({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label="Get started" className="px-4 py-20 sm:px-6 lg:px-8">
-      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-navy-900 px-6 py-14 text-center sm:px-12">
-        <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-brand-500/30 blur-3xl" />
+      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-ink-900 px-6 py-14 text-center sm:px-12">
+        <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-brand-500/20 blur-3xl" />
         <div className="relative space-y-5">
           <h2 className="text-3xl font-semibold tracking-tight text-on-accent sm:text-4xl">{title}</h2>
           <p className="mx-auto max-w-xl text-nav-text">{children}</p>

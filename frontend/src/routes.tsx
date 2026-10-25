@@ -1,11 +1,13 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router'
-import { GuestOnly, RequireAuth } from './auth/guards'
+import { GuestOnly, RequireAdmin, RequireAuth } from './auth/guards'
+import { DealerApplicationsPage } from './features/dealers/DealerApplicationsPage'
 import { InventoryPage } from './features/inventory/InventoryPage'
 import { AppShell } from './layout/AppShell'
 import { AboutPage } from './marketing/AboutPage'
 import { HomePage } from './marketing/HomePage'
 import { MarketingLayout } from './marketing/MarketingLayout'
 import { PricingPage } from './marketing/PricingPage'
+import { DealerRegisterPage } from './pages/DealerRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -29,6 +31,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/signup', element: <RegisterPage /> },
+      { path: '/dealer/register', element: <DealerRegisterPage /> },
     ],
   },
   { path: '/register', element: <Navigate to="/signup" replace /> },
@@ -38,7 +41,13 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <AppShell />,
-        children: [{ path: APP_HOME, element: <InventoryPage /> }],
+        children: [
+          { path: APP_HOME, element: <InventoryPage /> },
+          {
+            element: <RequireAdmin />,
+            children: [{ path: `${APP_HOME}/dealer-applications`, element: <DealerApplicationsPage /> }],
+          },
+        ],
       },
     ],
   },

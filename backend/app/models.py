@@ -2,8 +2,18 @@ import enum
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Numeric, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
+    func,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 
@@ -11,6 +21,9 @@ from app.db import Base
 class Role(enum.StrEnum):
     CUSTOMER = "customer"
     ADMIN = "admin"
+    # Manages inventory (vehicles, stock, photos). Admins can do that too, plus review
+    # dealer applications. Listed last to match the order of the database enum.
+    DEALER = "dealer"
 
 
 def _enum_values(enum_cls: type[enum.Enum]) -> list[str]:
@@ -61,6 +74,9 @@ class Vehicle(Base):
         CheckConstraint("price > 0", name="ck_vehicles_price_positive"),
         CheckConstraint("quantity >= 0", name="ck_vehicles_quantity_non_negative"),
         CheckConstraint("year BETWEEN 1900 AND 2100", name="ck_vehicles_year_range"),
+        CheckConstraint(
+            "catalog_image_id ~ '^[0-9a-f]{16}$'", name="ck_vehicles_catalog_image_id_format"
+        ),
         Index("ix_vehicles_make_model", "make", "model"),
     )
 
@@ -80,14 +96,44 @@ class Vehicle(Base):
     )
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), index=True)
     quantity: Mapped[int] = mapped_column(default=0, server_default="0")
+    # Unused: left over from the removed CarDatabase integration (migration 0005). Kept
+    # mapped so the model matches the schema; nothing reads or writes it, and it is not
+    # exposed by the API. Dropping it needs a new migration (see docs).
+    catalog_image_id: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    # Loaded with every vehicle (one extra query per batch) so responses always include them.
+    photos: Mapped[list["VehiclePhoto"]] = relationship(
+        order_by="VehiclePhoto.position",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+    )
+
     @property
     def label(self) -> str:
         return " ".join(str(part) for part in (self.year, self.make, self.model, self.trim) if part)
+
+
+class VehiclePhoto(Base):
+    """A photo uploaded by an admin. The image files live in the media folder under file_key."""
+
+    __tablename__ = "vehicle_photos"
+    __table_args__ = (
+        CheckConstraint("file_key ~ '^[0-9a-f]{32}$'", name="ck_vehicle_photos_file_key_format"),
+        CheckConstraint("position >= 0", name="ck_vehicle_photos_position_non_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vehicle_id: Mapped[int] = mapped_column(
+        ForeignKey("vehicles.id", ondelete="CASCADE"), index=True
+    )
+    file_key: Mapped[str] = mapped_column(String(32), unique=True)
+    position: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Purchase(Base):
@@ -111,3 +157,38 @@ class Purchase(Base):
     @property
     def total_price(self) -> Decimal:
         return self.unit_price * self.quantity
+
+
+class ApplicationStatus(enum.StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class DealerApplication(Base):
+    """A request to become a dealer, from before dealers could sign up directly.
+
+    New sign-ups no longer create these; existing ones are still reviewed by an admin.
+    """
+
+    __tablename__ = "dealer_applications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    business_name: Mapped[str] = mapped_column(String(100))
+    phone: Mapped[str | None] = mapped_column(String(30))
+    message: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[ApplicationStatus] = mapped_column(
+        Enum(ApplicationStatus, name="application_status", values_callable=_enum_values),
+        default=ApplicationStatus.PENDING,
+        server_default=ApplicationStatus.PENDING.value,
+        index=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reviewed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    review_note: Mapped[str | None] = mapped_column(String(500))
+
+    applicant: Mapped[User] = relationship(foreign_keys=[user_id], lazy="joined")

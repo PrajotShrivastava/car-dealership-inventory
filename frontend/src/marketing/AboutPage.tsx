@@ -43,7 +43,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white py-20">
+      <section className="border-y border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
           <Reveal>
             <SectionHeading eyebrow="Our mission" title="Our mission">
@@ -70,7 +70,7 @@ export function AboutPage() {
             {AUDIENCE.map(({ icon: Icon, title, body }, index) => (
               <Reveal key={title} delay={index * 90}>
                 <div className="h-full rounded-xl border border-slate-200 bg-white p-6">
-                  <Icon aria-hidden className="size-6 text-brand-600 dark:text-blue-400" />
+                  <Icon aria-hidden className="size-6 text-brand-600" />
                   <h3 className="mt-4 font-semibold text-slate-900">{title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
                 </div>
@@ -80,7 +80,7 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-slate-200 bg-white py-20">
+      <section className="border-t border-slate-200 bg-canvas-raised py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Reveal>
             <SectionHeading eyebrow="Principles" title="What guides the product" />
@@ -89,7 +89,7 @@ export function AboutPage() {
             {PRINCIPLES.map(({ icon: Icon, title, body }, index) => (
               <Reveal key={title} delay={index * 90}>
                 <div className="flex gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-blue-300">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                     <Icon aria-hidden className="size-5" />
                   </span>
                   <div>

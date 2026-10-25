@@ -2,28 +2,46 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens inspired by the reference: navy chrome, single blue accent,
-   cool-grey canvas, white bordered cards, semantic stock colours. */
+/* Design tokens: neutral ink chrome, a single green accent,
+   warm stone canvas (light), white bordered cards, semantic stock colours. */
 @theme {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  --color-navy-950: #071a33;
-  --color-navy-900: #0b2447;
-  --color-navy-800: #12325e;
-  --color-navy-700: #1b4178;
+  /* ── Colour tokens (light theme). Components use these, never raw hues. ── */
 
-  --color-brand-50: #eef4ff;
-  --color-brand-100: #dbe7ff;
-  --color-brand-500: #2f6bea;
-  --color-brand-600: #1f5bd8;
-  --color-brand-700: #1a4bb3;
+  /* Neutral chrome: sidebar, sign-in side panel, closing CTA band. */
+  --color-ink-950: #0a0a0a;
+  --color-ink-900: #171717;
+  --color-ink-800: #262626;
+  --color-ink-700: #404040;
 
-  --color-canvas: #f4f6f9;
+  /* Brand green. 500 = brand fill (focus rings, indicators, glows); 600 = buttons
+     and links (#2f7d38: 5.1:1 with white, AA); 700 = hover; 50/100 = light tints. */
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-300: #86efac;
+  --color-brand-500: #379943;
+  --color-brand-600: #2f7d38;
+  --color-brand-700: #14532d;
 
-  /* Fixed colours for content on navy/brand/red surfaces (never inverted). */
+  /* Surfaces and text */
+  --color-canvas: #e8e8d8; /* page background (warm stone) */
+  --color-canvas-raised: #f3f3e9; /* full-width bands and top bars that sit on the canvas */
+  --color-paper: #ffffff; /* content areas without a card, e.g. the sign-in form */
+  --color-slate-900: #111827;
+
+  /* Text placed directly on canvas / canvas-raised (slate-500 3.8:1 and brand-600 4.1:1
+     are too light on the stone background for small text). canvas-muted 5.8:1,
+     canvas-accent 5.3:1 on #e8e8d8; both higher on canvas-raised. Cards stay white. */
+  --color-canvas-muted: #525a45;
+  --color-canvas-accent: #1f6b2a;
+
+  /* Text on brand-filled elements (buttons, logo tile). */
+  --color-on-brand: #ffffff;
+  /* Fixed colours on ink surfaces (never inverted). */
   --color-on-accent: #ffffff;
-  --color-nav-text: #cbd5e1;
-  --color-nav-muted: #94a3b8;
+  --color-nav-text: #d4d4d4;
+  --color-nav-muted: #a3a3a3;
 
   --animate-fade-in: fade-in 200ms ease-out both;
   --animate-float: float 6s ease-in-out infinite;
@@ -46,23 +64,38 @@
   }
 }
 
-/* Dark mode: remap the neutral scale and surfaces so existing utilities
-   (bg-white, text-slate-900, border-slate-200, …) adapt automatically. */
+/* Dark theme: true black and neutral charcoal, green accents. Existing utilities
+   (bg-white, text-slate-900, border-slate-200, bg-brand-600, …) adapt automatically. */
 .dark {
-  --color-white: #111a2b;
-  --color-canvas: #0a1120;
-  --color-slate-50: #16213a;
-  --color-slate-100: #1b2740;
-  --color-slate-200: #26334d;
-  --color-slate-300: #34425e;
-  --color-slate-400: #6b7a93;
-  --color-slate-500: #93a0b5;
-  --color-slate-600: #aab5c7;
-  --color-slate-700: #c3ccda;
-  --color-slate-800: #d9e0ea;
-  --color-slate-900: #eef2f7;
-  --color-navy-900: #08172c;
-  --color-navy-950: #050f1f;
+  --color-canvas: #000000; /* main background */
+  --color-white: #111111; /* cards and panels */
+  /* Light-theme canvas roles mapped to the existing dark values (dark theme unchanged). */
+  --color-canvas-raised: #111111;
+  --color-paper: #000000;
+  --color-canvas-muted: #a3a3a3;
+  --color-canvas-accent: #22c55e;
+  --color-slate-50: #181818; /* elevated / hover */
+  --color-slate-100: #1d1d1d;
+  --color-slate-200: #292929; /* borders */
+  --color-slate-300: #363636; /* input borders */
+  --color-slate-400: #737373;
+  --color-slate-500: #a3a3a3; /* secondary text */
+  --color-slate-600: #b3b3b3;
+  --color-slate-700: #d4d4d4;
+  --color-slate-800: #e5e5e5;
+  --color-slate-900: #f5f5f5; /* primary text */
+
+  --color-ink-950: #000000;
+  --color-ink-900: #080808; /* sidebar */
+  --color-ink-800: #181818;
+  --color-ink-700: #292929;
+
+  --color-brand-50: #0c1f12;
+  --color-brand-100: #12301b;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #22c55e;
+  --color-brand-700: #16a34a;
+  --color-on-brand: #0a0a0a; /* white on #22c55e is only 2.3:1 */
 }
 
 html,
@@ -94,5 +127,78 @@ body {
   .animate-float,
   .animate-fade-in {
     animation: none;
+  }
+}
+
+/* Hero headline marquees. The track is two identical halves; moving it by -50%
+   lands on an identical frame, so the loop is seamless. Height never changes
+   (single nowrap line), so there is no layout shift. */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.marquee-half,
+.marquee-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+/* Spacing between repeats: a plain gap on the top line, a small car silhouette on the
+   bottom line (elements, not flex gap, so both halves stay exactly equal). */
+.marquee-gap {
+  width: 0.9em;
+}
+/* Bottom-line separator: a small car silhouette. */
+.marquee-separator {
+  width: 0.9em;
+  height: 0.36em;
+  margin-inline: 0.45em;
+  background-color: var(--color-brand-500);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 48'%3E%3Cpath d='M8 37 L8 30 Q8 27 13 26 L24 25 Q38 14 54 13 L68 13 Q75 13 80 17 L92 25 L107 26.5 Q113 27.5 113 32 L113 37 Q113 38 112 38 L9 38 Q8 38 8 37 Z'/%3E%3Ccircle cx='30' cy='39' r='8'/%3E%3Ccircle cx='92' cy='39' r='8'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0.85;
+}
+.marquee-to-left {
+  animation: marquee-left 60s linear infinite;
+}
+.marquee-to-right {
+  animation: marquee-left 60s linear infinite reverse;
+}
+.marquee-paused .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee-left {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion: no movement, just the phrase once, centred and free to wrap. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    mask-image: none;
+  }
+  .marquee-track {
+    width: auto;
+    justify-content: center;
+    animation: none;
+  }
+  .marquee-half + .marquee-half,
+  .marquee-item + .marquee-item,
+  .marquee-gap,
+  .marquee-separator {
+    display: none;
+  }
+  .marquee-half,
+  .marquee-item {
+    flex-shrink: 1;
+    white-space: normal;
+    text-align: center;
   }
 }
