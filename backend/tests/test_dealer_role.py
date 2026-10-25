@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import func, select
 
 from app.db import get_sessionmaker
-from app.models import DealerApplication
+from app.models import DealerApplication, Role, User
 from tests.conftest import VEHICLE
 from tests.test_vehicle_photos import files, image_bytes
 
@@ -35,6 +35,13 @@ class TestDealerRegistration:
         assert body["email"] == "dana@motors.example"
         assert body["full_name"] == "Dana Dealer"
         assert body["role"] == "dealer"
+
+    def test_the_dealer_role_is_what_the_database_stores(self, client):
+        register_dealer(client)
+
+        with get_sessionmaker()() as session:
+            role = session.scalar(select(User.role).where(User.email == "dana@motors.example"))
+        assert role is Role.DEALER
 
     def test_the_dealer_role_is_stored_and_returned_on_sign_in(self, client, dealer_headers):
         login = client.post(

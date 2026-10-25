@@ -132,6 +132,11 @@ function currentUser(request: Request): StoredUser | undefined {
   return users.find((u) => tokenFor(u) === token)
 }
 
+/** Mirrors the API: dealers and admins may change the inventory. */
+function canManageInventory(user: StoredUser | undefined) {
+  return user?.role === 'dealer' || user?.role === 'admin'
+}
+
 function publicUser({ password: _password, ...user }: StoredUser): User {
   return user
 }
@@ -262,14 +267,14 @@ export const handlers = [
   http.post(`${API}/vehicles`, async ({ request }) => {
     const user = currentUser(request)
     if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
-    if (user.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const body = (await request.json()) as VehicleCreate
     return HttpResponse.json(seedVehicle({ ...body, price: Number(body.price).toFixed(2) }), { status: 201 })
   }),
 
   http.put(`${API}/vehicles/:id`, async ({ request, params }) => {
     const user = currentUser(request)
-    if (user?.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const vehicle = getVehicle(Number(params.id))
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     Object.assign(vehicle, (await request.json()) as Partial<Vehicle>)
@@ -279,7 +284,7 @@ export const handlers = [
 
   http.delete(`${API}/vehicles/:id`, ({ request, params }) => {
     const user = currentUser(request)
-    if (user?.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const before = vehicles.length
     vehicles = vehicles.filter((v) => v.id !== Number(params.id))
     return before === vehicles.length
@@ -316,7 +321,7 @@ export const handlers = [
   http.post(`${API}/vehicles/:id/photos`, async ({ request, params }) => {
     const user = currentUser(request)
     if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
-    if (user.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const vehicle = getVehicle(Number(params.id))
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     const files = await uploadedFiles(request)
@@ -335,7 +340,7 @@ export const handlers = [
 
   http.delete(`${API}/vehicles/:id/photos/:photoId`, ({ request, params }) => {
     const user = currentUser(request)
-    if (user?.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const vehicle = getVehicle(Number(params.id))
     const photo = vehicle?.photos.find((p) => p.id === Number(params.photoId))
     if (!vehicle || !photo) return error(404, 'PHOTO_NOT_FOUND', 'Photo not found')
@@ -345,7 +350,7 @@ export const handlers = [
 
   http.post(`${API}/vehicles/:id/restock`, async ({ request, params }) => {
     const user = currentUser(request)
-    if (user?.role !== 'admin') return error(403, 'FORBIDDEN', 'Admin privileges required')
+    if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const vehicle = getVehicle(Number(params.id))
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     vehicle.quantity += ((await request.json()) as { quantity: number }).quantity

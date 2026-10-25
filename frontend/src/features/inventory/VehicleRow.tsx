@@ -8,8 +8,16 @@ import { VehicleThumb } from './VehicleThumb'
 
 // Rows follow the width of the list (an @container), not the window, because the sidebar and
 // filter column change how much room it has: stacked card when narrow, one-line card from @2xl,
-// table columns (matching the header row) from 52rem (832px).
-export const ROW_GRID = '@[52rem]:grid @[52rem]:grid-cols-[minmax(0,1fr)_56px_128px_104px_auto] @[52rem]:items-center @[52rem]:gap-5'
+// a table from 52rem (832px).
+//
+// In table mode the list is one CSS grid (TABLE_GRID) and the header and every row are subgrids
+// of it (ROW_GRID), so all columns line up. Vehicle gets room first (up to 22rem, so Year stays
+// close to it on wide screens); Year, Availability and Price are at least as wide as their widest
+// value (the longest price always fits) and share the rest; the button column fits the button.
+export const TABLE_GRID =
+  '@[52rem]:grid @[52rem]:grid-cols-[minmax(14rem,22rem)_minmax(max-content,1fr)_minmax(max-content,1fr)_minmax(max-content,1fr)_max-content]'
+export const ROW_GRID =
+  '@[52rem]:col-span-full @[52rem]:grid @[52rem]:grid-cols-subgrid @[52rem]:items-center @[52rem]:gap-x-5'
 
 export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onView: () => void; actions?: ReactNode }) {
   return (
@@ -35,7 +43,7 @@ export function VehicleRow({ vehicle, onView, actions }: { vehicle: Vehicle; onV
         <div>
           <StockBadge quantity={vehicle.quantity} />
         </div>
-        <p className="text-sm font-semibold text-slate-900 tabular-nums @2xl:min-w-24 @2xl:text-right">{formatPrice(vehicle.price)}</p>
+        <p className="text-sm font-semibold text-slate-900 whitespace-nowrap tabular-nums @2xl:min-w-24 @2xl:text-right">{formatPrice(vehicle.price)}</p>
       </div>
       <div className="flex items-center justify-end gap-2 @2xl:shrink-0">
         {actions}

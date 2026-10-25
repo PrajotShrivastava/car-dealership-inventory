@@ -26,7 +26,7 @@ import {
 } from './queries'
 import { PAGE_SIZE, useInventoryFilters, useTextDrafts } from './useInventoryFilters'
 import { VehicleDetails } from './VehicleDetails'
-import { ROW_GRID, VehicleRow } from './VehicleRow'
+import { ROW_GRID, TABLE_GRID, VehicleRow } from './VehicleRow'
 
 const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'newest', label: 'Newest first' },
@@ -133,6 +133,20 @@ function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; o
               onSubmit={(fields) => update.mutateAsync(fields)}
             />
             <PhotoManager vehicle={vehicle} />
+            <section className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-5">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Delete vehicle</h3>
+                <p className="mt-1 text-sm text-slate-500">Removes it from inventory. Past purchase records are kept.</p>
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Trash2 aria-hidden className="size-3.5" />}
+                onClick={() => setConfirmingDelete(true)}
+              >
+                Delete this vehicle
+              </Button>
+            </section>
           </>
         )}
         {tab === 'restock' && <RestockForm key={vehicle.id} vehicle={vehicle} />}
@@ -285,17 +299,6 @@ export function InventoryPage() {
             </div>
           </div>
 
-          <div
-            aria-hidden
-            className={`hidden border-b border-slate-200 bg-slate-50/60 px-6 py-3 text-xs font-medium text-slate-500 ${ROW_GRID}`}
-          >
-            <span>Vehicle</span>
-            <span>Year</span>
-            <span>Availability</span>
-            <span className="text-right">Price</span>
-            <span className="w-[118px]" />
-          </div>
-
           {isPending ? (
             <div role="status" className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500">
               <Spinner /> Loading vehicles…
@@ -310,11 +313,23 @@ export function InventoryPage() {
           ) : data.items.length === 0 ? (
             <EmptyState filtered={activeCount > 0} onClear={clearAll} />
           ) : (
-            <ul aria-label="Vehicles" className="divide-y divide-slate-200">
-              {data.items.map((vehicle) => (
-                <VehicleRow key={vehicle.id} vehicle={vehicle} onView={() => select(vehicle.id)} />
-              ))}
-            </ul>
+            <div className={TABLE_GRID}>
+              <div
+                aria-hidden
+                className={`hidden border-b border-slate-200 bg-slate-50/60 px-6 py-3 text-xs font-medium text-slate-500 ${ROW_GRID}`}
+              >
+                <span>Vehicle</span>
+                <span>Year</span>
+                <span>Availability</span>
+                <span className="text-right">Price</span>
+                <span />
+              </div>
+              <ul aria-label="Vehicles" className={`divide-y divide-slate-200 ${ROW_GRID}`}>
+                {data.items.map((vehicle) => (
+                  <VehicleRow key={vehicle.id} vehicle={vehicle} onView={() => select(vehicle.id)} />
+                ))}
+              </ul>
+            </div>
           )}
 
           {total > 0 && (

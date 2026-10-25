@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { approveElsewhere, getApplication, PASSWORD, seedApplication, seedUser, seedVehicle } from '../../test/handlers'
+import { approveElsewhere, getApplication, getVehicle, PASSWORD, seedApplication, seedUser, seedVehicle } from '../../test/handlers'
 import { renderApp } from '../../test/utils'
 
 describe('dealer sign-in entry point', () => {
@@ -157,6 +157,22 @@ describe('admin review of dealer applications', () => {
     expect(within(drawer).getByRole('tab', { name: /edit/i })).toBeInTheDocument()
     expect(within(drawer).getByRole('tab', { name: /restock/i })).toBeInTheDocument()
     expect(within(drawer).getByRole('button', { name: /delete vehicle/i })).toBeInTheDocument()
+  })
+
+  it('lets a dealer delete a vehicle with the labelled button in the Edit tab', async () => {
+    const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga' })
+    const { user } = renderApp({ path: '/app', user: seedUser('dealer') })
+
+    await user.click(await screen.findByRole('button', { name: /view details/i }))
+    const drawer = await screen.findByRole('dialog', { name: /ford kuga/i })
+    await user.click(within(drawer).getByRole('tab', { name: /edit/i }))
+    await user.click(within(drawer).getByRole('button', { name: 'Delete this vehicle' }))
+    const confirm = await screen.findByRole('alertdialog', { name: /delete ford kuga/i })
+    await user.click(within(confirm).getByRole('button', { name: /^delete$/i }))
+
+    await waitFor(() => expect(getVehicle(vehicle.id)).toBeUndefined())
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: /ford kuga/i })).not.toBeInTheDocument())
+    expect(await screen.findByText(/no vehicles in inventory yet/i)).toBeInTheDocument()
   })
 
   it('hides the page and navigation item from customers', async () => {
