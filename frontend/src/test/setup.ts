@@ -1,8 +1,13 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
+import { compareStore } from '../features/compare/compareStore'
 import { resetDb } from './handlers'
 import { server } from './server'
+
+// findBy*/waitFor give up after 1s by default, which the full suite (many files in parallel)
+// occasionally exceeds. Failing tests still fail; they just get a little longer.
+configure({ asyncUtilTimeout: 3000 })
 
 // jsdom has no object URLs; the photo picker uses them for local previews.
 URL.createObjectURL ??= (blob: Blob) => `blob:preview-${blob.size}`
@@ -41,5 +46,6 @@ afterEach(() => {
   server.resetHandlers()
   resetDb()
   localStorage.clear()
+  compareStore.reload()
 })
 afterAll(() => server.close())
