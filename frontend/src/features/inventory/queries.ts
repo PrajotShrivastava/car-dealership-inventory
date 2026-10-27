@@ -44,15 +44,21 @@ export function useSyncVehicle() {
 
 export function usePurchase() {
   const sync = useSyncVehicle()
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, quantity }: { id: number; quantity: number }) => vehiclesApi.purchase(id, quantity),
-    onSuccess: (result) => sync(result.vehicle),
+    onSuccess: (result) => {
+      sync(result.vehicle)
+      return queryClient.invalidateQueries({ queryKey: ['account', 'purchases'] })
+    },
   })
 }
 
 export function useEnquire(id: number) {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (body: Parameters<typeof vehiclesApi.enquire>[1]) => vehiclesApi.enquire(id, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['account', 'enquiries'] }),
   })
 }
 

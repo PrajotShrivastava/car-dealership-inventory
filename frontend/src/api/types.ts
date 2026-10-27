@@ -367,3 +367,34 @@ export interface LeadList {
 export interface FollowUps extends Reminders {
   items: { id: number; name: string; status: LeadStatus; follow_up_on: string; vehicle_label: string | null }[]
 }
+
+/** A customer's own purchase; never includes the dealer's cost or profit. */
+export interface AccountPurchase {
+  id: number
+  invoice_number: string
+  vehicle_id: number | null
+  vehicle_label: string
+  quantity: number
+  unit_price: string
+  total_price: string
+  sold_at: string
+  /** The dealer's name, or the store's for vehicles no dealer listed. */
+  seller: string
+}
+
+/** The dealer's lead status, simplified for the customer. */
+export type EnquiryProgress = 'sent' | 'in_progress' | 'test_drive_scheduled' | 'completed' | 'closed'
+
+export interface AccountEnquiry {
+  id: number
+  kind: EnquiryKind | null
+  vehicle_id: number | null
+  vehicle_label: string | null
+  progress: EnquiryProgress
+  sent_at: string
+}
+
+export interface Page<T> {
+  items: T[]
+  total: number
+}

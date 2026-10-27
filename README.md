@@ -38,6 +38,7 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 - Sorting (newest, price, year, make) and pagination
 - Details drawer with a photo gallery, full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
 - **Ask the dealer a question or book a test drive** from the details drawer (customers, on vehicles a dealer listed). It reaches that dealer as a new lead, due for follow-up today; a second open request about the same vehicle is refused
+- **My account** (customers): every purchase with a PDF invoice, and every question or test drive request with its progress (sent, in progress, test drive booked, completed, closed). The dealer's notes and follow-up dates are never shown
 
 **Dealers and admins** (server-enforced)
 - Add vehicles (with initial stock), edit details and price, **restock**, delete (with confirmation)

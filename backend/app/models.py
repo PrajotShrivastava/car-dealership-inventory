@@ -295,6 +295,13 @@ class LeadStatus(enum.StrEnum):
     LOST = "lost"
 
 
+class EnquiryKind(enum.StrEnum):
+    """What a customer sent from a vehicle's page."""
+
+    QUESTION = "question"
+    TEST_DRIVE = "test_drive"
+
+
 class Lead(Base):
     """A prospective customer a dealer is following up with. Never deleted on conversion."""
 
@@ -310,6 +317,10 @@ class Lead(Base):
     dealer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     # The customer account that sent the enquiry from the website; None for leads entered by hand.
     customer_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    # Set with customer_id; kept apart from `source`, which the dealer may edit.
+    enquiry_kind: Mapped[EnquiryKind | None] = mapped_column(
+        Enum(EnquiryKind, name="enquiry_kind", values_callable=_enum_values)
+    )
     vehicle_id: Mapped[int | None] = mapped_column(ForeignKey("vehicles.id", ondelete="SET NULL"))
     # The vehicle's name when it was chosen, kept if the vehicle is later removed.
     vehicle_label: Mapped[str | None] = mapped_column(String(170))

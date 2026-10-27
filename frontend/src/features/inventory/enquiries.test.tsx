@@ -72,7 +72,7 @@ describe('customer enquiries', () => {
     const dealer = seedUser('dealer')
     const customer = seedUser('customer')
     const vehicle = seedVehicle({}, dealer)
-    seedLead(dealer, { vehicle_id: vehicle.id, email: customer.email, source: 'Website enquiry' })
+    seedLead(dealer, { vehicle_id: vehicle.id, customer_id: customer.id, enquiry_kind: 'question' })
     const { user } = renderApp({ path: '/app', user: customer })
     const dialog = await openDetails(user)
 

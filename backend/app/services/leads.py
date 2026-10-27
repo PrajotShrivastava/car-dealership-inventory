@@ -8,11 +8,10 @@ from sqlalchemy import ColumnElement, and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.errors import AppError
-from app.models import Lead, LeadEvent, LeadStatus, Purchase, User, Vehicle
+from app.models import EnquiryKind, Lead, LeadEvent, LeadStatus, Purchase, User, Vehicle
 from app.schemas.common import today_in
 from app.schemas.leads import (
     EnquiryCreate,
-    EnquiryKind,
     FollowUpFilter,
     LeadCreate,
     LeadEventOut,
@@ -116,7 +115,7 @@ def create_enquiry(db: Session, customer: User, vehicle: Vehicle, data: EnquiryC
         select(Lead.id).where(
             Lead.customer_id == customer.id,
             Lead.vehicle_id == vehicle.id,
-            Lead.source == source,
+            Lead.enquiry_kind == data.kind,
             OPEN,
         )
     )
@@ -134,6 +133,7 @@ def create_enquiry(db: Session, customer: User, vehicle: Vehicle, data: EnquiryC
     lead = Lead(
         dealer_id=vehicle.dealer_id,
         customer_id=customer.id,
+        enquiry_kind=data.kind,
         vehicle_id=vehicle.id,
         vehicle_label=vehicle.label,
         name=customer.full_name,

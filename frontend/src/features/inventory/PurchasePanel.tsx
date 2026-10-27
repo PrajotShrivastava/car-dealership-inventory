@@ -1,9 +1,12 @@
 import { Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { ApiError } from '../../api/client'
 import type { Purchase, Vehicle } from '../../api/types'
+import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
+import { APP_ACCOUNT } from '../../paths'
 import { formatPrice } from './format'
 import { usePurchase } from './queries'
 
@@ -11,6 +14,7 @@ const MAX_PER_ORDER = 10
 
 export function PurchasePanel({ vehicle }: { vehicle: Vehicle }) {
   const purchase = usePurchase()
+  const isCustomer = useAuth().user?.role === 'customer'
   const [quantity, setQuantity] = useState(1)
   const [confirmed, setConfirmed] = useState<Purchase | null>(null)
 
@@ -35,7 +39,12 @@ export function PurchasePanel({ vehicle }: { vehicle: Vehicle }) {
     <div className="space-y-3">
       {confirmed && (
         <Alert tone="success">
-          Purchase confirmed: {confirmed.quantity} × {confirmed.vehicle_label} for {formatPrice(confirmed.total_price)}
+          Purchase confirmed: {confirmed.quantity} × {confirmed.vehicle_label} for {formatPrice(confirmed.total_price)}.{' '}
+          {isCustomer && (
+            <Link to={APP_ACCOUNT} className="font-medium underline">
+              Get the invoice in My account
+            </Link>
+          )}
         </Alert>
       )}
       {purchase.isError && (

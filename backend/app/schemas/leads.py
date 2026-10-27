@@ -12,7 +12,7 @@ from pydantic import (
     model_validator,
 )
 
-from app.models import LeadStatus
+from app.models import EnquiryKind, LeadStatus
 from app.schemas.common import (
     EARLIEST_DATE,
     Amount,
@@ -131,11 +131,6 @@ class LeadList(BaseModel):
     total: int
     counts: dict[LeadStatus, int]
     reminders: Reminders
-
-
-class EnquiryKind(enum.StrEnum):
-    QUESTION = "question"
-    TEST_DRIVE = "test_drive"
 
 
 class EnquiryCreate(BaseModel):
