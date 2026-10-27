@@ -10,7 +10,7 @@ import { PricingPage } from './marketing/PricingPage'
 import { DealerRegisterPage } from './pages/DealerRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { APP_ACCOUNT, APP_DASHBOARD, APP_HOME, APP_INVENTORY, APP_LEADS, APP_SALES } from './paths'
+import { APP_ACCOUNT, APP_COMPARE, APP_DASHBOARD, APP_HOME, APP_INVENTORY, APP_LEADS, APP_SALES } from './paths'
 import { RegisterPage } from './pages/RegisterPage'
 
 
@@ -58,6 +58,10 @@ export const routes: RouteObject[] = [
           {
             element: <RequireCustomer />,
             children: [
+              {
+                path: APP_COMPARE,
+                lazy: () => import('./features/compare/ComparePage').then((m) => ({ Component: m.ComparePage })),
+              },
               {
                 path: APP_ACCOUNT,
                 lazy: () => import('./features/account/AccountPage').then((m) => ({ Component: m.AccountPage })),

@@ -18,6 +18,8 @@ import { RestockForm } from '../admin/RestockForm'
 import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
 import { vehicleTitle } from './format'
+import { CompareBar } from '../compare/CompareBar'
+import { CompareToggle } from '../compare/CompareToggle'
 import { EnquiryPanel } from './EnquiryPanel'
 import { PurchasePanel } from './PurchasePanel'
 import {
@@ -249,6 +251,7 @@ export interface AddVehicleState {
 }
 
 export function InventoryPage() {
+  const isCustomer = useAuth().user?.role === 'customer'
   const { filters, query, update, clear, activeCount, selectedId, select } = useInventoryFilters()
   const { data, isPending, isError, error, refetch, isFetching } = useVehicleSearch(query)
   const { drafts, change: changeDrafts, reset: resetDrafts } = useTextDrafts(filters, update)
@@ -380,7 +383,12 @@ export function InventoryPage() {
               </div>
               <ul aria-label="Vehicles" className={`divide-y divide-slate-200 ${ROW_GRID}`}>
                 {data.items.map((vehicle) => (
-                  <VehicleRow key={vehicle.id} vehicle={vehicle} onView={() => select(vehicle.id)} />
+                  <VehicleRow
+                    key={vehicle.id}
+                    vehicle={vehicle}
+                    onView={() => select(vehicle.id)}
+                    actions={isCustomer && <CompareToggle vehicle={vehicle} />}
+                  />
                 ))}
               </ul>
             </div>
@@ -438,6 +446,8 @@ export function InventoryPage() {
           </div>
         </div>
       )}
+
+      {isCustomer && <CompareBar />}
 
       {selectedId !== null && (
         <VehicleDrawer
