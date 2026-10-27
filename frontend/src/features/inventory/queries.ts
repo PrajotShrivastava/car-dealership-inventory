@@ -50,6 +50,12 @@ export function usePurchase() {
   })
 }
 
+export function useEnquire(id: number) {
+  return useMutation({
+    mutationFn: (body: Parameters<typeof vehiclesApi.enquire>[1]) => vehiclesApi.enquire(id, body),
+  })
+}
+
 export function useCreateVehicle() {
   const sync = useSyncVehicle()
   return useMutation({ mutationFn: vehiclesApi.create, onSuccess: sync })

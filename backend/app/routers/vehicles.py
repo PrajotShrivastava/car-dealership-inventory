@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, File, Path, Query, Response, UploadFile,
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.errors import AppError
 from app.media import delete_photos
 from app.models import Role, User, Vehicle
+from app.schemas.leads import EnquiryCreate, EnquiryOut
 from app.schemas.vehicles import (
     PurchaseOut,
     PurchaseRequest,
@@ -24,6 +26,7 @@ from app.services.inventory import (
     search_vehicles,
     vehicle_not_found,
 )
+from app.services.leads import create_enquiry
 from app.services.photos import MAX_PHOTO_BYTES, add_photos, remove_photo
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
@@ -177,3 +180,21 @@ def restock(
 ) -> VehicleOut:
     _get_or_404(db, vehicle_id, user)
     return _out(restock_vehicle(db, vehicle_id, payload.quantity), user)
+
+
+@router.post(
+    "/{vehicle_id}/enquiries", response_model=EnquiryOut, status_code=status.HTTP_201_CREATED
+)
+def enquire(
+    vehicle_id: VehicleId,
+    payload: EnquiryCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> EnquiryOut:
+    """Ask the vehicle's dealer a question or request a test drive. It arrives as a new lead."""
+    if user.role != Role.CUSTOMER:
+        raise AppError(403, "FORBIDDEN", "Only customer accounts can send enquiries")
+    lead = create_enquiry(db, user, _get_or_404(db, vehicle_id, user), payload)
+    return EnquiryOut(
+        id=lead.id, kind=payload.kind, vehicle_id=vehicle_id, created_at=lead.created_at
+    )

@@ -162,7 +162,11 @@ class TestUpload:
     def test_editing_a_vehicle_keeps_its_photos(self, client, upload, make_vehicle, admin_headers):
         vehicle = make_vehicle()
         photos = upload(vehicle["id"], image_bytes()).json()["photos"]
-        fields = {k: v for k, v in vehicle.items() if k not in ("id", "quantity", "photos")}
+        fields = {
+            k: v
+            for k, v in vehicle.items()
+            if k not in ("id", "quantity", "photos", "accepts_enquiries")
+        }
 
         response = client.put(
             f"/api/vehicles/{vehicle['id']}",

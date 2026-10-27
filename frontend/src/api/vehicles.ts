@@ -1,5 +1,7 @@
 import { apiFetch } from './client'
 import type {
+  Enquiry,
+  EnquiryCreate,
   PurchaseResult,
   Vehicle,
   VehicleCreate,
@@ -18,6 +20,8 @@ export const vehiclesApi = {
   remove: (id: number) => apiFetch<void>(`/vehicles/${id}`, { method: 'DELETE' }),
   purchase: (id: number, quantity = 1) =>
     apiFetch<PurchaseResult>(`/vehicles/${id}/purchase`, { method: 'POST', body: { quantity } }),
+  enquire: (id: number, body: EnquiryCreate) =>
+    apiFetch<Enquiry>(`/vehicles/${id}/enquiries`, { method: 'POST', body }),
   restock: (id: number, quantity: number) =>
     apiFetch<Vehicle>(`/vehicles/${id}/restock`, { method: 'POST', body: { quantity } }),
   uploadPhotos: (id: number, files: File[]) => {

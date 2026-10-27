@@ -80,6 +80,13 @@ class VehicleOut(VehicleFields):
     quantity: int
     # Read-only here; photos change only through the photo endpoints.
     photos: list[PhotoOut] = []
+    dealer_id: int | None = Field(default=None, exclude=True)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def accepts_enquiries(self) -> bool:
+        """Only a dealer's listing has someone to receive enquiries and test-drive requests."""
+        return self.dealer_id is not None
 
     @field_serializer("price")
     def _price_as_fixed_point(self, value: Decimal) -> str:

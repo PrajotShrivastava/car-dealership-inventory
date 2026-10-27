@@ -8,9 +8,11 @@ from sqlalchemy import ColumnElement, and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.errors import AppError
-from app.models import Lead, LeadEvent, LeadStatus, Purchase, Vehicle
+from app.models import Lead, LeadEvent, LeadStatus, Purchase, User, Vehicle
 from app.schemas.common import today_in
 from app.schemas.leads import (
+    EnquiryCreate,
+    EnquiryKind,
     FollowUpFilter,
     LeadCreate,
     LeadEventOut,
@@ -24,6 +26,11 @@ from app.services.inventory import contains, vehicle_not_found
 from app.services.sales import lead_not_found
 
 UPCOMING_DAYS = 7
+# How a website enquiry appears in the dealer's lead list.
+ENQUIRY_SOURCES = {
+    EnquiryKind.QUESTION: "Website enquiry",
+    EnquiryKind.TEST_DRIVE: "Test drive request",
+}
 # Converted and lost leads need no more follow-ups, so they never count as overdue.
 OPEN = Lead.status.not_in([LeadStatus.CONVERTED, LeadStatus.LOST])
 
@@ -87,6 +94,56 @@ def create_lead(db: Session, dealer_id: int, data: LeadCreate) -> Lead:
         vehicle_label=vehicle.label if vehicle else None,
     )
     lead.events.append(LeadEvent(kind="created", new_value=lead.status))
+    db.add(lead)
+    db.commit()
+    db.refresh(lead)
+    return lead
+
+
+def create_enquiry(db: Session, customer: User, vehicle: Vehicle, data: EnquiryCreate) -> Lead:
+    """Turn a customer's question or test-drive request into a new lead for the vehicle's dealer.
+
+    It is due for follow-up today (in the customer's time zone) so the dealer replies promptly.
+    """
+    if vehicle.dealer_id is None:
+        raise AppError(
+            409,
+            "NO_DEALER",
+            f"{vehicle.label} isn't listed by a dealer, so it can't take enquiries",
+        )
+    source = ENQUIRY_SOURCES[data.kind]
+    duplicate = db.scalar(
+        select(Lead.id).where(
+            Lead.customer_id == customer.id,
+            Lead.vehicle_id == vehicle.id,
+            Lead.source == source,
+            OPEN,
+        )
+    )
+    if duplicate is not None:
+        noun = "a question" if data.kind is EnquiryKind.QUESTION else "a test drive request"
+        raise AppError(
+            409,
+            "ALREADY_ENQUIRED",
+            f"You've already sent {noun} about {vehicle.label}; the dealer will be in touch",
+        )
+
+    notes = [data.message] if data.message else []
+    if data.preferred_date is not None:
+        notes.insert(0, f"Preferred test drive date: {data.preferred_date:%a %d %b %Y}")
+    lead = Lead(
+        dealer_id=vehicle.dealer_id,
+        customer_id=customer.id,
+        vehicle_id=vehicle.id,
+        vehicle_label=vehicle.label,
+        name=customer.full_name,
+        email=customer.email,
+        phone=data.phone,
+        source=source,
+        notes="\n\n".join(notes) or None,
+        follow_up_on=today_in(data.tz),
+    )
+    lead.events.append(LeadEvent(kind="created", new_value=LeadStatus.NEW))
     db.add(lead)
     db.commit()
     db.refresh(lead)

@@ -8,6 +8,7 @@ import type {
   Dashboard,
   DashboardRange,
   DealerApplication,
+  EnquiryCreate,
   Lead,
   LeadEvent,
   LeadFields,
@@ -161,6 +162,7 @@ export function seedVehicle(overrides: Partial<Vehicle> = {}, owner?: User): Veh
     price: '35990.00',
     quantity: 3,
     photos: [],
+    accepts_enquiries: owner?.role === 'dealer',
     ...overrides,
   }
   vehicles.push(vehicle)
@@ -223,6 +225,10 @@ export function seedLead(owner: User, overrides: Partial<Lead> = {}): Lead {
   }
   leads.push(lead)
   return lead
+}
+
+export function getLeads() {
+  return leads
 }
 
 export function getLead(id: number) {
@@ -500,6 +506,44 @@ export const handlers = [
       },
       vehicle,
     })
+  }),
+
+  http.post(`${API}/vehicles/:id/enquiries`, async ({ request, params }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    if (user.role !== 'customer') return error(403, 'FORBIDDEN', 'Only customer accounts can send enquiries')
+    const vehicle = findVisible(request, params.id)
+    if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    const label = `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+    const dealerId = owners.get(vehicle.id)
+    if (dealerId === undefined) {
+      return error(409, 'NO_DEALER', `${label} isn't listed by a dealer, so it can't take enquiries`)
+    }
+    const body = (await request.json()) as EnquiryCreate
+    const source = body.kind === 'question' ? 'Website enquiry' : 'Test drive request'
+    const duplicate = leads.some(
+      (lead) => lead.vehicle_id === vehicle.id && lead.email === user.email && lead.source === source && !CLOSED.includes(lead.status),
+    )
+    if (duplicate) {
+      const noun = body.kind === 'question' ? 'a question' : 'a test drive request'
+      return error(409, 'ALREADY_ENQUIRED', `You've already sent ${noun} about ${label}; the dealer will be in touch`)
+    }
+    const notes = [body.preferred_date && `Preferred test drive date: ${body.preferred_date}`, body.message].filter(Boolean)
+    const lead = seedLead(users.find((u) => u.id === dealerId)!, {
+      name: user.full_name,
+      email: user.email,
+      phone: body.phone ?? null,
+      vehicle_id: vehicle.id,
+      vehicle_label: label,
+      source,
+      notes: notes.join('\n\n') || null,
+      follow_up_on: localDate(),
+      created_at: new Date().toISOString(),
+    })
+    return HttpResponse.json(
+      { id: lead.id, kind: body.kind, vehicle_id: vehicle.id, created_at: lead.created_at },
+      { status: 201 },
+    )
   }),
 
   http.post(`${API}/vehicles/:id/photos`, async ({ request, params }) => {

@@ -37,6 +37,7 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 - Search (make, model, trim) and filters for category, price range and availability, with counts per availability state; filters live in the URL so a view can be shared
 - Sorting (newest, price, year, make) and pagination
 - Details drawer with a photo gallery, full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
+- **Ask the dealer a question or book a test drive** from the details drawer (customers, on vehicles a dealer listed). It reaches that dealer as a new lead, due for follow-up today; a second open request about the same vehicle is refused
 
 **Dealers and admins** (server-enforced)
 - Add vehicles (with initial stock), edit details and price, **restock**, delete (with confirmation)

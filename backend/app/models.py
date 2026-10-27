@@ -267,10 +267,13 @@ class Lead(Base):
         CheckConstraint("budget > 0", name="ck_leads_budget_positive"),
         Index("ix_leads_dealer_id_status", "dealer_id", "status"),
         Index("ix_leads_dealer_id_follow_up_on", "dealer_id", "follow_up_on"),
+        Index("ix_leads_customer_id_vehicle_id", "customer_id", "vehicle_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     dealer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    # The customer account that sent the enquiry from the website; None for leads entered by hand.
+    customer_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     vehicle_id: Mapped[int | None] = mapped_column(ForeignKey("vehicles.id", ondelete="SET NULL"))
     # The vehicle's name when it was chosen, kept if the vehicle is later removed.
     vehicle_label: Mapped[str | None] = mapped_column(String(170))

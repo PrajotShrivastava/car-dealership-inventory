@@ -2,7 +2,15 @@ import enum
 from datetime import date, datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from app.models import LeadStatus
 from app.schemas.common import (
@@ -13,6 +21,7 @@ from app.schemas.common import (
     Phone,
     TimeZone,
     blank_to_none,
+    today_in,
 )
 
 VehicleRef = Annotated[int, Field(ge=1, le=2_147_483_647)]
@@ -122,3 +131,47 @@ class LeadList(BaseModel):
     total: int
     counts: dict[LeadStatus, int]
     reminders: Reminders
+
+
+class EnquiryKind(enum.StrEnum):
+    QUESTION = "question"
+    TEST_DRIVE = "test_drive"
+
+
+class EnquiryCreate(BaseModel):
+    """A signed-in customer's question about a vehicle, or a request to test-drive it.
+
+    The name and email come from their account, so only the extras are sent.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: EnquiryKind
+    message: Notes | None = None
+    phone: Phone | None = None
+    preferred_date: date | None = None
+    tz: TimeZone = "UTC"
+
+    _blank = field_validator("message", "phone", mode="before")(blank_to_none)
+
+    @model_validator(mode="after")
+    def _complete(self) -> "EnquiryCreate":
+        if self.kind is EnquiryKind.QUESTION:
+            if not self.message:
+                raise ValueError("a question needs a message")
+            if self.preferred_date is not None:
+                raise ValueError("only a test drive takes a preferred date")
+        elif self.preferred_date is None:
+            raise ValueError("a test drive needs a preferred date")
+        elif self.preferred_date < today_in(self.tz):
+            raise ValueError("the preferred date can't be in the past")
+        return self
+
+
+class EnquiryOut(BaseModel):
+    """What the customer gets back: confirmation only, none of the dealer's lead details."""
+
+    id: int
+    kind: EnquiryKind
+    vehicle_id: int
+    created_at: datetime

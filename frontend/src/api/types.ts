@@ -57,6 +57,8 @@ export interface Vehicle extends VehicleFields {
   quantity: number
   /** In display order; the first is the cover photo. */
   photos: VehiclePhoto[]
+  /** False when no dealer listed it, so there is nobody to send questions or test-drive requests to. */
+  accepts_enquiries: boolean
 }
 
 export type VehicleCreate = VehicleFields & { quantity: number }
@@ -276,6 +278,25 @@ export interface LeadEvent {
   kind: 'created' | 'status' | 'follow_up' | 'sale'
   old_value: string | null
   new_value: string | null
+  created_at: string
+}
+
+export type EnquiryKind = 'question' | 'test_drive'
+
+/** A signed-in customer's question or test-drive request; their name and email come from the account. */
+export interface EnquiryCreate {
+  kind: EnquiryKind
+  message?: string
+  phone?: string
+  /** "YYYY-MM-DD"; test drives only. */
+  preferred_date?: string
+  tz?: string
+}
+
+export interface Enquiry {
+  id: number
+  kind: EnquiryKind
+  vehicle_id: number
   created_at: string
 }
 

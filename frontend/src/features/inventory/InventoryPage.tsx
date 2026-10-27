@@ -18,6 +18,7 @@ import { RestockForm } from '../admin/RestockForm'
 import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
 import { vehicleTitle } from './format'
+import { EnquiryPanel } from './EnquiryPanel'
 import { PurchasePanel } from './PurchasePanel'
 import {
   useCreateVehicle,
@@ -146,6 +147,11 @@ function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; o
         }
       >
         {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
+        {tab === 'details' && !canManageInventory && vehicle.accepts_enquiries && (
+          <div className="px-6 pb-6">
+            <EnquiryPanel key={vehicle.id} vehicle={vehicle} />
+          </div>
+        )}
         {tab === 'edit' && (
           <>
             {notice && (
