@@ -120,8 +120,10 @@ class TestDealerPermissions:
         assert photo_deleted.status_code == 204
         assert deleted.status_code == 204
 
-    def test_dealers_share_one_inventory(self, client, dealer_headers, make_vehicle):
-        vehicle = make_vehicle()  # added by an admin
+    def test_dealers_cannot_change_vehicles_they_did_not_list(
+        self, client, dealer_headers, make_vehicle
+    ):
+        vehicle = make_vehicle()  # added by an admin, so no dealer owns it
         fields = {k: v for k, v in VEHICLE.items() if k != "quantity"}
 
         response = client.put(
@@ -130,7 +132,7 @@ class TestDealerPermissions:
             headers=dealer_headers,
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 404
 
     @pytest.mark.parametrize(
         ("method", "path"),

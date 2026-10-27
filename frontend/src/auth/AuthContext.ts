@@ -8,6 +8,8 @@ export interface AuthContextValue {
   user: User | null
   /** Admin-only operations, such as reviewing dealer applications. */
   isAdmin: boolean
+  /** Dealers: their own listings plus a sales dashboard. */
+  isDealer: boolean
   /** Dealers and admins: add, edit, restock and delete vehicles and their photos. */
   canManageInventory: boolean
   login: (email: string, password: string) => Promise<void>

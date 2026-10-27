@@ -4,7 +4,22 @@
  * exercise UI flows; the real API has its own pytest suite.
  */
 import { http, HttpResponse } from 'msw/http'
-import type { DealerApplication, User, Vehicle, VehicleCreate, VehiclePhoto } from '../api/types'
+import type {
+  Dashboard,
+  DashboardRange,
+  DealerApplication,
+  EnquiryCreate,
+  Lead,
+  LeadEvent,
+  LeadFields,
+  LeadStatus,
+  Sale,
+  SaleCreate,
+  User,
+  Vehicle,
+  VehicleCreate,
+  VehiclePhoto,
+} from '../api/types'
 
 const API = 'http://localhost:8000/api'
 
@@ -15,6 +30,11 @@ interface StoredUser extends User {
 let users: StoredUser[] = []
 let vehicles: Vehicle[] = []
 let applications: DealerApplication[] = []
+/** Vehicle id -> the dealer who listed it (the real API keeps this server-side). */
+let owners = new Map<number, number>()
+let sales: (Sale & { dealer_id: number; request_id?: string })[] = []
+let leads: (Lead & { dealer_id: number })[] = []
+let dashboard: Dashboard | ((months: DashboardRange) => Dashboard) | null = null
 let nextId = 1
 
 export const PASSWORD = 'password-123'
@@ -23,7 +43,65 @@ export function resetDb() {
   users = []
   vehicles = []
   applications = []
+  owners = new Map()
+  sales = []
+  leads = []
+  dashboard = null
+  dashboardRequests.length = 0
   nextId = 1
+}
+
+/** The dashboard every dealer receives, optionally varying with the requested range. */
+export function setDashboard(value: Dashboard | ((months: DashboardRange) => Dashboard)) {
+  dashboard = value
+}
+
+/** Query strings the dashboard was requested with, e.g. to check the time zone sent. */
+export const dashboardRequests: URLSearchParams[] = []
+
+/** "YYYY-MM" for the `count` months ending October 2026, oldest first. */
+export function lastMonths(count: number): string[] {
+  return Array.from({ length: count }, (_, i) => {
+    const index = 2026 * 12 + 9 - (count - 1 - i)
+    return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, '0')}`
+  })
+}
+
+/** A dealer with no listings or sales, as the real API reports it. */
+export function emptyDashboard(months: DashboardRange = 6): Dashboard {
+  return {
+    timezone: 'UTC',
+    summary: {
+      total_listings: 0,
+      available_stock: 0,
+      in_stock: 0,
+      low_stock: 0,
+      out_of_stock: 0,
+      never_sold: 0,
+      low_stock_threshold: 2,
+      inventory_value: '0.00',
+      units_sold: 0,
+      sales_count: 0,
+      gross_profit: null,
+      sales_with_cost: 0,
+      total_revenue: '0.00',
+      units_sold_this_month: 0,
+      revenue_this_month: '0.00',
+      units_sold_last_month: 0,
+      revenue_last_month: '0.00',
+      has_sales_before_this_month: false,
+    },
+    monthly: lastMonths(months).map((month) => ({ month, units: 0, revenue: '0.00' })),
+    best_seller: null,
+    top_revenue: null,
+    top_sellers: [],
+    low_stock: [],
+    out_of_stock: [],
+    never_sold: [],
+    recent_listings: [],
+    recent_sales: [],
+    follow_ups: { overdue: 0, today: 0, upcoming: 0, items: [] },
+  }
 }
 
 export function seedApplication(
@@ -70,7 +148,8 @@ export function tokenFor(user: User) {
   return `token-${user.id}`
 }
 
-export function seedVehicle(overrides: Partial<Vehicle> = {}): Vehicle {
+/** `owner`: the dealer who listed it. Without one it belongs to no dealer (admin-added). */
+export function seedVehicle(overrides: Partial<Vehicle> = {}, owner?: User): Vehicle {
   const vehicle: Vehicle = {
     id: nextId++,
     make: 'Ford',
@@ -82,12 +161,106 @@ export function seedVehicle(overrides: Partial<Vehicle> = {}): Vehicle {
     transmission: 'automatic',
     price: '35990.00',
     quantity: 3,
+    condition: 'new',
+    mileage: null,
+    colour: null,
+    vin: null,
+    features: [],
     photos: [],
+    accepts_enquiries: owner?.role === 'dealer',
     ...overrides,
   }
   vehicles.push(vehicle)
+  if (owner?.role === 'dealer') owners.set(vehicle.id, owner.id)
   return vehicle
 }
+
+
+/** The local calendar date, "YYYY-MM-DD", offset by `days`. */
+export function localDate(days = 0): string {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return date.toLocaleDateString('en-CA')
+}
+
+export function seedSale(owner: User, overrides: Partial<Sale> = {}): Sale {
+  const sale = {
+    id: nextId++,
+    channel: 'dealer' as const,
+    sold_at: `${localDate()}T12:00:00Z`,
+    vehicle_id: null,
+    vehicle_label: '2024 Ford Kuga ST-Line',
+    quantity: 1,
+    unit_price: '30000.00',
+    total_price: '30000.00',
+    unit_cost: null,
+    gross_profit: null,
+    customer: { name: 'Priya Shah', email: 'priya@example.com', phone: null },
+    lead_id: null,
+    ...overrides,
+    dealer_id: owner.id,
+  }
+  sales.push(sale)
+  return sale
+}
+
+export function getSales() {
+  return sales
+}
+
+export function seedLead(owner: User, overrides: Partial<Lead> = {}): Lead {
+  const lead = {
+    id: nextId++,
+    name: 'Arjun Mehta',
+    email: null,
+    phone: null,
+    vehicle_id: null,
+    vehicle_label: null,
+    budget: null,
+    source: null,
+    notes: null,
+    follow_up_on: null,
+    status: 'new' as LeadStatus,
+    created_at: '2026-10-01T09:00:00Z',
+    updated_at: '2026-10-01T09:00:00Z',
+    sale_id: null,
+    events: [{ kind: 'created', old_value: null, new_value: 'new', created_at: '2026-10-01T09:00:00Z' }] as LeadEvent[],
+    ...overrides,
+    dealer_id: owner.id,
+  }
+  leads.push(lead)
+  return lead
+}
+
+export function getLeads() {
+  return leads
+}
+
+export function getLead(id: number) {
+  return leads.find((lead) => lead.id === id)
+}
+
+const CLOSED: LeadStatus[] = ['converted', 'lost']
+
+function followUpBucket(lead: Lead, today: string): 'overdue' | 'today' | 'upcoming' | 'none' | null {
+  if (CLOSED.includes(lead.status)) return null
+  if (!lead.follow_up_on) return 'none'
+  if (lead.follow_up_on < today) return 'overdue'
+  if (lead.follow_up_on === today) return 'today'
+  const week = new Date(`${today}T00:00:00Z`)
+  week.setUTCDate(week.getUTCDate() + 7)
+  return lead.follow_up_on <= week.toISOString().slice(0, 10) ? 'upcoming' : null
+}
+
+function publicLead({ dealer_id: _dealer, ...lead }: Lead & { dealer_id: number }): Lead {
+  return lead
+}
+
+function publicSale({ dealer_id: _dealer, request_id: _request, ...sale }: Sale & { dealer_id: number; request_id?: string }): Sale {
+  return sale
+}
+
+const money = (value: number) => value.toFixed(2)
 
 /** Photo records as the real API returns them (served from /api/media). */
 export function fakePhoto(): VehiclePhoto {
@@ -124,6 +297,28 @@ export function getVehicle(id: number) {
   return vehicles.find((v) => v.id === id)
 }
 
+/** Mirrors the API: dealers see only their own listings; others see every vehicle. */
+function visibleTo(user: StoredUser | undefined, vehicle: Vehicle | undefined) {
+  if (!user || !vehicle) return undefined
+  return user.role !== 'dealer' || owners.get(vehicle.id) === user.id ? vehicle : undefined
+}
+
+function findVisible(request: Request, id: unknown) {
+  return visibleTo(currentUser(request), getVehicle(Number(id)))
+}
+
+/** Mirrors the API: only the vehicle's dealer and admins see its acquisition cost. */
+function present(vehicle: Vehicle, user: StoredUser | undefined): Vehicle {
+  return user?.role === 'customer' ? { ...vehicle, acquisition_cost: null } : vehicle
+}
+
+function requireDealer(request: Request) {
+  const user = currentUser(request)
+  if (!user) return { failure: error(401, 'NOT_AUTHENTICATED', 'Authentication required') }
+  if (user.role !== 'dealer') return { failure: error(403, 'FORBIDDEN', 'Dealer privileges required') }
+  return { user }
+}
+
 const error = (status: number, code: string, message: string) =>
   HttpResponse.json({ error: { code, message } }, { status })
 
@@ -144,13 +339,16 @@ function publicUser({ password: _password, ...user }: StoredUser): User {
 function listVehicles(request: Request) {
   const url = new URL(request.url)
   const p = Object.fromEntries(url.searchParams)
-  let items = vehicles.filter((v) => {
-    const text = `${v.make} ${v.model} ${v.trim ?? ''}`.toLowerCase()
+  const user = currentUser(request)
+  let items = vehicles.filter((v) => visibleTo(user, v)).filter((v) => {
+    const text = [v.make, v.model, v.trim, v.colour, v.vin, ...v.features].join(' ').toLowerCase()
     return (
       (!p.q || p.q.toLowerCase().split(/\s+/).every((w) => text.includes(w))) &&
       (!p.category || v.category === p.category) &&
       (!p.min_price || Number(v.price) >= Number(p.min_price)) &&
-      (!p.max_price || Number(v.price) <= Number(p.max_price))
+      (!p.max_price || Number(v.price) <= Number(p.max_price)) &&
+      (!p.condition || v.condition === p.condition) &&
+      (!p.max_mileage || (v.mileage ?? 0) <= Number(p.max_mileage))
     )
   })
   const counts = {
@@ -163,9 +361,10 @@ function listVehicles(request: Request) {
   if (!p.sort || p.sort === 'newest') items = [...items].sort((a, b) => b.id - a.id)
   if (p.sort === 'price_asc') items = [...items].sort((a, b) => Number(a.price) - Number(b.price))
   if (p.sort === 'price_desc') items = [...items].sort((a, b) => Number(b.price) - Number(a.price))
+  if (p.sort === 'mileage_asc') items = [...items].sort((a, b) => (a.mileage ?? 0) - (b.mileage ?? 0))
   const offset = Number(p.offset ?? 0)
   const limit = Number(p.limit ?? 20)
-  return HttpResponse.json({ items: items.slice(offset, offset + limit), total: items.length, counts })
+  return HttpResponse.json({ items: items.slice(offset, offset + limit).map((v) => present(v, user)), total: items.length, counts })
 }
 
 function review(request: Request, id: number, status: 'approved' | 'rejected', note: string | null) {
@@ -260,8 +459,8 @@ export const handlers = [
 
   http.get(`${API}/vehicles/:id`, ({ request, params }) => {
     if (!currentUser(request)) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
-    const vehicle = getVehicle(Number(params.id))
-    return vehicle ? HttpResponse.json(vehicle) : error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    const vehicle = findVisible(request, params.id)
+    return vehicle ? HttpResponse.json(present(vehicle, currentUser(request))) : error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
   }),
 
   http.post(`${API}/vehicles`, async ({ request }) => {
@@ -269,13 +468,13 @@ export const handlers = [
     if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
     const body = (await request.json()) as VehicleCreate
-    return HttpResponse.json(seedVehicle({ ...body, price: Number(body.price).toFixed(2) }), { status: 201 })
+    return HttpResponse.json(seedVehicle({ ...body, price: Number(body.price).toFixed(2) }, user), { status: 201 })
   }),
 
   http.put(`${API}/vehicles/:id`, async ({ request, params }) => {
     const user = currentUser(request)
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
-    const vehicle = getVehicle(Number(params.id))
+    const vehicle = findVisible(request, params.id)
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     Object.assign(vehicle, (await request.json()) as Partial<Vehicle>)
     vehicle.price = Number(vehicle.price).toFixed(2)
@@ -285,16 +484,15 @@ export const handlers = [
   http.delete(`${API}/vehicles/:id`, ({ request, params }) => {
     const user = currentUser(request)
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
-    const before = vehicles.length
-    vehicles = vehicles.filter((v) => v.id !== Number(params.id))
-    return before === vehicles.length
-      ? error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
-      : new HttpResponse(null, { status: 204 })
+    const vehicle = findVisible(request, params.id)
+    if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    vehicles = vehicles.filter((v) => v !== vehicle)
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.post(`${API}/vehicles/:id/purchase`, async ({ request, params }) => {
     if (!currentUser(request)) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
-    const vehicle = getVehicle(Number(params.id))
+    const vehicle = findVisible(request, params.id)
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     const text = await request.text()
     const quantity = text ? ((JSON.parse(text) as { quantity?: number }).quantity ?? 1) : 1
@@ -318,11 +516,49 @@ export const handlers = [
     })
   }),
 
+  http.post(`${API}/vehicles/:id/enquiries`, async ({ request, params }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    if (user.role !== 'customer') return error(403, 'FORBIDDEN', 'Only customer accounts can send enquiries')
+    const vehicle = findVisible(request, params.id)
+    if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    const label = `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+    const dealerId = owners.get(vehicle.id)
+    if (dealerId === undefined) {
+      return error(409, 'NO_DEALER', `${label} isn't listed by a dealer, so it can't take enquiries`)
+    }
+    const body = (await request.json()) as EnquiryCreate
+    const source = body.kind === 'question' ? 'Website enquiry' : 'Test drive request'
+    const duplicate = leads.some(
+      (lead) => lead.vehicle_id === vehicle.id && lead.email === user.email && lead.source === source && !CLOSED.includes(lead.status),
+    )
+    if (duplicate) {
+      const noun = body.kind === 'question' ? 'a question' : 'a test drive request'
+      return error(409, 'ALREADY_ENQUIRED', `You've already sent ${noun} about ${label}; the dealer will be in touch`)
+    }
+    const notes = [body.preferred_date && `Preferred test drive date: ${body.preferred_date}`, body.message].filter(Boolean)
+    const lead = seedLead(users.find((u) => u.id === dealerId)!, {
+      name: user.full_name,
+      email: user.email,
+      phone: body.phone ?? null,
+      vehicle_id: vehicle.id,
+      vehicle_label: label,
+      source,
+      notes: notes.join('\n\n') || null,
+      follow_up_on: localDate(),
+      created_at: new Date().toISOString(),
+    })
+    return HttpResponse.json(
+      { id: lead.id, kind: body.kind, vehicle_id: vehicle.id, created_at: lead.created_at },
+      { status: 201 },
+    )
+  }),
+
   http.post(`${API}/vehicles/:id/photos`, async ({ request, params }) => {
     const user = currentUser(request)
     if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
-    const vehicle = getVehicle(Number(params.id))
+    const vehicle = findVisible(request, params.id)
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     const files = await uploadedFiles(request)
     if (files.some((file) => !PHOTO_TYPES.includes(file.type))) {
@@ -341,7 +577,7 @@ export const handlers = [
   http.delete(`${API}/vehicles/:id/photos/:photoId`, ({ request, params }) => {
     const user = currentUser(request)
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
-    const vehicle = getVehicle(Number(params.id))
+    const vehicle = findVisible(request, params.id)
     const photo = vehicle?.photos.find((p) => p.id === Number(params.photoId))
     if (!vehicle || !photo) return error(404, 'PHOTO_NOT_FOUND', 'Photo not found')
     vehicle.photos = vehicle.photos.filter((p) => p !== photo)
@@ -351,9 +587,199 @@ export const handlers = [
   http.post(`${API}/vehicles/:id/restock`, async ({ request, params }) => {
     const user = currentUser(request)
     if (!canManageInventory(user)) return error(403, 'FORBIDDEN', 'Dealer or admin privileges required')
-    const vehicle = getVehicle(Number(params.id))
+    const vehicle = findVisible(request, params.id)
     if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
     vehicle.quantity += ((await request.json()) as { quantity: number }).quantity
     return HttpResponse.json(vehicle)
+  }),
+
+  http.get(`${API}/dashboard`, ({ request }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'NOT_AUTHENTICATED', 'Authentication required')
+    if (user.role !== 'dealer') return error(403, 'FORBIDDEN', 'Dealer privileges required')
+    const params = new URL(request.url).searchParams
+    dashboardRequests.push(params)
+    const months = Number(params.get('months') ?? 6) as DashboardRange
+    if (![3, 6, 12].includes(months)) return error(422, 'VALIDATION_ERROR', 'months must be 3, 6 or 12')
+    const value = typeof dashboard === 'function' ? dashboard(months) : (dashboard ?? emptyDashboard(months))
+    return HttpResponse.json(value)
+  }),
+
+  http.get(`${API}/sales`, ({ request }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const p = Object.fromEntries(new URL(request.url).searchParams)
+    let items = sales.filter((sale) => sale.dealer_id === user.id)
+    if (p.vehicle_id) items = items.filter((sale) => sale.vehicle_id === Number(p.vehicle_id))
+    if (p.channel) items = items.filter((sale) => sale.channel === p.channel)
+    if (p.date_from) items = items.filter((sale) => sale.sold_at.slice(0, 10) >= p.date_from!)
+    if (p.date_to) items = items.filter((sale) => sale.sold_at.slice(0, 10) <= p.date_to!)
+    for (const word of (p.q ?? '').toLowerCase().split(/\s+/).filter(Boolean)) {
+      items = items.filter((sale) =>
+        `${sale.vehicle_label} ${sale.customer.name ?? ''} ${sale.customer.email ?? ''} #${sale.id}`.toLowerCase().includes(word),
+      )
+    }
+    items = [...items].sort((a, b) => b.sold_at.localeCompare(a.sold_at) || b.id - a.id)
+    const costed = items.filter((sale) => sale.gross_profit !== null)
+    const offset = Number(p.offset ?? 0)
+    const limit = Number(p.limit ?? 20)
+    return HttpResponse.json({
+      items: items.slice(offset, offset + limit).map(publicSale),
+      total: items.length,
+      totals: {
+        sales: items.length,
+        units: items.reduce((sum, sale) => sum + sale.quantity, 0),
+        revenue: money(items.reduce((sum, sale) => sum + Number(sale.total_price), 0)),
+        gross_profit: costed.length ? money(costed.reduce((sum, sale) => sum + Number(sale.gross_profit), 0)) : null,
+        sales_with_cost: costed.length,
+      },
+    })
+  }),
+
+  http.post(`${API}/sales`, async ({ request }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const body = (await request.json()) as SaleCreate
+    const replay = sales.find((sale) => sale.dealer_id === user.id && sale.request_id === body.request_id)
+    if (replay) return HttpResponse.json(publicSale(replay), { status: 200 })
+    if (body.sold_on > localDate()) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Request validation failed', details: [{ field: 'sold_on', issue: "sale date can't be in the future" }] } },
+        { status: 422 },
+      )
+    }
+    const lead = body.lead_id ? leads.find((l) => l.id === body.lead_id && l.dealer_id === user.id) : undefined
+    if (body.lead_id && !lead) return error(404, 'LEAD_NOT_FOUND', 'Lead not found')
+    if (lead?.sale_id) return error(409, 'LEAD_ALREADY_CONVERTED', 'This lead has already been converted into a sale')
+    const vehicle = visibleTo(user, getVehicle(body.vehicle_id))
+    if (!vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    if (vehicle.quantity === 0) return error(409, 'OUT_OF_STOCK', `${vehicle.make} ${vehicle.model} is out of stock`)
+    if (vehicle.quantity < body.quantity) return error(409, 'INSUFFICIENT_STOCK', `Only ${vehicle.quantity} unit(s) available`)
+    vehicle.quantity -= body.quantity
+    const unit = Number(body.unit_price)
+    const cost = vehicle.acquisition_cost == null ? null : Number(vehicle.acquisition_cost)
+    const sale = {
+      ...seedSale(user, {
+        vehicle_id: vehicle.id,
+        vehicle_label: [vehicle.year, vehicle.make, vehicle.model, vehicle.trim].filter(Boolean).join(' '),
+        sold_at: `${body.sold_on}T12:00:00Z`,
+        quantity: body.quantity,
+        unit_price: money(unit),
+        total_price: money(unit * body.quantity),
+        unit_cost: cost === null ? null : money(cost),
+        gross_profit: cost === null ? null : money((unit - cost) * body.quantity),
+        customer: { name: body.customer_name, email: body.customer_email, phone: body.customer_phone },
+        lead_id: body.lead_id,
+      }),
+    }
+    const stored = sales.find((s) => s.id === sale.id)!
+    stored.request_id = body.request_id
+    if (lead) {
+      if (lead.status !== 'converted') {
+        lead.events.push({ kind: 'status', old_value: lead.status, new_value: 'converted', created_at: new Date().toISOString() })
+        lead.status = 'converted'
+      }
+      lead.events.push({ kind: 'sale', old_value: null, new_value: String(sale.id), created_at: new Date().toISOString() })
+      lead.sale_id = sale.id
+    }
+    return HttpResponse.json(publicSale(stored), { status: 201 })
+  }),
+
+  http.get(`${API}/sales/:id`, ({ request, params }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const sale = sales.find((s) => s.id === Number(params.id) && s.dealer_id === user.id)
+    return sale ? HttpResponse.json(publicSale(sale)) : error(404, 'SALE_NOT_FOUND', 'Sale not found')
+  }),
+
+  http.get(`${API}/sales/:id/invoice`, ({ request, params }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const sale = sales.find((s) => s.id === Number(params.id) && s.dealer_id === user.id)
+    if (!sale) return error(404, 'SALE_NOT_FOUND', 'Sale not found')
+    return new HttpResponse('%PDF-1.4 fake', { headers: { 'Content-Type': 'application/pdf' } })
+  }),
+
+  http.get(`${API}/leads`, ({ request }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const p = Object.fromEntries(new URL(request.url).searchParams)
+    const today = localDate()
+    const mine = leads.filter((lead) => lead.dealer_id === user.id)
+    let items = mine
+    if (p.status) items = items.filter((lead) => lead.status === p.status)
+    if (p.follow_up) items = items.filter((lead) => followUpBucket(lead, today) === p.follow_up)
+    for (const word of (p.q ?? '').toLowerCase().split(/\s+/).filter(Boolean)) {
+      items = items.filter((lead) =>
+        `${lead.name} ${lead.email ?? ''} ${lead.phone ?? ''} ${lead.vehicle_label ?? ''}`.toLowerCase().includes(word),
+      )
+    }
+    items = [...items].sort(
+      (a, b) =>
+        Number(!a.follow_up_on) - Number(!b.follow_up_on) ||
+        (a.follow_up_on ?? '').localeCompare(b.follow_up_on ?? '') ||
+        b.id - a.id,
+    )
+    const count = (bucket: string) => mine.filter((lead) => followUpBucket(lead, today) === bucket).length
+    const offset = Number(p.offset ?? 0)
+    const limit = Number(p.limit ?? 20)
+    return HttpResponse.json({
+      items: items.slice(offset, offset + limit).map(publicLead),
+      total: items.length,
+      counts: Object.fromEntries(
+        ['new', 'contacted', 'test_drive_scheduled', 'negotiation', 'converted', 'lost'].map((status) => [
+          status,
+          mine.filter((lead) => lead.status === status).length,
+        ]),
+      ),
+      reminders: { overdue: count('overdue'), today: count('today'), upcoming: count('upcoming') },
+    })
+  }),
+
+  http.post(`${API}/leads`, async ({ request }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const body = (await request.json()) as Partial<LeadFields> & { name: string }
+    if (!body.name?.trim()) {
+      return HttpResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Request validation failed', details: [{ field: 'name', issue: 'Name is required' }] } },
+        { status: 422 },
+      )
+    }
+    const vehicle = body.vehicle_id ? visibleTo(user, getVehicle(body.vehicle_id)) : undefined
+    if (body.vehicle_id && !vehicle) return error(404, 'VEHICLE_NOT_FOUND', 'Vehicle not found')
+    const status = body.status ?? 'new'
+    const lead = seedLead(user, {
+      ...body,
+      status,
+      vehicle_label: vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : null,
+      events: [{ kind: 'created', old_value: null, new_value: status, created_at: new Date().toISOString() }],
+    })
+    return HttpResponse.json(lead, { status: 201 })
+  }),
+
+  http.get(`${API}/leads/:id`, ({ request, params }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const lead = leads.find((l) => l.id === Number(params.id) && l.dealer_id === user.id)
+    return lead ? HttpResponse.json(publicLead(lead)) : error(404, 'LEAD_NOT_FOUND', 'Lead not found')
+  }),
+
+  http.patch(`${API}/leads/:id`, async ({ request, params }) => {
+    const { user, failure } = requireDealer(request)
+    if (failure) return failure
+    const lead = leads.find((l) => l.id === Number(params.id) && l.dealer_id === user.id)
+    if (!lead) return error(404, 'LEAD_NOT_FOUND', 'Lead not found')
+    const body = (await request.json()) as Partial<LeadFields>
+    const now = new Date().toISOString()
+    if (body.status && body.status !== lead.status) {
+      if (lead.sale_id) return error(409, 'LEAD_HAS_SALE', 'A lead with a recorded sale stays converted')
+      lead.events.push({ kind: 'status', old_value: lead.status, new_value: body.status, created_at: now })
+    }
+    if ('follow_up_on' in body && body.follow_up_on !== lead.follow_up_on) {
+      lead.events.push({ kind: 'follow_up', old_value: lead.follow_up_on, new_value: body.follow_up_on ?? null, created_at: now })
+    }
+    Object.assign(lead, body, { updated_at: now })
+    return HttpResponse.json(publicLead(lead))
   }),
 ]

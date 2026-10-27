@@ -37,10 +37,12 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
 type Query = Record<string, string | number | undefined | null>
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   body?: unknown
   query?: Query
   signal?: AbortSignal
+  /** 'blob' for files such as PDF invoices; JSON otherwise. */
+  responseType?: 'json' | 'blob'
 }
 
 function buildUrl(path: string, query?: Query) {
@@ -90,5 +92,6 @@ export async function apiFetch<T = unknown>(path: string, options: RequestOption
     throw error
   }
   if (response.status === 204) return undefined as T
+  if (options.responseType === 'blob') return (await response.blob()) as T
   return (await response.json()) as T
 }

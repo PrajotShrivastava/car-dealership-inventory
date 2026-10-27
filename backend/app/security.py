@@ -81,3 +81,18 @@ def require_inventory_manager(user: User = Depends(get_current_user)) -> User:
     if user.role not in (Role.DEALER, Role.ADMIN):
         raise AppError(403, "FORBIDDEN", "Dealer or admin privileges required")
     return user
+
+
+def require_dealer(user: User = Depends(get_current_user)) -> User:
+    """Dealer-only pages, such as the sales dashboard of their own listings."""
+    if user.role != Role.DEALER:
+        raise AppError(403, "FORBIDDEN", "Dealer privileges required")
+    return user
+
+
+def owned_by(user: User) -> int | None:
+    """The dealer whose vehicles `user` may see and change, or None for every vehicle.
+
+    Dealers work only with their own listings; customers browse and admins manage them all.
+    """
+    return user.id if user.role == Role.DEALER else None

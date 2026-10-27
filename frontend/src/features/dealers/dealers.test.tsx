@@ -146,10 +146,11 @@ describe('admin review of dealer applications', () => {
   })
 
   it('hides the page and navigation item from dealers, who still get the inventory tools', async () => {
-    seedVehicle({ make: 'Ford', model: 'Kuga' })
-    const { user, router } = renderApp({ path: '/app/dealer-applications', user: seedUser('dealer') })
+    const dealer = seedUser('dealer')
+    seedVehicle({ make: 'Ford', model: 'Kuga' }, dealer)
+    const { user, router } = renderApp({ path: '/app/dealer-applications', user: dealer })
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/app/inventory'))
     expect(screen.queryByRole('link', { name: /dealer applications/i })).not.toBeInTheDocument()
     expect(await screen.findByRole('button', { name: /add vehicle/i })).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /view details/i }))
@@ -160,8 +161,9 @@ describe('admin review of dealer applications', () => {
   })
 
   it('lets a dealer delete a vehicle with the labelled button in the Edit tab', async () => {
-    const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga' })
-    const { user } = renderApp({ path: '/app', user: seedUser('dealer') })
+    const dealer = seedUser('dealer')
+    const vehicle = seedVehicle({ make: 'Ford', model: 'Kuga' }, dealer)
+    const { user } = renderApp({ path: '/app/inventory', user: dealer })
 
     await user.click(await screen.findByRole('button', { name: /view details/i }))
     const drawer = await screen.findByRole('dialog', { name: /ford kuga/i })
@@ -178,7 +180,7 @@ describe('admin review of dealer applications', () => {
   it('hides the page and navigation item from customers', async () => {
     const { router } = renderApp({ path: '/app/dealer-applications', user: seedUser('customer') })
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/app'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/app/inventory'))
     expect(screen.queryByRole('link', { name: /dealer applications/i })).not.toBeInTheDocument()
   })
 

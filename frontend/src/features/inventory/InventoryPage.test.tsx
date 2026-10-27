@@ -38,7 +38,7 @@ describe('inventory list', () => {
   })
 
   it.each(['dealer', 'admin'] as const)('invites a %s to add the first vehicle to an empty inventory', async (role) => {
-    const { user } = renderApp({ path: '/app', user: seedUser(role) })
+    const { user } = renderApp({ path: '/app/inventory', user: seedUser(role) })
 
     expect(await screen.findByText('Your inventory is empty')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add your first vehicle' }))
@@ -54,8 +54,9 @@ describe('inventory list', () => {
   })
 
   it('keeps the filtered message, not the add prompt, when filters hide every vehicle', async () => {
-    seedVehicle({ make: 'Ford', model: 'Kuga', category: 'suv' })
-    renderApp({ path: '/app?category=van', user: seedUser('dealer') })
+    const dealer = seedUser('dealer')
+    seedVehicle({ make: 'Ford', model: 'Kuga', category: 'suv' }, dealer)
+    renderApp({ path: '/app/inventory?category=van', user: dealer })
 
     expect(await screen.findByText(/no vehicles match your filters/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add your first vehicle' })).not.toBeInTheDocument()

@@ -11,6 +11,7 @@ test('dealer signs up and manages inventory straight away, without admin approva
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('dealer-pass-1')
   await page.getByRole('button', { name: 'Create dealer account' }).click()
+  await expect(page).toHaveURL(/\/app\/dashboard$/)
 
   // 2. A dealer at once: tools visible, no pending banner, no admin-only page
   await expect(page.getByRole('button', { name: 'Add vehicle' })).toBeVisible()
@@ -45,7 +46,7 @@ test('dealer signs up and manages inventory straight away, without admin approva
   expect((await request.get('http://localhost:8001/api/dealer-applications', { headers })).status()).toBe(403)
 
   await page.goto('/app/dealer-applications')
-  await expect(page).toHaveURL(/\/app$/)
+  await expect(page).toHaveURL(/\/app\/inventory$/)
 
   // Clean up so reruns start from the same state.
   await page.getByRole('list', { name: 'Vehicles' }).getByRole('listitem').filter({ hasText: 'Kia Sportage' }).getByRole('button', { name: 'View details' }).click()
@@ -61,7 +62,7 @@ test('customer sign-up still creates a customer without inventory tools', async 
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('customer-pass-1')
   await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(page).toHaveURL(/\/app$/)
+  await expect(page).toHaveURL(/\/app\/inventory$/)
   await expect(page.getByRole('heading', { name: 'Inventory', level: 1 })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Add vehicle' })).toHaveCount(0)
 
@@ -75,9 +76,9 @@ test('customers cannot open the admin review page', async ({ page }) => {
   await page.getByLabel('Email').fill(`curious-${Date.now()}@example.com`)
   await page.getByLabel('Password').fill('customer-pass-1')
   await page.getByRole('button', { name: 'Create account' }).click()
-  await expect(page).toHaveURL(/\/app$/)
+  await expect(page).toHaveURL(/\/app\/inventory$/)
 
   await page.goto('/app/dealer-applications')
-  await expect(page).toHaveURL(/\/app$/)
+  await expect(page).toHaveURL(/\/app\/inventory$/)
   await expect(page.getByRole('link', { name: /Dealer applications/ })).toHaveCount(0)
 })

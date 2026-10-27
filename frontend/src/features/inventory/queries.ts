@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { Vehicle, VehicleQuery } from '../../api/types'
 import { vehiclesApi } from '../../api/vehicles'
 
@@ -25,12 +25,20 @@ export function useVehicle(id: number | null, initial?: Vehicle) {
   })
 }
 
+/** Lists and the dealer dashboard both summarise vehicles, so any change refreshes them. */
+function refreshSummaries(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] }),
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] }),
+  ])
+}
+
 /** After any stock or catalogue change: update the detail cache and refetch lists. */
 export function useSyncVehicle() {
   const queryClient = useQueryClient()
   return (vehicle: Vehicle) => {
     queryClient.setQueryData(vehicleKeys.detail(vehicle.id), vehicle)
-    return queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] })
+    return refreshSummaries(queryClient)
   }
 }
 
@@ -39,6 +47,12 @@ export function usePurchase() {
   return useMutation({
     mutationFn: ({ id, quantity }: { id: number; quantity: number }) => vehiclesApi.purchase(id, quantity),
     onSuccess: (result) => sync(result.vehicle),
+  })
+}
+
+export function useEnquire(id: number) {
+  return useMutation({
+    mutationFn: (body: Parameters<typeof vehiclesApi.enquire>[1]) => vehiclesApi.enquire(id, body),
   })
 }
 
@@ -76,7 +90,7 @@ export function useDeletePhoto(id: number) {
       queryClient.setQueryData<Vehicle>(vehicleKeys.detail(id), (vehicle) =>
         vehicle && { ...vehicle, photos: vehicle.photos.filter((photo) => photo.id !== photoId) },
       )
-      return queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] })
+      return refreshSummaries(queryClient)
     },
   })
 }
@@ -87,7 +101,7 @@ export function useDeleteVehicle() {
     mutationFn: (id: number) => vehiclesApi.remove(id),
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: vehicleKeys.detail(id) })
-      return queryClient.invalidateQueries({ queryKey: ['vehicles', 'list'] })
+      return refreshSummaries(queryClient)
     },
   })
 }

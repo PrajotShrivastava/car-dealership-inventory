@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
-import { CATEGORIES, type Availability, type Category, type SortOrder, type VehicleQuery } from '../../api/types'
+import {
+  CATEGORIES,
+  CONDITIONS,
+  type Availability,
+  type Category,
+  type SortOrder,
+  type VehicleCondition,
+  type VehicleQuery,
+} from '../../api/types'
 
 export const PAGE_SIZE = 20
 
-const SORTS: SortOrder[] = ['newest', 'price_asc', 'price_desc', 'year_desc', 'year_asc', 'make_asc']
+const SORTS: SortOrder[] = ['newest', 'price_asc', 'price_desc', 'year_desc', 'year_asc', 'make_asc', 'mileage_asc']
+/** The mileage ceilings offered as filters. */
+export const MILEAGE_LIMITS = [10_000, 30_000, 60_000, 100_000] as const
 const AVAILABILITY: Availability[] = ['all', 'in_stock', 'out_of_stock']
 
 export interface Filters {
@@ -14,11 +24,14 @@ export interface Filters {
   min_price: string
   max_price: string
   availability: Availability
+  condition: VehicleCondition | ''
+  /** One of MILEAGE_LIMITS as a string, or '' for any. */
+  max_mileage: string
   sort: SortOrder
   page: number
 }
 
-const FILTER_KEYS = ['q', 'category', 'min_price', 'max_price', 'availability'] as const
+const FILTER_KEYS = ['q', 'category', 'min_price', 'max_price', 'availability', 'condition', 'max_mileage'] as const
 
 function oneOf<T extends string>(value: string | null, allowed: readonly T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback
@@ -31,6 +44,8 @@ function parseFilters(params: URLSearchParams): Filters {
     min_price: params.get('min_price') ?? '',
     max_price: params.get('max_price') ?? '',
     availability: oneOf(params.get('availability'), AVAILABILITY, 'all'),
+    condition: oneOf(params.get('condition'), CONDITIONS, '' as never) as VehicleCondition | '',
+    max_mileage: oneOf(params.get('max_mileage'), MILEAGE_LIMITS.map(String), ''),
     sort: oneOf(params.get('sort'), SORTS, 'newest'),
     page: Math.max(1, Number(params.get('page')) || 1),
   }
@@ -92,6 +107,8 @@ export function useInventoryFilters() {
     min_price: filters.min_price || undefined,
     max_price: filters.max_price || undefined,
     availability: filters.availability,
+    condition: filters.condition || undefined,
+    max_mileage: filters.max_mileage ? Number(filters.max_mileage) : undefined,
     sort: filters.sort,
     limit: PAGE_SIZE,
     offset: (filters.page - 1) * PAGE_SIZE,

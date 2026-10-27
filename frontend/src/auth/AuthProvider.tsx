@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       user,
       isAdmin: user?.role === 'admin',
+      isDealer: user?.role === 'dealer',
       canManageInventory: user?.role === 'admin' || user?.role === 'dealer',
       login,
       register,
