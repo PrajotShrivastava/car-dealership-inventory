@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { salesApi } from '../../api/sales'
 import type { SaleQuery } from '../../api/types'
 import { vehiclesApi } from '../../api/vehicles'
+import { saveFile } from '../../download'
 
 export function useSales(query: SaleQuery) {
   return useQuery({
@@ -38,13 +39,5 @@ export function useRecordSale() {
 
 /** Fetches the PDF with the signed-in session and saves it as invoice-<id>.pdf. */
 export async function downloadInvoice(id: number, tz: string) {
-  const blob = await salesApi.invoice(id, tz)
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `invoice-${id}.pdf`
-  document.body.append(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  saveFile(await salesApi.invoice(id, tz), `invoice-${id}.pdf`)
 }

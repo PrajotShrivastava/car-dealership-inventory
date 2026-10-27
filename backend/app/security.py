@@ -90,6 +90,13 @@ def require_dealer(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+def require_customer(user: User = Depends(get_current_user)) -> User:
+    """Pages about the customer's own buying: their purchases and enquiries."""
+    if user.role != Role.CUSTOMER:
+        raise AppError(403, "FORBIDDEN", "Customer account required")
+    return user
+
+
 def owned_by(user: User) -> int | None:
     """The dealer whose vehicles `user` may see and change, or None for every vehicle.
 

@@ -1,11 +1,13 @@
 import { CalendarDays, MessageSquare } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { ApiError } from '../../api/client'
 import type { EnquiryKind, Vehicle } from '../../api/types'
 import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
 import { TextAreaField, TextField } from '../../components/Field'
+import { APP_ACCOUNT } from '../../paths'
 import { formatDay, localDate, viewerTimeZone } from '../../time'
 import { useEnquire } from './queries'
 
@@ -76,7 +78,10 @@ export function EnquiryPanel({ vehicle }: { vehicle: Vehicle }) {
       {sent && (
         <Alert tone="success">
           {SENT[sent.kind]}{' '}
-          {sent.date ? `The dealer will confirm ${formatDay(sent.date)} with you.` : 'The dealer will be in touch soon.'}
+          {sent.date ? `The dealer will confirm ${formatDay(sent.date)} with you.` : 'The dealer will be in touch soon.'}{' '}
+          <Link to={APP_ACCOUNT} className="font-medium underline">
+            Track it in My account
+          </Link>
         </Alert>
       )}
 

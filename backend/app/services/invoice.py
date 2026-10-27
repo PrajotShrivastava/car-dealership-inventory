@@ -31,7 +31,7 @@ def _customer(sale: Purchase) -> list[str]:
 
 
 def invoice_lines(
-    sale: Purchase, *, dealer_name: str, dealer_email: str, tz: str = "UTC"
+    sale: Purchase, *, dealer_name: str, dealer_email: str | None, tz: str = "UTC"
 ) -> Iterator[str]:
     """The invoice's text, in reading order (also what the tests check)."""
     sold = sale.sold_at.astimezone(ZoneInfo(tz))
@@ -40,7 +40,8 @@ def invoice_lines(
     yield f"Date of sale: {sold.day} {sold:%b %Y}"
     yield "Sold by"
     yield dealer_name
-    yield dealer_email
+    if dealer_email:
+        yield dealer_email
     yield "Bill to"
     yield from _customer(sale)
     yield "Vehicle"
@@ -71,7 +72,7 @@ class _Invoice(FPDF):
 
 
 def render_invoice(
-    sale: Purchase, *, dealer_name: str, dealer_email: str, tz: str = "UTC"
+    sale: Purchase, *, dealer_name: str, dealer_email: str | None, tz: str = "UTC"
 ) -> bytes:
     sold = sale.sold_at.astimezone(ZoneInfo(tz))
     pdf = _Invoice(format="A4")
@@ -89,7 +90,8 @@ def render_invoice(
     top = pdf.get_y()
     pdf.label("Sold by")
     pdf.line_text(dealer_name, bold=True)
-    pdf.line_text(dealer_email)
+    if dealer_email:
+        pdf.line_text(dealer_email)
     left_bottom = pdf.get_y()
     pdf.set_xy(110, top)
     pdf.set_left_margin(110)

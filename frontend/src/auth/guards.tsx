@@ -26,6 +26,12 @@ export function RequireDealer() {
   return isDealer ? <Outlet /> : <Navigate to={APP_INVENTORY} replace />
 }
 
+/** The customer's own purchases and enquiries: dealers and admins have none. */
+export function RequireCustomer() {
+  const { user } = useAuth()
+  return user?.role === 'customer' ? <Outlet /> : <Navigate to={APP_INVENTORY} replace />
+}
+
 /** /app itself: dealers start on their dashboard, everyone else on the inventory. The query
  * string is kept, so older links such as /app?category=suv still work. */
 export function AppHome() {

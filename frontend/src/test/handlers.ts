@@ -5,6 +5,7 @@
  */
 import { http, HttpResponse } from 'msw/http'
 import type {
+  AccountPurchase,
   Dashboard,
   DashboardRange,
   DealerApplication,
@@ -33,7 +34,9 @@ let applications: DealerApplication[] = []
 /** Vehicle id -> the dealer who listed it (the real API keeps this server-side). */
 let owners = new Map<number, number>()
 let sales: (Sale & { dealer_id: number; request_id?: string })[] = []
-let leads: (Lead & { dealer_id: number })[] = []
+/** `customer_id`/`enquiry_kind`: set on leads a customer sent from a vehicle's page. */
+let leads: (Lead & { dealer_id: number; customer_id?: number; enquiry_kind?: EnquiryCreate['kind'] })[] = []
+let purchases: (AccountPurchase & { user_id: number })[] = []
 let dashboard: Dashboard | ((months: DashboardRange) => Dashboard) | null = null
 let nextId = 1
 
@@ -46,6 +49,7 @@ export function resetDb() {
   owners = new Map()
   sales = []
   leads = []
+  purchases = []
   dashboard = null
   dashboardRequests.length = 0
   nextId = 1
@@ -208,7 +212,10 @@ export function getSales() {
   return sales
 }
 
-export function seedLead(owner: User, overrides: Partial<Lead> = {}): Lead {
+export function seedLead(
+  owner: User,
+  overrides: Partial<Lead> & { customer_id?: number; enquiry_kind?: EnquiryCreate['kind'] } = {},
+): Lead {
   const lead = {
     id: nextId++,
     name: 'Arjun Mehta',
@@ -310,6 +317,21 @@ function findVisible(request: Request, id: unknown) {
 /** Mirrors the API: only the vehicle's dealer and admins see its acquisition cost. */
 function present(vehicle: Vehicle, user: StoredUser | undefined): Vehicle {
   return user?.role === 'customer' ? { ...vehicle, acquisition_cost: null } : vehicle
+}
+
+function requireCustomer(request: Request) {
+  const user = currentUser(request)
+  if (!user) return { failure: error(401, 'NOT_AUTHENTICATED', 'Authentication required') }
+  if (user.role !== 'customer') return { failure: error(403, 'FORBIDDEN', 'Customer account required') }
+  return { user }
+}
+
+/** The `limit`/`offset` slice of `items`, with the total. */
+function page<T>(request: Request, items: T[]) {
+  const params = new URL(request.url).searchParams
+  const offset = Number(params.get('offset') ?? 0)
+  const limit = Number(params.get('limit') ?? 20)
+  return { items: items.slice(offset, offset + limit), total: items.length }
 }
 
 function requireDealer(request: Request) {
@@ -502,9 +524,23 @@ export const handlers = [
     }
     vehicle.quantity -= quantity
     const unit = Number(vehicle.price)
+    const sellerId = owners.get(vehicle.id)
+    const purchaseId = nextId++
+    purchases.push({
+      id: purchaseId,
+      user_id: currentUser(request)!.id,
+      invoice_number: `INV-${String(purchaseId).padStart(6, '0')}`,
+      vehicle_id: vehicle.id,
+      vehicle_label: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      quantity,
+      unit_price: unit.toFixed(2),
+      total_price: (unit * quantity).toFixed(2),
+      sold_at: new Date().toISOString(),
+      seller: users.find((u) => u.id === sellerId)?.full_name ?? 'DriveStock',
+    })
     return HttpResponse.json({
       purchase: {
-        id: nextId++,
+        id: purchaseId,
         vehicle_id: vehicle.id,
         vehicle_label: `${vehicle.year} ${vehicle.make} ${vehicle.model}`,
         quantity,
@@ -530,7 +566,8 @@ export const handlers = [
     const body = (await request.json()) as EnquiryCreate
     const source = body.kind === 'question' ? 'Website enquiry' : 'Test drive request'
     const duplicate = leads.some(
-      (lead) => lead.vehicle_id === vehicle.id && lead.email === user.email && lead.source === source && !CLOSED.includes(lead.status),
+      (lead) =>
+        lead.vehicle_id === vehicle.id && lead.customer_id === user.id && lead.enquiry_kind === body.kind && !CLOSED.includes(lead.status),
     )
     if (duplicate) {
       const noun = body.kind === 'question' ? 'a question' : 'a test drive request'
@@ -547,11 +584,55 @@ export const handlers = [
       notes: notes.join('\n\n') || null,
       follow_up_on: localDate(),
       created_at: new Date().toISOString(),
+      customer_id: user.id,
+      enquiry_kind: body.kind,
     })
     return HttpResponse.json(
       { id: lead.id, kind: body.kind, vehicle_id: vehicle.id, created_at: lead.created_at },
       { status: 201 },
     )
+  }),
+
+  http.get(`${API}/account/purchases`, ({ request }) => {
+    const { user, failure } = requireCustomer(request)
+    if (failure) return failure
+    const mine = purchases.filter((p) => p.user_id === user.id).reverse()
+    return HttpResponse.json(page(request, mine.map(({ user_id: _userId, ...purchase }) => purchase)))
+  }),
+
+  http.get(`${API}/account/purchases/:id/invoice`, ({ request, params }) => {
+    const { user, failure } = requireCustomer(request)
+    if (failure) return failure
+    const purchase = purchases.find((p) => p.id === Number(params.id) && p.user_id === user.id)
+    if (!purchase) return error(404, 'PURCHASE_NOT_FOUND', `Purchase ${params.id} not found`)
+    return new HttpResponse(new Blob(['%PDF-1.4 fake'], { type: 'application/pdf' }), {
+      headers: { 'Content-Type': 'application/pdf' },
+    })
+  }),
+
+  http.get(`${API}/account/enquiries`, ({ request }) => {
+    const { user, failure } = requireCustomer(request)
+    if (failure) return failure
+    const progress = {
+      new: 'sent',
+      contacted: 'in_progress',
+      negotiation: 'in_progress',
+      test_drive_scheduled: 'test_drive_scheduled',
+      converted: 'completed',
+      lost: 'closed',
+    } as const
+    const mine = leads
+      .filter((lead) => lead.customer_id === user.id)
+      .reverse()
+      .map((lead) => ({
+        id: lead.id,
+        kind: lead.enquiry_kind ?? null,
+        vehicle_id: lead.vehicle_id,
+        vehicle_label: lead.vehicle_label,
+        progress: progress[lead.status],
+        sent_at: lead.created_at,
+      }))
+    return HttpResponse.json(page(request, mine))
   }),
 
   http.post(`${API}/vehicles/:id/photos`, async ({ request, params }) => {

@@ -1,5 +1,6 @@
 import {
   CarFront,
+  CircleUserRound,
   Handshake,
   LayoutDashboard,
   Receipt,
@@ -18,7 +19,7 @@ import { cn } from '../components/cn'
 import { Logo } from '../components/Logo'
 import { ApplicationBanner } from '../features/dealers/ApplicationBanner'
 import { usePendingApplications } from '../features/dealers/queries'
-import { APP_DASHBOARD, APP_INVENTORY, APP_LEADS, APP_SALES } from '../paths'
+import { APP_ACCOUNT, APP_DASHBOARD, APP_INVENTORY, APP_LEADS, APP_SALES } from '../paths'
 import { ThemeToggle } from '../theme/ThemeToggle'
 
 const COLLAPSE_KEY = 'drivestock.sidebarCollapsed'
@@ -94,7 +95,7 @@ function SidebarLink({
 }
 
 function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => void }) {
-  const { isAdmin, isDealer } = useAuth()
+  const { isAdmin, isDealer, user } = useAuth()
   const { data: pending } = usePendingApplications(isAdmin)
   const heading = (text: string) =>
     mode !== 'rail' && (
@@ -117,6 +118,12 @@ function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => vo
       )}
       {heading('Inventory')}
       <SidebarLink to={APP_INVENTORY} label="Vehicles" icon={CarFront} mode={mode} onNavigate={onNavigate} />
+      {user?.role === 'customer' && (
+        <>
+          {heading('You')}
+          <SidebarLink to={APP_ACCOUNT} label="My account" icon={CircleUserRound} mode={mode} onNavigate={onNavigate} />
+        </>
+      )}
       {isDealer && (
         <>
           {heading('Sales')}

@@ -1,5 +1,5 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router'
-import { AppHome, GuestOnly, RequireAdmin, RequireAuth, RequireDealer } from './auth/guards'
+import { AppHome, GuestOnly, RequireAdmin, RequireAuth, RequireCustomer, RequireDealer } from './auth/guards'
 import { DealerApplicationsPage } from './features/dealers/DealerApplicationsPage'
 import { InventoryPage } from './features/inventory/InventoryPage'
 import { AppShell } from './layout/AppShell'
@@ -10,7 +10,7 @@ import { PricingPage } from './marketing/PricingPage'
 import { DealerRegisterPage } from './pages/DealerRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { APP_DASHBOARD, APP_HOME, APP_INVENTORY, APP_LEADS, APP_SALES } from './paths'
+import { APP_ACCOUNT, APP_DASHBOARD, APP_HOME, APP_INVENTORY, APP_LEADS, APP_SALES } from './paths'
 import { RegisterPage } from './pages/RegisterPage'
 
 
@@ -53,6 +53,15 @@ export const routes: RouteObject[] = [
               },
               { path: APP_SALES, lazy: () => import('./features/sales/SalesPage').then((m) => ({ Component: m.SalesPage })) },
               { path: APP_LEADS, lazy: () => import('./features/leads/LeadsPage').then((m) => ({ Component: m.LeadsPage })) },
+            ],
+          },
+          {
+            element: <RequireCustomer />,
+            children: [
+              {
+                path: APP_ACCOUNT,
+                lazy: () => import('./features/account/AccountPage').then((m) => ({ Component: m.AccountPage })),
+              },
             ],
           },
           {
