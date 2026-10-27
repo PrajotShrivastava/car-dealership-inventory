@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
-import { CATEGORIES, FUEL_TYPES, TRANSMISSIONS, type Vehicle, type VehicleFields } from '../../api/types'
+import { CATEGORIES, CONDITIONS, FUEL_TYPES, TRANSMISSIONS, type Vehicle, type VehicleFields } from '../../api/types'
 import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
-import { SelectField, TextField } from '../../components/Field'
-import { titleCase } from '../inventory/format'
+import { SelectField, TextAreaField, TextField } from '../../components/Field'
+import { CONDITION_LABELS, titleCase } from '../inventory/format'
 import { PhotoPicker } from './PhotoPicker'
-import { initialValues, MAX_YEAR, toFields, validate, type VehicleFormErrors, type VehicleFormValues } from './vehicleFormModel'
+import { initialValues, MAX_MILEAGE, MAX_YEAR, toFields, validate, type VehicleFormErrors, type VehicleFormValues } from './vehicleFormModel'
 
 const options = (values: readonly string[]) => values.map((value) => ({ value, label: titleCase(value) }))
 
@@ -54,6 +54,8 @@ export function VehicleForm({
     } catch (error) {
       if (error instanceof ApiError && Object.keys(error.fieldErrors).length) {
         setErrors(error.fieldErrors as VehicleFormErrors)
+      } else if (error instanceof ApiError && (error.code === 'VIN_TAKEN' || error.code === 'VIN_SINGLE_UNIT')) {
+        setErrors({ vin: error.message })
       } else {
         setFormError(error instanceof ApiError ? error.message : 'Could not save. Please try again.')
       }
@@ -137,7 +139,50 @@ export function VehicleForm({
             hint="Later changes go through Restock or purchases."
           />
         )}
+        <SelectField
+          label="Condition"
+          value={values.condition}
+          onChange={(e) => set('condition', e.target.value as VehicleFormValues['condition'])}
+          options={CONDITIONS.map((value) => ({ value, label: CONDITION_LABELS[value] }))}
+          error={errors.condition}
+        />
+        <TextField
+          label={values.condition === 'new' ? 'Mileage (optional)' : 'Mileage'}
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={MAX_MILEAGE}
+          value={values.mileage}
+          onChange={(e) => set('mileage', e.target.value)}
+          error={errors.mileage}
+          hint="Miles on the odometer."
+        />
+        <TextField
+          label="Colour (optional)"
+          maxLength={30}
+          value={values.colour}
+          onChange={(e) => set('colour', e.target.value)}
+          error={errors.colour}
+        />
+        <TextField
+          label="VIN (optional)"
+          maxLength={21}
+          autoCapitalize="characters"
+          spellCheck={false}
+          value={values.vin}
+          onChange={(e) => set('vin', e.target.value)}
+          error={errors.vin}
+          hint="Only for a single car: its stock stays at 1 or 0."
+        />
       </div>
+      <TextAreaField
+        label="Features (optional)"
+        placeholder="Sunroof, Heated seats, Apple CarPlay"
+        value={values.features}
+        onChange={(e) => set('features', e.target.value)}
+        error={errors.features}
+        hint="Separate with commas or new lines."
+      />
       {withPhotos && <PhotoPicker files={photos} onChange={setPhotos} />}
       <div className="flex justify-end">
         <Button type="submit" loading={submitting}>

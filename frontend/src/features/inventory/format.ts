@@ -1,4 +1,4 @@
-import type { Vehicle } from '../../api/types'
+import type { Vehicle, VehicleCondition } from '../../api/types'
 
 const wholeDollars = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -33,6 +33,29 @@ export function vehicleTitle(vehicle: Pick<Vehicle, 'make' | 'model'>): string {
   return `${vehicle.make} ${vehicle.model}`
 }
 
-export function specLine(vehicle: Pick<Vehicle, 'category' | 'fuel_type' | 'transmission'>): string[] {
-  return [titleCase(vehicle.category), titleCase(vehicle.fuel_type), titleCase(vehicle.transmission)]
+const miles = new Intl.NumberFormat('en-US')
+
+/** "42,150 mi" */
+export function formatMileage(value: number): string {
+  return `${miles.format(value)} mi`
+}
+
+export const CONDITION_LABELS: Record<VehicleCondition, string> = {
+  new: 'New',
+  used: 'Used',
+  certified: 'Certified pre-owned',
+}
+
+/** Short enough for a one-line summary in the list. */
+const SHORT_CONDITION: Record<VehicleCondition, string> = { new: 'New', used: 'Used', certified: 'Certified' }
+
+/** Used and certified vehicles lead with their condition and mileage; new ones need neither. */
+export function specLine(
+  vehicle: Pick<Vehicle, 'category' | 'fuel_type' | 'transmission'> & Partial<Pick<Vehicle, 'condition' | 'mileage'>>,
+): string[] {
+  const history =
+    vehicle.condition && vehicle.condition !== 'new'
+      ? [SHORT_CONDITION[vehicle.condition], ...(vehicle.mileage != null ? [formatMileage(vehicle.mileage)] : [])]
+      : []
+  return [...history, titleCase(vehicle.category), titleCase(vehicle.fuel_type), titleCase(vehicle.transmission)]
 }

@@ -1,10 +1,10 @@
 import { ChevronDown, Search, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
-import { CATEGORIES, type Availability, type VehicleList } from '../../api/types'
+import { CATEGORIES, CONDITIONS, type Availability, type VehicleList } from '../../api/types'
 import { cn } from '../../components/cn'
 import { SelectField, TextField } from '../../components/Field'
-import { titleCase } from './format'
-import type { Filters, TextDrafts } from './useInventoryFilters'
+import { CONDITION_LABELS, formatMileage, titleCase } from './format'
+import { MILEAGE_LIMITS, type Filters, type TextDrafts } from './useInventoryFilters'
 
 interface FilterPanelProps {
   filters: Filters
@@ -64,7 +64,7 @@ export function FilterPanel({ filters, drafts, onDraftChange, counts, activeCoun
           <input
             type="search"
             aria-label="Search"
-            placeholder="Make, model or trim…"
+            placeholder="Make, model, colour…"
             value={drafts.q}
             onChange={(e) => onDraftChange({ q: e.target.value })}
             className="block h-10 w-full rounded-md border border-slate-300 bg-white pr-3 pl-9 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
@@ -78,6 +78,24 @@ export function FilterPanel({ filters, drafts, onDraftChange, counts, activeCoun
           value={filters.category}
           onChange={(e) => onChange({ category: e.target.value as Filters['category'] })}
           options={[{ value: '', label: 'All categories' }, ...CATEGORIES.map((c) => ({ value: c, label: titleCase(c) }))]}
+        />
+      </Section>
+
+      <Section title="Condition and mileage">
+        <SelectField
+          label="Condition"
+          value={filters.condition}
+          onChange={(e) => onChange({ condition: e.target.value as Filters['condition'] })}
+          options={[{ value: '', label: 'Any condition' }, ...CONDITIONS.map((c) => ({ value: c, label: CONDITION_LABELS[c] }))]}
+        />
+        <SelectField
+          label="Max mileage"
+          value={filters.max_mileage}
+          onChange={(e) => onChange({ max_mileage: e.target.value })}
+          options={[
+            { value: '', label: 'Any mileage' },
+            ...MILEAGE_LIMITS.map((limit) => ({ value: String(limit), label: `Up to ${formatMileage(limit)}` })),
+          ]}
         />
       </Section>
 

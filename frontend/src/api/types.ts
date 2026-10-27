@@ -31,6 +31,12 @@ export type FuelType = (typeof FUEL_TYPES)[number]
 export const TRANSMISSIONS = ['manual', 'automatic'] as const
 export type Transmission = (typeof TRANSMISSIONS)[number]
 
+/** "certified": used, inspected and warrantied by the dealer or manufacturer. */
+export const CONDITIONS = ['new', 'used', 'certified'] as const
+export type VehicleCondition = (typeof CONDITIONS)[number]
+
+export const MAX_FEATURES = 30
+
 export interface VehicleFields {
   make: string
   model: string
@@ -43,6 +49,14 @@ export interface VehicleFields {
   price: string
   /** Per unit, for gross profit. Only the vehicle's dealer and admins receive it (else null). */
   acquisition_cost?: string | null
+  condition: VehicleCondition
+  /** Miles on the odometer; required for used and certified vehicles. */
+  mileage: number | null
+  colour: string | null
+  /** 17 characters. A vehicle with a VIN is one car, so its stock is at most 1. */
+  vin: string | null
+  /** Short labels such as "Sunroof", in the dealer's order. */
+  features: string[]
 }
 
 /** Paths on the API host, e.g. "/api/media/vehicles/<key>.webp"; resolve with mediaUrl(). */
@@ -71,6 +85,7 @@ export type SortOrder =
   | 'year_desc'
   | 'year_asc'
   | 'make_asc'
+  | 'mileage_asc'
 
 export interface VehicleQuery {
   q?: string
@@ -80,6 +95,8 @@ export interface VehicleQuery {
   min_price?: string
   max_price?: string
   availability?: Availability
+  condition?: VehicleCondition
+  max_mileage?: number
   sort?: SortOrder
   limit?: number
   offset?: number

@@ -1,4 +1,13 @@
-import { CATEGORIES, type Category, type FuelType, type Transmission, type Vehicle, type VehicleFields } from '../../api/types'
+import {
+  CATEGORIES,
+  MAX_FEATURES,
+  type Category,
+  type FuelType,
+  type Transmission,
+  type Vehicle,
+  type VehicleCondition,
+  type VehicleFields,
+} from '../../api/types'
 
 export interface VehicleFormValues {
   make: string
@@ -12,6 +21,12 @@ export interface VehicleFormValues {
   /** Optional: blank means unknown. */
   acquisition_cost: string
   quantity: string
+  condition: VehicleCondition
+  mileage: string
+  colour: string
+  vin: string
+  /** One feature per line or comma-separated, e.g. "Sunroof, Heated seats". */
+  features: string
 }
 
 export type VehicleFormErrors = Partial<Record<keyof VehicleFormValues, string>>
@@ -30,11 +45,37 @@ export function initialValues(vehicle?: Vehicle): VehicleFormValues {
     price: vehicle ? String(Number(vehicle.price)) : '',
     acquisition_cost: vehicle?.acquisition_cost ? String(Number(vehicle.acquisition_cost)) : '',
     quantity: '1',
+    condition: vehicle?.condition ?? 'new',
+    mileage: vehicle?.mileage != null ? String(vehicle.mileage) : '',
+    colour: vehicle?.colour ?? '',
+    vin: vehicle?.vin ?? '',
+    features: vehicle?.features.join(', ') ?? '',
   }
+}
+
+/** Upper-cased, without spaces or dashes, as the API stores it. */
+export function normaliseVin(value: string): string {
+  return value.replace(/[\s-]/g, '').toUpperCase()
+}
+
+/** Split on commas and new lines; blanks and repeats (ignoring case) dropped. */
+export function parseFeatures(value: string): string[] {
+  const seen = new Set<string>()
+  return value
+    .split(/[,\n]/)
+    .map((feature) => feature.trim())
+    .filter((feature) => {
+      const key = feature.toLowerCase()
+      if (!feature || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 }
 
 const MONEY = /^\d+(\.\d{1,2})?$/
 const WHOLE = /^\d+$/
+const VIN = /^[A-HJ-NPR-Z0-9]{17}$/
+export const MAX_MILEAGE = 2_000_000
 
 export function validate(values: VehicleFormValues, { withQuantity }: { withQuantity: boolean }): VehicleFormErrors {
   const errors: VehicleFormErrors = {}
@@ -54,6 +95,22 @@ export function validate(values: VehicleFormValues, { withQuantity }: { withQuan
   if (withQuantity && (!WHOLE.test(values.quantity.trim()) || Number(values.quantity) > 10_000)) {
     errors.quantity = 'Stock must be a whole number of 0 or more (max 10,000)'
   }
+  const mileage = values.mileage.trim()
+  if (mileage && (!WHOLE.test(mileage) || Number(mileage) > MAX_MILEAGE)) {
+    errors.mileage = `Mileage must be a whole number from 0 to ${MAX_MILEAGE.toLocaleString('en-US')}`
+  } else if (!mileage && values.condition !== 'new') {
+    errors.mileage = 'Mileage is required for used and certified vehicles'
+  }
+  if (values.colour.trim().length > 30) errors.colour = 'Colour must be 30 characters or fewer'
+  const vin = normaliseVin(values.vin)
+  if (vin && !VIN.test(vin)) {
+    errors.vin = 'VIN must be 17 letters and digits, without I, O or Q'
+  } else if (vin && withQuantity && Number(values.quantity) > 1) {
+    errors.vin = 'A vehicle with a VIN is a single car, so its stock can be at most 1'
+  }
+  const features = parseFeatures(values.features)
+  if (features.length > MAX_FEATURES) errors.features = `Up to ${MAX_FEATURES} features`
+  else if (features.some((feature) => feature.length > 40)) errors.features = 'Each feature must be 40 characters or fewer'
   return errors
 }
 
@@ -68,5 +125,10 @@ export function toFields(values: VehicleFormValues): VehicleFields {
     transmission: values.transmission,
     price: Number(values.price).toFixed(2),
     acquisition_cost: values.acquisition_cost.trim() ? Number(values.acquisition_cost).toFixed(2) : null,
+    condition: values.condition,
+    mileage: values.mileage.trim() ? Number(values.mileage) : null,
+    colour: values.colour.trim() || null,
+    vin: normaliseVin(values.vin) || null,
+    features: parseFeatures(values.features),
   }
 }

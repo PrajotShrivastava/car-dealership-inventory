@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, func, or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import InstrumentedAttribute, Session
 
 from app.errors import AppError
@@ -15,6 +16,8 @@ _ORDERING: dict[SortOrder, tuple[ColumnElement[Any], ...]] = {
     SortOrder.YEAR_DESC: (Vehicle.year.desc(), Vehicle.id.desc()),
     SortOrder.YEAR_ASC: (Vehicle.year.asc(), Vehicle.id.asc()),
     SortOrder.MAKE_ASC: (Vehicle.make.asc(), Vehicle.model.asc(), Vehicle.id.asc()),
+    # New cars without a recorded mileage count as zero miles.
+    SortOrder.MILEAGE_ASC: (func.coalesce(Vehicle.mileage, 0).asc(), Vehicle.id.asc()),
 }
 
 
@@ -35,6 +38,11 @@ def _attribute_filters(query: VehicleQuery) -> list[ColumnElement[bool]]:
                 contains(Vehicle.make, word),
                 contains(Vehicle.model, word),
                 contains(Vehicle.trim, word),
+                contains(Vehicle.colour, word),
+                contains(Vehicle.vin, word),
+                func.array_to_string(Vehicle.features, " ").ilike(
+                    f"%{escape_like(word)}%", escape="\\"
+                ),
             )
         )
     if query.make:
@@ -47,6 +55,10 @@ def _attribute_filters(query: VehicleQuery) -> list[ColumnElement[bool]]:
         conditions.append(Vehicle.price >= query.min_price)
     if query.max_price is not None:
         conditions.append(Vehicle.price <= query.max_price)
+    if query.condition:
+        conditions.append(Vehicle.condition == query.condition)
+    if query.max_mileage is not None:
+        conditions.append(func.coalesce(Vehicle.mileage, 0) <= query.max_mileage)
     return conditions
 
 
@@ -97,6 +109,30 @@ def vehicle_not_found(vehicle_id: int) -> AppError:
     return AppError(404, "VEHICLE_NOT_FOUND", f"Vehicle {vehicle_id} not found")
 
 
+def vin_single_unit() -> AppError:
+    return AppError(
+        409,
+        "VIN_SINGLE_UNIT",
+        "A vehicle with a VIN is a single car, so its stock can be at most 1",
+    )
+
+
+def save_vehicle(db: Session, vehicle: Vehicle) -> Vehicle:
+    """Commit a new or edited vehicle, reporting a VIN already in the inventory as a conflict."""
+    db.add(vehicle)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        if "uq_vehicles_dealer_id_vin" in str(exc.orig):
+            raise AppError(
+                409, "VIN_TAKEN", f"A vehicle with VIN {vehicle.vin} is already in the inventory"
+            ) from exc
+        raise
+    db.refresh(vehicle)
+    return vehicle
+
+
 def purchase_vehicle(db: Session, vehicle_id: int, user_id: int, quantity: int) -> Purchase:
     """Atomically take `quantity` units out of stock and record the sale.
 
@@ -141,7 +177,11 @@ def purchase_vehicle(db: Session, vehicle_id: int, user_id: int, quantity: int) 
 def restock_vehicle(db: Session, vehicle_id: int, quantity: int) -> Vehicle:
     vehicle = db.scalars(
         update(Vehicle)
-        .where(Vehicle.id == vehicle_id, Vehicle.quantity + quantity <= MAX_STOCK)
+        .where(
+            Vehicle.id == vehicle_id,
+            Vehicle.quantity + quantity <= MAX_STOCK,
+            or_(Vehicle.vin.is_(None), Vehicle.quantity + quantity <= 1),
+        )
         .values(quantity=Vehicle.quantity + quantity)
         .returning(Vehicle)
         .execution_options(populate_existing=True)
@@ -151,6 +191,8 @@ def restock_vehicle(db: Session, vehicle_id: int, quantity: int) -> Vehicle:
         current = db.get(Vehicle, vehicle_id)
         if current is None:
             raise vehicle_not_found(vehicle_id)
+        if current.vin is not None:
+            raise vin_single_unit()
         raise AppError(
             409,
             "STOCK_LIMIT_EXCEEDED",

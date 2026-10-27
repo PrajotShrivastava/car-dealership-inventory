@@ -161,6 +161,11 @@ export function seedVehicle(overrides: Partial<Vehicle> = {}, owner?: User): Veh
     transmission: 'automatic',
     price: '35990.00',
     quantity: 3,
+    condition: 'new',
+    mileage: null,
+    colour: null,
+    vin: null,
+    features: [],
     photos: [],
     accepts_enquiries: owner?.role === 'dealer',
     ...overrides,
@@ -336,12 +341,14 @@ function listVehicles(request: Request) {
   const p = Object.fromEntries(url.searchParams)
   const user = currentUser(request)
   let items = vehicles.filter((v) => visibleTo(user, v)).filter((v) => {
-    const text = `${v.make} ${v.model} ${v.trim ?? ''}`.toLowerCase()
+    const text = [v.make, v.model, v.trim, v.colour, v.vin, ...v.features].join(' ').toLowerCase()
     return (
       (!p.q || p.q.toLowerCase().split(/\s+/).every((w) => text.includes(w))) &&
       (!p.category || v.category === p.category) &&
       (!p.min_price || Number(v.price) >= Number(p.min_price)) &&
-      (!p.max_price || Number(v.price) <= Number(p.max_price))
+      (!p.max_price || Number(v.price) <= Number(p.max_price)) &&
+      (!p.condition || v.condition === p.condition) &&
+      (!p.max_mileage || (v.mileage ?? 0) <= Number(p.max_mileage))
     )
   })
   const counts = {
@@ -354,6 +361,7 @@ function listVehicles(request: Request) {
   if (!p.sort || p.sort === 'newest') items = [...items].sort((a, b) => b.id - a.id)
   if (p.sort === 'price_asc') items = [...items].sort((a, b) => Number(a.price) - Number(b.price))
   if (p.sort === 'price_desc') items = [...items].sort((a, b) => Number(b.price) - Number(a.price))
+  if (p.sort === 'mileage_asc') items = [...items].sort((a, b) => (a.mileage ?? 0) - (b.mileage ?? 0))
   const offset = Number(p.offset ?? 0)
   const limit = Number(p.limit ?? 20)
   return HttpResponse.json({ items: items.slice(offset, offset + limit).map((v) => present(v, user)), total: items.length, counts })

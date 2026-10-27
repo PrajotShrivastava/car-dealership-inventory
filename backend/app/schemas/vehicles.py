@@ -1,4 +1,5 @@
 import enum
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated
@@ -12,13 +13,19 @@ from pydantic import (
     computed_field,
     field_serializer,
     field_validator,
+    model_validator,
 )
 
 from app.media import photo_url, thumb_url
-from app.models import Category, FuelType, Transmission
+from app.models import Category, FuelType, Transmission, VehicleCondition
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
 Price = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
+Mileage = Annotated[int, Field(ge=0, le=2_000_000)]
+Feature = Annotated[str, StringConstraints(strip_whitespace=True, max_length=40)]
+MAX_FEATURES = 30
+# 17 characters; I, O and Q are never used, so they can't be mistaken for 1 and 0.
+VIN_PATTERN = re.compile(r"^[A-HJ-NPR-Z0-9]{17}$")
 
 
 class VehicleFields(BaseModel):
@@ -32,11 +39,45 @@ class VehicleFields(BaseModel):
     price: Price
     # Per unit, for gross profit. Only the owning dealer and admins ever see it.
     acquisition_cost: Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)] | None = None
+    condition: VehicleCondition = VehicleCondition.NEW
+    mileage: Mileage | None = None
+    colour: Annotated[str, StringConstraints(strip_whitespace=True, max_length=30)] | None = None
+    vin: str | None = None
+    features: Annotated[list[Feature], Field(max_length=MAX_FEATURES)] = []
 
-    @field_validator("trim")
+    @field_validator("trim", "colour")
     @classmethod
-    def _blank_trim_is_none(cls, value: str | None) -> str | None:
+    def _blank_is_none(cls, value: str | None) -> str | None:
         return value or None
+
+    @field_validator("vin")
+    @classmethod
+    def _valid_vin(cls, value: str | None) -> str | None:
+        """Upper-cased, with spaces and dashes dropped; blank means none."""
+        vin = re.sub(r"[\s-]", "", value or "").upper()
+        if not vin:
+            return None
+        if not VIN_PATTERN.fullmatch(vin):
+            raise ValueError("VIN must be 17 letters and digits, without I, O or Q")
+        return vin
+
+    @field_validator("features")
+    @classmethod
+    def _tidy_features(cls, value: list[str]) -> list[str]:
+        """Blank entries dropped and repeats (ignoring case) removed, keeping the first."""
+        seen: set[str] = set()
+        tidy = []
+        for feature in value:
+            if feature and feature.casefold() not in seen:
+                seen.add(feature.casefold())
+                tidy.append(feature)
+        return tidy
+
+    @model_validator(mode="after")
+    def _used_cars_have_mileage(self) -> "VehicleFields":
+        if self.condition is not VehicleCondition.NEW and self.mileage is None:
+            raise ValueError("mileage is required for used and certified vehicles")
+        return self
 
     @field_validator("year")
     @classmethod
@@ -49,6 +90,12 @@ class VehicleFields(BaseModel):
 
 class VehicleCreate(VehicleFields):
     quantity: int = Field(default=0, ge=0, le=10_000)
+
+    @model_validator(mode="after")
+    def _one_car_per_vin(self) -> "VehicleCreate":
+        if self.vin and self.quantity > 1:
+            raise ValueError("a vehicle with a VIN is a single car, so its stock can be at most 1")
+        return self
 
 
 class VehicleUpdate(VehicleFields):
@@ -110,6 +157,7 @@ class SortOrder(enum.StrEnum):
     YEAR_DESC = "year_desc"
     YEAR_ASC = "year_asc"
     MAKE_ASC = "make_asc"
+    MILEAGE_ASC = "mileage_asc"
 
 
 OptionalText = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] | None
@@ -124,6 +172,8 @@ class VehicleQuery(BaseModel):
     min_price: NonNegativePrice = None
     max_price: NonNegativePrice = None
     availability: Availability = Availability.ALL
+    condition: VehicleCondition | None = None
+    max_mileage: Mileage | None = None
     sort: SortOrder = SortOrder.NEWEST
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0, le=1_000_000)

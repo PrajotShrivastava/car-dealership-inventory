@@ -212,7 +212,8 @@ describe('recording a sale', () => {
     const details = await screen.findByRole('dialog', { name: 'Arjun Mehta' })
     await user.click(within(details).getByRole('button', { name: 'Record sale' }))
     const form = await screen.findByRole('dialog', { name: 'Record sale' })
-    expect(within(form).getByLabelText('Vehicle')).toHaveValue(String(kuga.id))
+    // The vehicle options load after the drawer opens.
+    await waitFor(() => expect(within(form).getByLabelText('Vehicle')).toHaveValue(String(kuga.id)))
     expect(within(form).getByLabelText('Customer name')).toHaveValue('Arjun Mehta')
     expect(within(form).getByLabelText('Lead (optional)')).toHaveValue(String(lead.id))
 
@@ -234,7 +235,8 @@ describe('recording a sale', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Record sale' }))
 
     const form = await screen.findByRole('dialog', { name: 'Record sale' })
-    expect(within(form).getByLabelText('Vehicle')).toHaveValue(String(kuga.id))
+    // The vehicle options load after the drawer opens.
+    await waitFor(() => expect(within(form).getByLabelText('Vehicle')).toHaveValue(String(kuga.id)))
   })
 
   it('does not allow a future sale date', async () => {

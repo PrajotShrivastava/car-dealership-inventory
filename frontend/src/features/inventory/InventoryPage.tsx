@@ -39,6 +39,7 @@ const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
   { value: 'year_desc', label: 'Year: newest' },
   { value: 'year_asc', label: 'Year: oldest' },
   { value: 'make_asc', label: 'Make: A–Z' },
+  { value: 'mileage_asc', label: 'Mileage: lowest' },
 ]
 
 /** `onAdd` is given to dealers and admins: an empty inventory then invites them to add the first vehicle. */

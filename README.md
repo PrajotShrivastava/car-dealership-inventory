@@ -33,14 +33,15 @@ A full-stack inventory system for a car dealership. Customers browse, search and
 
 **Everyone (signed in, at `/app`)**
 - Register and sign in (JWT bearer tokens); the session survives a reload
-- Inventory list showing each vehicle's cover photo, make, model, trim, year, spec line, price and a live stock badge (in stock / low stock / out of stock). Vehicles without photos show a drawing of their body style
-- Search (make, model, trim) and filters for category, price range and availability, with counts per availability state; filters live in the URL so a view can be shared
+- Inventory list showing each vehicle's cover photo, make, model, trim, year, spec line (led by condition and mileage for used cars), price and a live stock badge (in stock / low stock / out of stock). Vehicles without photos show a drawing of their body style
+- Search (make, model, trim, colour, VIN, features) and filters for category, condition (new / used / certified pre-owned), maximum mileage, price range and availability, plus sorting by lowest mileage, with counts per availability state; filters live in the URL so a view can be shared
 - Sorting (newest, price, year, make) and pagination
 - Details drawer with a photo gallery, full specifications and **purchase** (quantity stepper capped at available stock, purchase disabled at zero stock)
 - **Ask the dealer a question or book a test drive** from the details drawer (customers, on vehicles a dealer listed). It reaches that dealer as a new lead, due for follow-up today; a second open request about the same vehicle is refused
 
 **Dealers and admins** (server-enforced)
 - Add vehicles (with initial stock), edit details and price, **restock**, delete (with confirmation)
+- Record each vehicle's **condition, mileage, colour, VIN and features**. Used and certified vehicles need a mileage. A vehicle with a VIN is one physical car, so its stock is at most 1 (enforced in the database too), and a dealer can't list the same VIN twice
 - **Upload vehicle photos** from their device: several at once when adding a vehicle, then add or remove photos in the Edit tab (up to 10 per vehicle, JPEG/PNG/WebP, 5 MB each). The first photo is the cover
 - Dealers **sign up as a dealer** and can manage inventory straight away; no approval is needed
 

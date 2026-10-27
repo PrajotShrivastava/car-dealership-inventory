@@ -23,8 +23,10 @@ from app.security import get_current_user, owned_by, require_inventory_manager
 from app.services.inventory import (
     purchase_vehicle,
     restock_vehicle,
+    save_vehicle,
     search_vehicles,
     vehicle_not_found,
+    vin_single_unit,
 )
 from app.services.leads import create_enquiry
 from app.services.photos import MAX_PHOTO_BYTES, add_photos, remove_photo
@@ -95,10 +97,7 @@ def create_vehicle(
     user: User = Depends(require_inventory_manager),
 ) -> VehicleOut:
     vehicle = Vehicle(**payload.model_dump(), dealer_id=owned_by(user))
-    db.add(vehicle)
-    db.commit()
-    db.refresh(vehicle)
-    return _out(vehicle, user)
+    return _out(save_vehicle(db, vehicle), user)
 
 
 @router.put("/{vehicle_id}", response_model=VehicleOut)
@@ -109,11 +108,11 @@ def update_vehicle(
     user: User = Depends(require_inventory_manager),
 ) -> VehicleOut:
     vehicle = _get_or_404(db, vehicle_id, user)
+    if payload.vin and vehicle.quantity > 1:
+        raise vin_single_unit()
     for field, value in payload.model_dump().items():
         setattr(vehicle, field, value)
-    db.commit()
-    db.refresh(vehicle)
-    return _out(vehicle, user)
+    return _out(save_vehicle(db, vehicle), user)
 
 
 @router.delete("/{vehicle_id}", status_code=status.HTTP_204_NO_CONTENT)

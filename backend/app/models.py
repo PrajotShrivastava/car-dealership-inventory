@@ -13,7 +13,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -69,6 +71,13 @@ class Transmission(enum.StrEnum):
     AUTOMATIC = "automatic"
 
 
+class VehicleCondition(enum.StrEnum):
+    NEW = "new"
+    USED = "used"
+    # Used, inspected and warrantied by the dealer or manufacturer.
+    CERTIFIED = "certified"
+
+
 class Vehicle(Base):
     __tablename__ = "vehicles"
     __table_args__ = (
@@ -79,7 +88,20 @@ class Vehicle(Base):
             "catalog_image_id ~ '^[0-9a-f]{16}$'", name="ck_vehicles_catalog_image_id_format"
         ),
         CheckConstraint("acquisition_cost >= 0", name="ck_vehicles_acquisition_cost_non_negative"),
+        CheckConstraint("mileage BETWEEN 0 AND 2000000", name="ck_vehicles_mileage_range"),
+        CheckConstraint("vin ~ '^[A-HJ-NPR-Z0-9]{17}$'", name="ck_vehicles_vin_format"),
+        # A VIN identifies one physical car, so a listing with one never holds more than a unit.
+        CheckConstraint("vin IS NULL OR quantity <= 1", name="ck_vehicles_vin_single_unit"),
         Index("ix_vehicles_make_model", "make", "model"),
+        # One listing per VIN in each dealer's inventory (admin-added vehicles count as one group).
+        Index(
+            "uq_vehicles_dealer_id_vin",
+            "dealer_id",
+            "vin",
+            unique=True,
+            postgresql_where=text("vin IS NOT NULL"),
+            postgresql_nulls_not_distinct=True,
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -98,6 +120,20 @@ class Vehicle(Base):
     )
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), index=True)
     quantity: Mapped[int] = mapped_column(default=0, server_default="0")
+    condition: Mapped[VehicleCondition] = mapped_column(
+        Enum(VehicleCondition, name="vehicle_condition", values_callable=_enum_values),
+        default=VehicleCondition.NEW,
+        server_default=VehicleCondition.NEW.value,
+        index=True,
+    )
+    # Miles on the odometer; required for used and certified vehicles (checked by the API).
+    mileage: Mapped[int | None]
+    colour: Mapped[str | None] = mapped_column(String(30))
+    vin: Mapped[str | None] = mapped_column(String(17))
+    # Short labels such as "Sunroof" or "Apple CarPlay", in the dealer's order.
+    features: Mapped[list[str]] = mapped_column(
+        ARRAY(String(40)), default=list, server_default="{}"
+    )
     # The dealer who listed it. NULL for vehicles added by an admin or listed before
     # ownership was recorded; those belong to no dealer's inventory or dashboard.
     dealer_id: Mapped[int | None] = mapped_column(
