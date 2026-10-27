@@ -1,4 +1,10 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from 'react'
+import {
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react'
 import { cn } from './cn'
 
 const control =
@@ -79,6 +85,29 @@ export function SelectField({ label, error, options, className, ...props }: Sele
             </option>
           ))}
         </select>
+      )}
+    </FieldShell>
+  )
+}
+
+interface TextAreaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string
+  error?: string
+  hint?: string
+}
+
+export function TextAreaField({ label, error, hint, className, ...props }: TextAreaFieldProps) {
+  return (
+    <FieldShell label={label} error={error} hint={hint} className={className}>
+      {({ id, describedBy, invalid }) => (
+        <textarea
+          id={id}
+          rows={3}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
+          className={cn(control, 'py-2', invalid ? 'border-red-400' : 'border-slate-300')}
+          {...props}
+        />
       )}
     </FieldShell>
   )

@@ -41,6 +41,8 @@ export interface VehicleFields {
   transmission: Transmission
   /** Fixed-point decimal string, e.g. "35990.00" */
   price: string
+  /** Per unit, for gross profit. Only the vehicle's dealer and admins receive it (else null). */
+  acquisition_cost?: string | null
 }
 
 /** Paths on the API host, e.g. "/api/media/vehicles/<key>.webp"; resolve with mediaUrl(). */
@@ -121,4 +123,209 @@ export interface DealerRegisterRequest {
   full_name: string
   email: string
   password: string
+}
+
+/** Months of history the dashboard's sales chart can show. */
+export const DASHBOARD_RANGES = [3, 6, 12] as const
+export type DashboardRange = (typeof DASHBOARD_RANGES)[number]
+
+/** Money fields are fixed-point strings, like vehicle prices. */
+export interface DashboardSummary {
+  total_listings: number
+  available_stock: number
+  in_stock: number
+  low_stock: number
+  out_of_stock: number
+  never_sold: number
+  low_stock_threshold: number
+  inventory_value: string
+  units_sold: number
+  /** Completed sale transactions; one sale can be several units. */
+  sales_count: number
+  total_revenue: string
+  /** Over sales whose acquisition cost is known; null when none are. */
+  gross_profit: string | null
+  sales_with_cost: number
+  units_sold_this_month: number
+  revenue_this_month: string
+  units_sold_last_month: number
+  revenue_last_month: string
+  /** False until there is a sale before this month: no comparison is shown. */
+  has_sales_before_this_month: boolean
+}
+
+export interface MonthlySales {
+  /** "2026-10" */
+  month: string
+  units: number
+  revenue: string
+}
+
+export interface DashboardVehicle {
+  id: number
+  make: string
+  model: string
+  trim: string | null
+  year: number
+  category: Category
+  price: string
+  quantity: number
+  units_sold: number
+  revenue: string
+  photo: VehiclePhoto | null
+  created_at: string
+}
+
+export interface TopVehicle {
+  label: string
+  units_sold: number
+  revenue: string
+  /** Null once the vehicle has been deleted; its sales still count. */
+  vehicle: DashboardVehicle | null
+}
+
+export interface RecentSale {
+  id: number
+  channel: SaleChannel
+  /** The sale date. */
+  created_at: string
+  customer_name: string | null
+  vehicle_id: number | null
+  vehicle_label: string
+  quantity: number
+  unit_price: string
+  total_price: string
+}
+
+export interface Dashboard {
+  timezone: string
+  summary: DashboardSummary
+  monthly: MonthlySales[]
+  best_seller: TopVehicle | null
+  top_revenue: TopVehicle | null
+  top_sellers: TopVehicle[]
+  low_stock: DashboardVehicle[]
+  out_of_stock: DashboardVehicle[]
+  never_sold: DashboardVehicle[]
+  recent_listings: DashboardVehicle[]
+  recent_sales: RecentSale[]
+  follow_ups: FollowUps
+}
+
+export type SaleChannel = 'online' | 'dealer'
+
+export interface Customer {
+  name: string | null
+  email: string | null
+  phone: string | null
+}
+
+/** A completed sale, as the selling dealer sees it. */
+export interface Sale {
+  id: number
+  channel: SaleChannel
+  sold_at: string
+  vehicle_id: number | null
+  vehicle_label: string
+  quantity: number
+  unit_price: string
+  total_price: string
+  /** Null when the vehicle had no acquisition cost; profit is then unknown, not zero. */
+  unit_cost: string | null
+  gross_profit: string | null
+  customer: Customer
+  lead_id: number | null
+}
+
+export interface SaleCreate {
+  vehicle_id: number
+  quantity: number
+  unit_price: string
+  /** "YYYY-MM-DD" in the dealer's time zone (`tz`); not in the future. */
+  sold_on: string
+  tz: string
+  customer_name: string
+  customer_email: string | null
+  customer_phone: string | null
+  lead_id: number | null
+  /** A fresh UUID per form: resubmitting it records the sale only once. */
+  request_id: string
+}
+
+export interface SaleQuery {
+  q?: string
+  vehicle_id?: number
+  channel?: SaleChannel
+  date_from?: string
+  date_to?: string
+  tz?: string
+  limit?: number
+  offset?: number
+}
+
+export interface SaleList {
+  items: Sale[]
+  total: number
+  totals: { sales: number; units: number; revenue: string; gross_profit: string | null; sales_with_cost: number }
+}
+
+export const LEAD_STATUSES = ['new', 'contacted', 'test_drive_scheduled', 'negotiation', 'converted', 'lost'] as const
+export type LeadStatus = (typeof LEAD_STATUSES)[number]
+
+export interface LeadEvent {
+  kind: 'created' | 'status' | 'follow_up' | 'sale'
+  old_value: string | null
+  new_value: string | null
+  created_at: string
+}
+
+export interface LeadFields {
+  name: string
+  email: string | null
+  phone: string | null
+  vehicle_id: number | null
+  budget: string | null
+  source: string | null
+  notes: string | null
+  /** "YYYY-MM-DD", compared with the dealer's local date. */
+  follow_up_on: string | null
+  status: LeadStatus
+}
+
+export interface Lead extends LeadFields {
+  id: number
+  vehicle_label: string | null
+  created_at: string
+  updated_at: string
+  /** The sale recorded from this lead, if any. */
+  sale_id: number | null
+  events: LeadEvent[]
+}
+
+export type FollowUpFilter = 'overdue' | 'today' | 'upcoming' | 'none'
+
+export interface LeadQuery {
+  q?: string
+  status?: LeadStatus
+  follow_up?: FollowUpFilter
+  tz?: string
+  limit?: number
+  offset?: number
+}
+
+export interface Reminders {
+  overdue: number
+  today: number
+  upcoming: number
+}
+
+export interface LeadList {
+  items: Lead[]
+  total: number
+  counts: Record<LeadStatus, number>
+  reminders: Reminders
+}
+
+export interface FollowUps extends Reminders {
+  items: { id: number; name: string; status: LeadStatus; follow_up_on: string; vehicle_label: string | null }[]
 }

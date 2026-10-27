@@ -1,5 +1,6 @@
-import { ChevronLeft, ChevronRight, PackageSearch, Plus, SlidersHorizontal, Trash2, X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { ChevronLeft, ChevronRight, PackageSearch, Plus, Receipt, SlidersHorizontal, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { ApiError } from '../../api/client'
 import type { Vehicle } from '../../api/types'
 import type { SortOrder } from '../../api/types'
@@ -10,7 +11,9 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Drawer } from '../../components/Drawer'
 import { Spinner } from '../../components/Spinner'
 import { Tabs } from '../../components/Tabs'
+import { APP_SALES } from '../../paths'
 import { PhotoManager } from '../admin/PhotoManager'
+import type { RecordSaleState } from '../sales/SalesPage'
 import { RestockForm } from '../admin/RestockForm'
 import { VehicleForm } from '../admin/VehicleForm'
 import { FilterPanel } from './FilterPanel'
@@ -76,7 +79,8 @@ const MANAGER_TABS: { value: DrawerTab; label: string }[] = [
 
 /** `notice` (e.g. a failed photo upload after creating the vehicle) opens the Edit tab with it shown. */
 function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; onClose: () => void }) {
-  const { canManageInventory } = useAuth()
+  const { canManageInventory, isDealer } = useAuth()
+  const navigate = useNavigate()
   const { data: vehicle, isError, error } = useVehicle(id)
   const update = useUpdateVehicle(id)
   const remove = useDeleteVehicle()
@@ -123,7 +127,23 @@ function VehicleDrawer({ id, notice, onClose }: { id: number; notice?: string; o
           )
         }
         tabs={canManageInventory && <Tabs label="Vehicle sections" tabs={MANAGER_TABS} value={tab} onChange={setTab} />}
-        footer={tab === 'details' ? <PurchasePanel key={vehicle.id} vehicle={vehicle} /> : undefined}
+        footer={
+          tab !== 'details' ? undefined : isDealer ? (
+            // Dealers record their own sales (with the customer and agreed price) instead of buying.
+            <Button
+              className="w-full"
+              icon={<Receipt aria-hidden className="size-4" />}
+              disabled={vehicle.quantity === 0}
+              onClick={() =>
+                navigate(APP_SALES, { state: { recordSale: { vehicleId: vehicle.id } } satisfies RecordSaleState })
+              }
+            >
+              {vehicle.quantity === 0 ? 'Out of stock' : 'Record sale'}
+            </Button>
+          ) : (
+            <PurchasePanel key={vehicle.id} vehicle={vehicle} />
+          )
+        }
       >
         {tab === 'details' && <VehicleDetails vehicle={vehicle} />}
         {tab === 'edit' && (
@@ -216,14 +236,29 @@ function AddVehicleDrawer({
   )
 }
 
+/** Router state that asks the inventory to open the Add vehicle form. */
+export interface AddVehicleState {
+  addVehicle: true
+}
+
 export function InventoryPage() {
   const { filters, query, update, clear, activeCount, selectedId, select } = useInventoryFilters()
   const { data, isPending, isError, error, refetch, isFetching } = useVehicleSearch(query)
   const { drafts, change: changeDrafts, reset: resetDrafts } = useTextDrafts(filters, update)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [adding, setAdding] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Arriving from a shortcut such as the dashboard's "Add vehicle" opens the form at once.
+  const [adding, setAdding] = useState(() => Boolean((location.state as AddVehicleState | null)?.addVehicle))
   const [drawerNotice, setDrawerNotice] = useState<{ id: number; text: string } | null>(null)
   const { canManageInventory } = useAuth()
+
+  useEffect(() => {
+    // Forget the request so a reload or Back doesn't reopen the form.
+    if ((location.state as AddVehicleState | null)?.addVehicle) {
+      navigate({ search: location.search }, { replace: true, state: null })
+    }
+  }, [location.state, location.search, navigate])
 
   const clearAll = useCallback(() => {
     resetDrafts()

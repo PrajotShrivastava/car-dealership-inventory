@@ -1,4 +1,16 @@
-import { CarFront, LogOut, Menu, PanelLeftClose, PanelLeftOpen, UserCheck, X, type LucideIcon } from 'lucide-react'
+import {
+  CarFront,
+  Handshake,
+  LayoutDashboard,
+  Receipt,
+  LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  UserCheck,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
@@ -6,6 +18,7 @@ import { cn } from '../components/cn'
 import { Logo } from '../components/Logo'
 import { ApplicationBanner } from '../features/dealers/ApplicationBanner'
 import { usePendingApplications } from '../features/dealers/queries'
+import { APP_DASHBOARD, APP_INVENTORY, APP_LEADS, APP_SALES } from '../paths'
 import { ThemeToggle } from '../theme/ThemeToggle'
 
 const COLLAPSE_KEY = 'drivestock.sidebarCollapsed'
@@ -81,7 +94,7 @@ function SidebarLink({
 }
 
 function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => void }) {
-  const { isAdmin } = useAuth()
+  const { isAdmin, isDealer } = useAuth()
   const { data: pending } = usePendingApplications(isAdmin)
   const heading = (text: string) =>
     mode !== 'rail' && (
@@ -96,8 +109,21 @@ function SidebarNav({ mode, onNavigate }: { mode: NavMode; onNavigate?: () => vo
     )
   return (
     <nav aria-label="Main" className="flex-1 space-y-1 px-3 py-4">
+      {isDealer && (
+        <>
+          {heading('Overview')}
+          <SidebarLink to={APP_DASHBOARD} label="Dashboard" icon={LayoutDashboard} mode={mode} onNavigate={onNavigate} />
+        </>
+      )}
       {heading('Inventory')}
-      <SidebarLink to="/app" label="Vehicles" icon={CarFront} mode={mode} onNavigate={onNavigate} />
+      <SidebarLink to={APP_INVENTORY} label="Vehicles" icon={CarFront} mode={mode} onNavigate={onNavigate} />
+      {isDealer && (
+        <>
+          {heading('Sales')}
+          <SidebarLink to={APP_SALES} label="Sales" icon={Receipt} mode={mode} onNavigate={onNavigate} />
+          <SidebarLink to={APP_LEADS} label="Leads" icon={Handshake} mode={mode} onNavigate={onNavigate} />
+        </>
+      )}
       {isAdmin && (
         <>
           {heading('Administration')}

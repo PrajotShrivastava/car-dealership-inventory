@@ -1,5 +1,5 @@
 import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router'
-import { GuestOnly, RequireAdmin, RequireAuth } from './auth/guards'
+import { AppHome, GuestOnly, RequireAdmin, RequireAuth, RequireDealer } from './auth/guards'
 import { DealerApplicationsPage } from './features/dealers/DealerApplicationsPage'
 import { InventoryPage } from './features/inventory/InventoryPage'
 import { AppShell } from './layout/AppShell'
@@ -10,10 +10,9 @@ import { PricingPage } from './marketing/PricingPage'
 import { DealerRegisterPage } from './pages/DealerRegisterPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { APP_DASHBOARD, APP_HOME, APP_INVENTORY, APP_LEADS, APP_SALES } from './paths'
 import { RegisterPage } from './pages/RegisterPage'
 
-/** Where users land after signing in or up. */
-export const APP_HOME = '/app'
 
 export const routes: RouteObject[] = [
   {
@@ -42,7 +41,20 @@ export const routes: RouteObject[] = [
       {
         element: <AppShell />,
         children: [
-          { path: APP_HOME, element: <InventoryPage /> },
+          { path: APP_HOME, element: <AppHome /> },
+          { path: APP_INVENTORY, element: <InventoryPage /> },
+          {
+            element: <RequireDealer />,
+            children: [
+              // Dealer-only pages load on demand, keeping them out of everyone else's bundle.
+              {
+                path: APP_DASHBOARD,
+                lazy: () => import('./features/dashboard/DashboardPage').then((m) => ({ Component: m.DashboardPage })),
+              },
+              { path: APP_SALES, lazy: () => import('./features/sales/SalesPage').then((m) => ({ Component: m.SalesPage })) },
+              { path: APP_LEADS, lazy: () => import('./features/leads/LeadsPage').then((m) => ({ Component: m.LeadsPage })) },
+            ],
+          },
           {
             element: <RequireAdmin />,
             children: [{ path: `${APP_HOME}/dealer-applications`, element: <DealerApplicationsPage /> }],

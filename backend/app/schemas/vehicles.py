@@ -30,6 +30,8 @@ class VehicleFields(BaseModel):
     fuel_type: FuelType
     transmission: Transmission
     price: Price
+    # Per unit, for gross profit. Only the owning dealer and admins ever see it.
+    acquisition_cost: Annotated[Decimal, Field(ge=0, max_digits=12, decimal_places=2)] | None = None
 
     @field_validator("trim")
     @classmethod
@@ -82,6 +84,10 @@ class VehicleOut(VehicleFields):
     @field_serializer("price")
     def _price_as_fixed_point(self, value: Decimal) -> str:
         return f"{value:.2f}"
+
+    @field_serializer("acquisition_cost")
+    def _cost_as_fixed_point(self, value: Decimal | None) -> str | None:
+        return None if value is None else f"{value:.2f}"
 
 
 class Availability(enum.StrEnum):
@@ -145,6 +151,8 @@ class RestockRequest(BaseModel):
 
 
 class PurchaseOut(BaseModel):
+    """A customer's own purchase: never includes the dealer's cost or profit."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int

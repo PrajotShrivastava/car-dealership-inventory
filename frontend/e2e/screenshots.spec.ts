@@ -103,6 +103,9 @@ test('dealer onboarding', async ({ page }) => {
   await page.getByLabel('Password').fill('dealer-pass-1')
   await page.screenshot({ path: `${OUT}/20-dealer-register.png`, fullPage: true })
   await page.getByRole('button', { name: 'Create dealer account' }).click()
+  // Dealers land on their dashboard; this screenshot shows their inventory.
+  await page.waitForURL(/\/app\/dashboard$/)
+  await page.goto('/app/inventory')
   await page.getByRole('button', { name: 'Add vehicle' }).waitFor()
   await page.screenshot({ path: `${OUT}/21-dealer-inventory.png` })
   await page.getByRole('button', { name: 'Sign out' }).click()

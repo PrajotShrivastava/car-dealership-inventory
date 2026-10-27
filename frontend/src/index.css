@@ -36,6 +36,9 @@
   --color-canvas-muted: #525a45;
   --color-canvas-accent: #1f6b2a;
 
+  /* Data marks in charts, checked for contrast against the card surface in each theme. */
+  --color-chart-bar: #379943;
+
   /* Text on brand-filled elements (buttons, logo tile). */
   --color-on-brand: #ffffff;
   /* Fixed colours on ink surfaces (never inverted). */
@@ -96,6 +99,7 @@
   --color-brand-600: #22c55e;
   --color-brand-700: #16a34a;
   --color-on-brand: #0a0a0a; /* white on #22c55e is only 2.3:1 */
+  --color-chart-bar: #16a34a;
 }
 
 html,

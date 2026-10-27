@@ -18,12 +18,12 @@ _ORDERING: dict[SortOrder, tuple[ColumnElement[Any], ...]] = {
 }
 
 
-def _escape_like(term: str) -> str:
+def escape_like(term: str) -> str:
     return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def _contains(column: InstrumentedAttribute[Any], term: str) -> ColumnElement[bool]:
-    return column.ilike(f"%{_escape_like(term)}%", escape="\\")
+def contains(column: InstrumentedAttribute[Any], term: str) -> ColumnElement[bool]:
+    return column.ilike(f"%{escape_like(term)}%", escape="\\")
 
 
 def _attribute_filters(query: VehicleQuery) -> list[ColumnElement[bool]]:
@@ -32,9 +32,9 @@ def _attribute_filters(query: VehicleQuery) -> list[ColumnElement[bool]]:
     for word in (query.q or "").split():
         conditions.append(
             or_(
-                _contains(Vehicle.make, word),
-                _contains(Vehicle.model, word),
-                _contains(Vehicle.trim, word),
+                contains(Vehicle.make, word),
+                contains(Vehicle.model, word),
+                contains(Vehicle.trim, word),
             )
         )
     if query.make:
@@ -59,9 +59,12 @@ def _availability_filter(availability: Availability) -> list[ColumnElement[bool]
 
 
 def search_vehicles(
-    db: Session, query: VehicleQuery
+    db: Session, query: VehicleQuery, dealer_id: int | None = None
 ) -> tuple[Sequence[Vehicle], int, AvailabilityCounts]:
+    """`dealer_id` limits the search (and its counts) to that dealer's listings."""
     attribute_filters = _attribute_filters(query)
+    if dealer_id is not None:
+        attribute_filters.append(Vehicle.dealer_id == dealer_id)
     filters = and_(True, *attribute_filters, *_availability_filter(query.availability))
 
     items_stmt = (
@@ -124,9 +127,11 @@ def purchase_vehicle(db: Session, vehicle_id: int, user_id: int, quantity: int) 
     record = Purchase(
         user_id=user_id,
         vehicle_id=vehicle.id,
+        dealer_id=vehicle.dealer_id,
         vehicle_label=vehicle.label,
         quantity=quantity,
         unit_price=vehicle.price,
+        unit_cost=vehicle.acquisition_cost,
     )
     db.add(record)
     db.commit()

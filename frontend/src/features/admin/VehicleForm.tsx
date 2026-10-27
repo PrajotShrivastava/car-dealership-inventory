@@ -115,6 +115,17 @@ export function VehicleForm({
           onChange={(e) => set('price', e.target.value)}
           error={errors.price}
         />
+        <TextField
+          label="Acquisition cost (optional)"
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="0.01"
+          value={values.acquisition_cost}
+          onChange={(e) => set('acquisition_cost', e.target.value)}
+          error={errors.acquisition_cost}
+          hint="What one unit cost you. Used for gross profit; customers never see it."
+        />
         {withQuantity && (
           <TextField
             label="Initial stock"

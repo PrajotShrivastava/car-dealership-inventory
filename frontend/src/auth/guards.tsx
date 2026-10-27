@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
+import { APP_DASHBOARD, APP_INVENTORY } from '../paths'
 import { FullPageSpinner } from '../components/Spinner'
 import { useAuth } from './AuthContext'
 import { postAuthTarget } from './redirects'
@@ -16,7 +17,21 @@ export function RequireAuth() {
 /** Admin-only pages: everyone else is sent back to the inventory. */
 export function RequireAdmin() {
   const { isAdmin } = useAuth()
-  return isAdmin ? <Outlet /> : <Navigate to="/app" replace />
+  return isAdmin ? <Outlet /> : <Navigate to={APP_INVENTORY} replace />
+}
+
+/** Dealer-only pages (the sales dashboard): everyone else is sent to the inventory. */
+export function RequireDealer() {
+  const { isDealer } = useAuth()
+  return isDealer ? <Outlet /> : <Navigate to={APP_INVENTORY} replace />
+}
+
+/** /app itself: dealers start on their dashboard, everyone else on the inventory. The query
+ * string is kept, so older links such as /app?category=suv still work. */
+export function AppHome() {
+  const { isDealer } = useAuth()
+  const { search } = useLocation()
+  return <Navigate to={{ pathname: isDealer ? APP_DASHBOARD : APP_INVENTORY, search }} replace />
 }
 
 export function GuestOnly() {
