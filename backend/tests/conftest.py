@@ -20,6 +20,8 @@ os.environ["DATABASE_URL"] = _test_url
 # Uploaded photos go to a throwaway folder, never the real media directory.
 _media_dir = tempfile.mkdtemp(prefix="drivestock-media-")
 os.environ["MEDIA_DIR"] = _media_dir
+# The test client talks plain http, which never carries Secure cookies.
+os.environ["COOKIE_SECURE"] = "false"
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
@@ -47,6 +49,7 @@ def _migrated_database() -> Iterator[None]:
     cfg = Config("alembic.ini")
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
+    get_engine().dispose()  # drop connections that cached the old types
     yield
     shutil.rmtree(_media_dir, ignore_errors=True)
 

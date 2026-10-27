@@ -1,4 +1,4 @@
-import { CalendarDays, Download, MessageSquare, ShoppingBag, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Download, LogOut, MessageSquare, ShoppingBag, type LucideIcon } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ApiError } from '../../api/client'
@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthContext'
 import { Alert } from '../../components/Alert'
 import { Button } from '../../components/Button'
 import { cn } from '../../components/cn'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { Spinner } from '../../components/Spinner'
 import { APP_INVENTORY } from '../../paths'
 import { viewerTimeZone } from '../../time'
@@ -203,6 +204,58 @@ function EnquiryRow({ enquiry }: { enquiry: AccountEnquiry }) {
   )
 }
 
+/** Ends every session of the account, e.g. after signing in on a shared or lost device. */
+function SignOutEverywhere() {
+  const { logoutEverywhere } = useAuth()
+  const [confirming, setConfirming] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function confirm() {
+    setBusy(true)
+    setError(null)
+    try {
+      await logoutEverywhere()
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'Could not sign out everywhere. Please try again.')
+      setBusy(false)
+      setConfirming(false)
+    }
+  }
+
+  return (
+    <section aria-labelledby="security-heading" className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 id="security-heading" className="text-base font-semibold text-slate-900">
+            Signed-in devices
+          </h2>
+          <p className="mt-0.5 text-sm text-slate-500">Signed in somewhere you shouldn’t be? End every session, including this one.</p>
+        </div>
+        <Button variant="secondary" icon={<LogOut aria-hidden className="size-4" />} onClick={() => setConfirming(true)}>
+          Sign out of all devices
+        </Button>
+      </div>
+      {error && (
+        <div className="mt-3">
+          <Alert>{error}</Alert>
+        </div>
+      )}
+      {confirming && (
+        <ConfirmDialog
+          title="Sign out of all devices?"
+          confirmLabel="Sign out everywhere"
+          busy={busy}
+          onConfirm={confirm}
+          onCancel={() => setConfirming(false)}
+        >
+          You’ll need to sign in again on every phone, tablet and computer, including this one.
+        </ConfirmDialog>
+      )}
+    </section>
+  )
+}
+
 export function AccountPage() {
   const { user } = useAuth()
   const purchases = usePurchases()
@@ -250,6 +303,8 @@ export function AccountPage() {
           </ul>
         )}
       </Section>
+
+      <SignOutEverywhere />
     </div>
   )
 }

@@ -31,18 +31,20 @@ def verify_password(password: str, password_hash: str | None) -> bool:
     return password_hash is not None
 
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(user: User) -> str:
     settings = get_settings()
     now = datetime.now(UTC)
     payload = {
-        "sub": str(user_id),
+        "sub": str(user.id),
+        "ver": user.token_version,
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expire_minutes),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
-def _decode_user_id(token: str) -> int:
+def _decode(token: str) -> tuple[int, int]:
+    """The token's user id and version (tokens from before versions existed count as 0)."""
     settings = get_settings()
     try:
         payload = jwt.decode(
@@ -51,7 +53,7 @@ def _decode_user_id(token: str) -> int:
             algorithms=[settings.jwt_algorithm],
             options={"require": ["exp", "sub"]},
         )
-        return int(payload["sub"])
+        return int(payload["sub"]), int(payload.get("ver", 0))
     except (jwt.InvalidTokenError, ValueError) as exc:
         raise AppError(
             401, "INVALID_TOKEN", "Invalid or expired token", _UNAUTHORIZED_HEADERS
@@ -64,8 +66,10 @@ def get_current_user(
 ) -> User:
     if credentials is None:
         raise AppError(401, "NOT_AUTHENTICATED", "Authentication required", _UNAUTHORIZED_HEADERS)
-    user = db.get(User, _decode_user_id(credentials.credentials))
-    if user is None:
+    user_id, version = _decode(credentials.credentials)
+    user = db.get(User, user_id)
+    # A bumped version means the user signed out everywhere after this token was issued.
+    if user is None or version != user.token_version:
         raise AppError(401, "INVALID_TOKEN", "Invalid or expired token", _UNAUTHORIZED_HEADERS)
     return user
 

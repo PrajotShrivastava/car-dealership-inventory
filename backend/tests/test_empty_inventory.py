@@ -4,7 +4,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import func, select
 
-from app.db import get_sessionmaker
+from app.db import get_engine, get_sessionmaker
 from app.models import Vehicle
 from tests.conftest import VEHICLE
 from tests.test_dealer_role import DEALER, register_dealer, token_for
@@ -14,6 +14,8 @@ def test_migrating_a_fresh_database_adds_no_vehicles():
     cfg = Config("alembic.ini")
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
+    # Pooled connections may hold prepared statements for the types just recreated.
+    get_engine().dispose()
 
     with get_sessionmaker()() as session:
         assert session.scalar(select(func.count()).select_from(Vehicle)) == 0

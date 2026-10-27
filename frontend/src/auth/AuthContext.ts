@@ -16,7 +16,10 @@ export interface AuthContextValue {
   register: (fullName: string, email: string, password: string) => Promise<void>
   /** Create a dealer account, then sign in. */
   registerDealer: (body: DealerRegisterRequest) => Promise<void>
+  /** Ends this browser's session (on the server too) and signs out. */
   logout: () => void
+  /** Ends every session of the account, on every device, then signs out here. */
+  logoutEverywhere: () => Promise<void>
   /** Re-reads the signed-in user from the API, e.g. after their role changed. */
   refreshUser: () => Promise<void>
 }
