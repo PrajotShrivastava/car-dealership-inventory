@@ -37,6 +37,8 @@ export default defineConfig({
         DATABASE_URL: testDb,
         CORS_ORIGINS: `http://localhost:${WEB_PORT}`,
         MEDIA_DIR: join(tmpdir(), 'drivestock-e2e-media'),
+        // Plain-http localhost: Secure cookies would never be sent back.
+        COOKIE_SECURE: 'false',
       },
       reuseExistingServer: false,
       timeout: 60_000,

@@ -39,6 +39,13 @@ let leads: (Lead & { dealer_id: number; customer_id?: number; enquiry_kind?: Enq
 let purchases: (AccountPurchase & { user_id: number })[] = []
 let dashboard: Dashboard | ((months: DashboardRange) => Dashboard) | null = null
 let nextId = 1
+/** Access tokens that stopped working (expired, or signed out everywhere). */
+let deadTokens = new Set<string>()
+/** Access tokens issued by /auth/refresh -> their user. */
+let refreshedTokens = new Map<string, number>()
+/** Whose refresh-token cookie this browser holds, if anyone's. */
+let refreshUserId: number | null = null
+export const authCalls = { refresh: 0, logout: 0, logoutAll: 0 }
 
 export const PASSWORD = 'password-123'
 
@@ -52,6 +59,10 @@ export function resetDb() {
   purchases = []
   dashboard = null
   dashboardRequests.length = 0
+  deadTokens = new Set()
+  refreshedTokens = new Map()
+  refreshUserId = null
+  Object.assign(authCalls, { refresh: 0, logout: 0, logoutAll: 0 })
   nextId = 1
 }
 
@@ -150,6 +161,16 @@ export function seedUser(role: User['role'] = 'customer', email = `${role}@examp
 
 export function tokenFor(user: User) {
   return `token-${user.id}`
+}
+
+/** The access token stops working, as when it expires. */
+export function expireToken(token: string) {
+  deadTokens.add(token)
+}
+
+/** The browser holds `user`'s refresh-token cookie, as after signing in. */
+export function holdRefreshCookie(user: User) {
+  refreshUserId = user.id
 }
 
 /** `owner`: the dealer who listed it. Without one it belongs to no dealer (admin-added). */
@@ -346,7 +367,9 @@ const error = (status: number, code: string, message: string) =>
 
 function currentUser(request: Request): StoredUser | undefined {
   const token = request.headers.get('Authorization')?.replace('Bearer ', '')
-  return users.find((u) => tokenFor(u) === token)
+  if (!token || deadTokens.has(token)) return undefined
+  const refreshedFor = refreshedTokens.get(token)
+  return users.find((u) => (refreshedFor === undefined ? tokenFor(u) === token : u.id === refreshedFor))
 }
 
 /** Mirrors the API: dealers and admins may change the inventory. */
@@ -464,7 +487,33 @@ export const handlers = [
     const body = (await request.json()) as { email: string; password: string }
     const user = users.find((u) => u.email === body.email.toLowerCase() && u.password === body.password)
     if (!user) return error(401, 'INVALID_CREDENTIALS', 'Invalid email or password')
+    refreshUserId = user.id
     return HttpResponse.json({ access_token: tokenFor(user), token_type: 'bearer', user: publicUser(user) })
+  }),
+
+  http.post(`${API}/auth/refresh`, () => {
+    authCalls.refresh++
+    const user = users.find((u) => u.id === refreshUserId)
+    if (!user) return error(401, 'SESSION_EXPIRED', 'Your session has ended. Please sign in again.')
+    const token = `token-${user.id}-refreshed-${nextId++}`
+    refreshedTokens.set(token, user.id)
+    return HttpResponse.json({ access_token: token, token_type: 'bearer', user: publicUser(user) })
+  }),
+
+  http.post(`${API}/auth/logout`, () => {
+    authCalls.logout++
+    refreshUserId = null
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  http.post(`${API}/auth/logout-all`, ({ request }) => {
+    const user = currentUser(request)
+    if (!user) return error(401, 'INVALID_TOKEN', 'Invalid or expired token')
+    authCalls.logoutAll++
+    deadTokens.add(tokenFor(user))
+    for (const [token, id] of refreshedTokens) if (id === user.id) deadTokens.add(token)
+    refreshUserId = null
+    return new HttpResponse(null, { status: 204 })
   }),
 
   http.get(`${API}/auth/me`, ({ request }) => {

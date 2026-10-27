@@ -40,12 +40,49 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(100))
+    # In every access token; bumping it ("sign out everywhere") invalidates those already issued.
+    token_version: Mapped[int] = mapped_column(default=0, server_default="0")
     role: Mapped[Role] = mapped_column(
         Enum(Role, name="user_role", values_callable=_enum_values),
         default=Role.CUSTOMER,
         server_default=Role.CUSTOMER.value,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class RefreshToken(Base):
+    """One link in a sign-in session's chain of refresh tokens; each is used once.
+
+    Only a SHA-256 hash of the token is stored. A session is a `family`: using a token
+    revokes it and issues the next one, and reusing a revoked token revokes the family.
+    """
+
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    family_id: Mapped[str] = mapped_column(String(36), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LoginFailure(Base):
+    """A failed sign-in, counted per email and per client address to slow password guessing."""
+
+    __tablename__ = "login_failures"
+    __table_args__ = (
+        Index("ix_login_failures_email_created_at", "email", "created_at"),
+        Index("ix_login_failures_ip_created_at", "ip", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(254))
+    ip: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
 
 
 class Category(enum.StrEnum):

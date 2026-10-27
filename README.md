@@ -164,7 +164,10 @@ The inventory starts empty: migrations create no vehicles and there is no comman
 | `DATABASE_URL` | backend | `postgresql+psycopg://drivestock:…@localhost:5432/drivestock` | Main database |
 | `TEST_DATABASE_URL` | backend | `…/drivestock_test` | pytest + e2e; **must end in `_test`** (a safety check) |
 | `JWT_SECRET` | backend | *(required, ≥ 32 chars)* | Token signing key |
-| `JWT_EXPIRE_MINUTES` | backend | `60` | Access token lifetime |
+| `JWT_EXPIRE_MINUTES` | backend | `15` | Access token lifetime |
+| `REFRESH_TOKEN_DAYS` | backend | `30` | Refresh-token cookie lifetime; each refresh replaces it |
+| `COOKIE_SECURE` | backend | *(unset)* | Secure cookies; unset means on everywhere except `APP_ENV=development` |
+| `LOGIN_MAX_FAILURES_PER_EMAIL` / `_PER_IP` | backend | `5` / `20` | Failed sign-ins allowed per `LOGIN_WINDOW_MINUTES` (`15`) before a 429 |
 | `CORS_ORIGINS` | backend | `http://localhost:5173` | Comma-separated allowed origins |
 | `MEDIA_DIR` | backend | `backend/media` | Where uploaded photos are stored (git-ignored; **back it up with the database**). Tests and e2e use temporary folders |
 | `APP_ENV` | backend | `production` (`.env.example` sets `development`) | Only `development` allows `seed-demo-users`. Anything else, or unset, is treated as production |
@@ -348,11 +351,14 @@ Migrations live in `backend/alembic/versions`. Apply them with `alembic upgrade 
 
 - argon2 password hashing; passwords 8–128 characters; generic login errors with equal-cost verification.
 - Roles enforced on the server (`require_admin`). The UI only hides controls.
-- JWT secret required and at least 32 characters; tokens expire after 60 minutes.
-- **Token storage:** the SPA keeps the token in `localStorage` so sessions survive reloads. Any script on the page can read it if XSS were possible. Mitigations: React escaping, no `dangerouslySetInnerHTML`, no third-party scripts, short expiry. An httpOnly cookie with CSRF protection would be the next step for production.
+- JWT secret required and at least 32 characters. **Access tokens last 15 minutes.**
+- **Sessions:** signing in also sets a 30-day refresh token in an **httpOnly, SameSite=Strict cookie** scoped to `/api/auth` (Secure everywhere except `APP_ENV=development`). The SPA swaps it for a new access token when one expires (`POST /api/auth/refresh`). Each refresh token works once and is replaced. Presenting a spent one (only a copy could) ends that whole session. Only SHA-256 hashes of refresh tokens are stored.
+- **Sign out** (`POST /api/auth/logout`) ends the session on the server. **Sign out of all devices** (`POST /api/auth/logout-all`, on the customer's My account page) ends every session and invalidates access tokens already issued, via a per-user token version in each token.
+- **Failed sign-in limits:** after 5 failures for an email, or 20 from one address, within 15 minutes, sign-in returns **429** with `Retry-After`, even with the right password. Failures are stored in the database, so limits hold across restarts and workers. Trade-off: anyone can lock an email out for up to 15 minutes. Behind a reverse proxy, run uvicorn with `--proxy-headers` so the client address is real.
+- **Token storage:** the SPA keeps the short-lived access token in `localStorage`, so any script on the page could read it if XSS were possible. Mitigations: React escaping, no `dangerouslySetInnerHTML`, no third-party scripts, a 15-minute lifetime, and a refresh token that scripts can't read. The refresh cookie is `SameSite=Strict`, so other sites can't make the browser send it, and CORS keeps the refresh response readable only by the web app's origin.
 - Out-of-range IDs and offsets → 422; unexpected errors → generic 500 (details only in server logs).
 - **Uploaded photos:** admin-only; checked by decoding, not by file name or declared type; size, pixel-count and per-vehicle limits; metadata (including GPS) stripped; stored under random 128-bit names. Photo files are served without sign-in because `<img>` tags can't send a bearer token, so anyone with a photo's URL can view it. URLs are only listed by the signed-in API. There's no overall request-size limit in the app itself; set one at the reverse proxy (e.g. nginx `client_max_body_size 60m`).
-- Not implemented: login rate limiting, token revocation or refresh, security headers (expected from a reverse proxy).
+- Not implemented: security headers (expected from a reverse proxy), password change or reset, and a sign-out-everywhere button for dealers and admins (the API endpoint works for every role).
 
 ## Screenshots
 

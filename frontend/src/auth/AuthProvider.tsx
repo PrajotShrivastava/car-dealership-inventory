@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { authApi } from '../api/auth'
-import { setAuthToken, setUnauthorizedHandler } from '../api/client'
+import { setAuthToken, setRefreshHandler, setUnauthorizedHandler } from '../api/client'
 import { dealersApi } from '../api/dealers'
 import type { DealerRegisterRequest, User } from '../api/types'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
@@ -12,7 +12,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>(() => (tokenStorage.get() ? 'loading' : 'anonymous'))
 
-  const logout = useCallback(() => {
+  /** Forgets the session in this tab only (the server has already ended it, or will). */
+  const clearSession = useCallback(() => {
     tokenStorage.clear()
     setAuthToken(null)
     setUser(null)
@@ -20,10 +21,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.clear()
   }, [queryClient])
 
+  const logout = useCallback(() => {
+    // Signing out here shouldn't wait on the network; a failed call leaves only a cookie
+    // that expires on its own.
+    authApi.logout().catch(() => {})
+    clearSession()
+  }, [clearSession])
+
+  const logoutEverywhere = useCallback(async () => {
+    await authApi.logoutAll()
+    clearSession()
+  }, [clearSession])
+
   useEffect(() => {
-    setUnauthorizedHandler(logout)
-    return () => setUnauthorizedHandler(null)
-  }, [logout])
+    setUnauthorizedHandler(clearSession)
+    setRefreshHandler(async () => {
+      const { access_token, user: me } = await authApi.refresh()
+      tokenStorage.set(access_token)
+      setAuthToken(access_token)
+      setUser(me)
+      return access_token
+    })
+    return () => {
+      setUnauthorizedHandler(null)
+      setRefreshHandler(null)
+    }
+  }, [clearSession])
 
   // Restore a stored session once on startup.
   useEffect(() => {
@@ -39,12 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setStatus('authenticated')
       })
       .catch(() => {
-        if (!cancelled) logout()
+        if (!cancelled) clearSession()
       })
     return () => {
       cancelled = true
     }
-  }, [logout])
+  }, [clearSession])
 
   const login = useCallback(async (email: string, password: string) => {
     const { access_token, user: me } = await authApi.login({ email, password })
@@ -85,9 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       registerDealer,
       logout,
+      logoutEverywhere,
       refreshUser,
     }),
-    [status, user, login, register, registerDealer, logout, refreshUser],
+    [status, user, login, register, registerDealer, logout, logoutEverywhere, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
